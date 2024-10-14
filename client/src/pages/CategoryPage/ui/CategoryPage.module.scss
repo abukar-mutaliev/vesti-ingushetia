@@ -1,0 +1,84 @@
+.categoryPage {
+    width: 90rem;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6%;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        width: 100%;
+        margin-top: 15%;
+    }
+}
+
+.content {
+    flex: 1;
+    margin-right: 20px;
+    width: 100%;
+    max-width: 45rem;
+    color: #333333;
+
+    h1 {
+        color: #7b7b7b;
+        padding: 5% 0 5% 0;
+    }
+
+    @media (max-width: 768px) {
+        margin-right: 0;
+        max-width: 100%;
+        padding: 0 10px;
+        h1 {
+            padding: 10px;
+        }
+    }
+}
+
+.newsList {
+    display: flex;
+    flex-direction: column;
+}
+
+.newsItem {
+    padding: 10px;
+    border-bottom: 1px solid #e0e0e0;
+
+    @media (max-width: 768px) {
+        padding: 8px;
+    }
+}
+
+.pagination {
+    display: flex;
+    list-style: none;
+    justify-content: center;
+    margin-top: 20px;
+
+    @media (max-width: 768px) {
+        flex-wrap: wrap;
+        padding: 0 10px;
+    }
+}
+
+.pageLink {
+    margin: 0 5px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: none;
+
+    @media (max-width: 768px) {
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+}
+
+.activePage .pageLink {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+
+.pageLink:hover {
+    background-color: #ddd;
+}

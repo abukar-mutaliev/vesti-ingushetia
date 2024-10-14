@@ -1,0 +1,112 @@
+
+:root {
+    font-family: Russia, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    color: #333333;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    @media (max-width: 768px) {
+        font-size: 14px;
+    }
+}
+
+a {
+    font-weight: 500;
+    color: #646cff;
+    text-decoration: inherit;
+
+    &:hover {
+        color: #0095da;
+    }
+
+    @media (max-width: 768px) {
+        font-size: 18px;
+    }
+}
+body {
+    margin: 0;
+}
+.appBody {
+    display: grid;
+    justify-content: center;
+    min-height: 100vh;
+    align-items: center;
+    padding: 20px;
+
+    @media (max-width: 968px) {
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+    @media (max-width: 768px) {
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+}
+.loaderContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #ffffff;
+
+    @media (max-width: 768px) {
+        height: auto;
+        padding: 20px;
+    }
+}
+
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.5; // Set a default line height
+  background-color: #fff; // Set a default background color
+  margin: 0;
+}
+
+ul,
+ol {
+  list-style: none; // Remove default list styles
+}
+
+a {
+  text-decoration: none; // Remove default link underline
+  color: inherit; // Inherit text color
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit; // Inherit font family
+  font-size: inherit; // Inherit font size
+  margin: 0; // Remove default margins
+  padding: 0; // Remove default padding
+  border: none; // Remove default border
+  outline: none; // Remove default outline
+  background: none; // Remove default background
+  appearance: none; // Remove default appearance (e.g., for input type="button")
+}
+
+img,
+video {
+  max-width: 100%; // Ensure media elements don't overflow their containers
+  height: auto; // Maintain aspect ratio for media elements
+}
+

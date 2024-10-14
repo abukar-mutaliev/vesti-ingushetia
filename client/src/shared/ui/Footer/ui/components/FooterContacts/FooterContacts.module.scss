@@ -1,0 +1,18 @@
+.footerContacts {
+  width: 25rem;
+  @media screen and (max-width: 820px) {
+    width: 100%;
+  }
+  p {
+    margin: 0 0 10px;
+    font-size: 16px;
+    @media screen and (max-width: 820px) {
+      width: 100%;
+      max-width: 83%;
+      margin: 0 0 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+
+  }
+  }
+}

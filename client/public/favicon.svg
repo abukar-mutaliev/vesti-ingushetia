@@ -1,0 +1,10 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="800" viewBox="0 0 200 100">
+    <rect x="0" y="0" width="163" height="50" rx="5" fill="white"/>
+
+<text x="21" y="35" font-family="Arial, sans-serif" font-size="35" fill="#9d9dfd">ВЕСТИ</text>
+    <rect x="0" y="40" width="163" height="50" rx="5" fill="#9d9dfd"/>
+
+    <text x="5" y="75" font-family="Arial, sans-serif" font-size="30" fill="white">Ингушетии</text>
+</svg>
+

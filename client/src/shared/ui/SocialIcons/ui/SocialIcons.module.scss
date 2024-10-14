@@ -1,0 +1,109 @@
+@import '../../../../shared/styles/variables';
+@import '../../../../shared/styles/mixins';
+
+.socialIcons {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 100px;
+    width: 50px;
+    flex-shrink: 0;
+    margin-right: 20px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    @media (max-width: 768px) {
+        display: ruby;
+
+        position: static;
+    }
+    .icon {
+        width: 50px;
+        height: 50px;
+        text-align: center;
+        line-height: 50px;
+        border-radius: 8px;
+        transition:
+                0.5s ease,
+                transform 0.5s ease;
+        font-size: 24px;
+        color: #555;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .youTube,
+    .telegramIcon,
+    .vkIcon {
+        width: 50px;
+        height: 50px;
+        text-align: center;
+        line-height: 60px;
+        border-radius: 8px;
+        transition:
+                0.5s ease,
+                transform 0.5s ease;
+    }
+
+    .ruTube {
+        width: 50px;
+        height: 50px;
+        text-align: center;
+        line-height: 60px;
+        border-radius: 8px;
+        transition:
+                0.5s ease,
+                transform 0.5s ease;
+        img {
+            filter: grayscale(100%) brightness(7) invert(1);
+            width: 25px;
+            height: 50px;
+            transition:
+                    0.5s ease,
+                    transform 0.5s ease;
+            @media (max-width: 768px) {
+                height: 21px;
+            }
+        }
+    }
+
+    .ruTube:hover {
+        background: #cccccc;
+        filter: none;
+        transition:
+                0.5s ease,
+                transform 0.5s ease;
+        img {
+            transition:
+                    0.5s ease,
+                    transform 0.5s ease;
+            filter: none;
+        }
+    }
+
+    .youTube:hover {
+        color: rgb(255, 0, 0);
+        background-color: #cccccc;
+        transition:
+                0.5s ease,
+                transform 0.5s ease;
+    }
+
+    .telegramIcon:hover {
+        color: white;
+        background: #0088cc;
+        transition:
+                0.5s ease,
+                transform 0.5s ease;
+    }
+
+    .vkIcon:hover {
+        color: white;
+        background: #4a76a8;
+        transition:
+                0.5s ease,
+                transform 0.5s ease;
+    }
+}

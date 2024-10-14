@@ -1,0 +1,11 @@
+@import '../../../shared/styles/variables';
+@import '../../../shared/styles/mixins';
+
+.videoNewsList {
+  display: grid;
+  flex-wrap: wrap;
+  gap: 20px;
+  &:hover {
+    color: $primary-color-hover;
+  }
+}

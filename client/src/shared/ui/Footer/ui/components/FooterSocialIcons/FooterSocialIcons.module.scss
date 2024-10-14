@@ -1,0 +1,23 @@
+.footerSocialIcons {
+  display: flex;
+  gap: 15px;
+  height: 30px;
+  a {
+    color: #fff;
+    font-size: 20px;
+    transition: color 0.3s;
+
+    &:hover {
+      color: #ccc;
+    }
+  }
+}
+.ruTube {
+  width: 16.5px;
+  filter: invert(100%) sepia(7%) saturate(7467%) hue-rotate(194deg) brightness(100%) contrast(108%);
+  transition: transform 0.3s ease;
+  &:hover {
+    transition: transform 0.3s ease;
+    filter: invert(74%) sepia(0%) saturate(24%) hue-rotate(136deg) brightness(106%) contrast(88%);
+}
+}

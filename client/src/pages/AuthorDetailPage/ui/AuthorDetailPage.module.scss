@@ -1,0 +1,99 @@
+@import '@shared/styles/variables';
+@import '@shared/styles/mixins';
+
+
+.authorDetailPage {
+    width: 90rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 8%;
+    font-family: 'Russia', Arial, sans-serif;
+
+    .authorContainer {
+        flex: 1;
+        margin-right: 20px;
+        width: 68rem;
+    }
+
+    .authorInfo {
+        text-align: left;
+        margin-bottom: 40px;
+
+        h2 {
+            font-size: 2rem;
+            color: #333;
+            margin: 0 0 20px ;
+        }
+
+        p {
+            font-size: 1rem;
+            color: #666;
+            line-height: 1.5;
+        }
+    }
+
+    .authorInfo h2::after {
+        content: '';
+        display: block;
+        width: 2em;
+        margin-left: 2px;
+    }
+
+    .newsSection {
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: bolder;
+        }
+
+        .newsList {
+            display: grid;
+            gap: 20px;
+            .newsItem {
+                background: #ffffff;
+                border-radius: 8px;
+                transition: box-shadow 0.3s;
+
+                h3 {
+                    font-size: 1.5rem;
+                    color: #0056b3;
+                    margin-bottom: 10px;
+                }
+
+                p {
+                    font-size: 1rem;
+                    color: #666;
+                }
+
+                a {
+                    text-decoration: none;
+                    color: black;
+                    &:hover {
+                        color: $primary-color-hover;
+                    }
+                }
+            }
+        }
+
+        .noNews {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #999;
+            margin-top: 20px;
+        }
+    }
+
+    .error {
+        text-align: center;
+        color: red;
+        font-size: 1.5rem;
+    }
+}
+
+.loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}

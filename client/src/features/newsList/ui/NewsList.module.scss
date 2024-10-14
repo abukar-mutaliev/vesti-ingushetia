@@ -1,0 +1,122 @@
+@import '../../../shared/styles/variables';
+@import '../../../shared/styles/mixins';
+
+.newsListContainer {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+.newsList {
+    background-color: $primary-background;
+    padding: 0 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 100%;
+
+    @media (max-width: 768px) {
+        width: 100%;
+        max-width: 80%;
+        padding: 10px;
+        justify-content: center;
+        align-content: center;
+        flex-wrap: wrap;
+        display: ruby;
+        box-sizing: border-box;
+    }
+
+    @media (max-width: 480px) {
+        gap: 12px;
+    }
+
+
+    h3 {
+        font-size: 1.5em;
+        font-family: 'Russia', Arial, sans-serif;
+        text-transform: uppercase;
+        color: black;
+        padding: 15px;
+    }
+}
+
+.customCalendarContainer {
+    margin-left: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    @media (max-width: 768px) {
+        margin-left: 0;
+        margin-top: 20px;
+    }
+}
+
+.pagination {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+    color: #333;
+
+    li {
+        margin: 0 5px;
+    }
+
+    @media (max-width: 768px) {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
+
+.pageLink {
+    padding: 8px 12px;
+    margin: 0 4px;
+    border: 1px solid #747bff;
+    border-radius: 4px;
+    color: #747bff;
+    cursor: pointer;
+    transition:
+        background-color 0.2s,
+        color 0.2s;
+    text-decoration: none;
+
+    &:hover {
+        background-color: #747bff;
+        color: white;
+    }
+
+    @media (max-width: 780px) {
+        padding: 4px 4px;
+        margin: 2px;
+    }
+    @media (max-width: 486px) {
+        padding: 2px 2px;
+        margin: 1px;
+        font-size: 10px;
+    }
+}
+
+.activePage {
+    a {
+        background-color: #747bff;
+        color: white;
+    }
+}
+.loaderContainer {
+    width: 45rem;
+    display: flex;
+    justify-content: center;
+
+    @media (max-width: 768px) {
+        width: 100%;
+    }
+}

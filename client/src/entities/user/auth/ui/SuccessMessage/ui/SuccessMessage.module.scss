@@ -1,0 +1,33 @@
+.successMessage {
+  background-color: #e6f7e4; /* Нежный зеленый фон */
+  border: 1px solid #5cb85c; /* Зеленая рамка */
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  max-width: 400px;
+  margin: 20px auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Легкая тень */
+  animation: fadeIn 0.5s ease-in-out; /* Анимация появления */
+
+  .title {
+    font-size: 1.5rem;
+    color: #3c763d; /* Темно-зеленый цвет текста */
+    margin-bottom: 10px;
+  }
+
+  .text {
+    font-size: 1rem;
+    color: #3c763d;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

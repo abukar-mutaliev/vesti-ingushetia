@@ -1,0 +1,81 @@
+.newsPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 90rem;
+    margin-top: 8%;
+    border-radius: 8px;
+    h1 {
+        text-align: center;
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        @media (max-width: 768px) {
+            font-size: 1.8rem;
+        }
+    }
+    @media (max-width: 768px) {
+        width: 100%;
+        padding: 10% 0 0 0;
+    }
+}
+
+.newsContent {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    width: 100%;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+.customCalendarContainer {
+    flex: 1;
+
+    @media (max-width: 768px) {
+        width: 100%;
+    }
+}
+
+.newsListContainer {
+    flex: 3;
+
+    @media (max-width: 768px) {
+        width: 100%;
+    }
+}
+
+.sidebarContainer {
+    max-width: 22rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 20px;
+
+    @media (max-width: 768px) {
+        max-width: 100%;
+        width: 100%;
+    }
+}
+
+.resetDateButton {
+    margin-top: 10px;
+    padding: 8px 16px;
+    font-size: 16px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+
+    @media (max-width: 768px) {
+        width: 100%;
+        font-size: 14px;
+    }
+}
+
+.resetDateButton:hover {
+    background-color: #0056b3;
+}

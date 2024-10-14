@@ -1,0 +1,112 @@
+@import '../../../shared/styles/variables';
+@import '../../../shared/styles/mixins';
+
+.searchResultsPage {
+    padding: 100px 20px 20px 20px;
+    width: 100%;
+
+    .searchBar {
+        margin-bottom: 20px;
+
+        .searchForm {
+            display: flex;
+            align-items: center;
+            max-width: 600px;
+            margin: 0 auto;
+
+            .searchInput {
+                flex: 1;
+                padding: 10px 15px;
+                font-size: 18px;
+                border: 1px solid #ccc;
+                border-radius: 4px 0 0 4px;
+                outline: none;
+            }
+
+            .searchButton {
+                padding: 10px 15px;
+                font-size: 18px;
+                background-color: $primary-color;
+                color: #fff;
+                border: none;
+                border-radius: 0 4px 4px 0;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                &:hover {
+                    background-color: $primary-color-hover;
+                }
+
+                svg {
+                    width: 24px;
+                    height: 24px;
+                }
+            }
+        }
+    }
+
+    .contentContainer {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .mainContent {
+        flex: 1;
+
+        .resultsTitle {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .resultsCount {
+            margin-bottom: 20px;
+            color: #777;
+            font-size: 16px;
+        }
+
+        .resultsList {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            cursor: pointer;
+        }
+
+        .loader,
+        .error,
+        .noResults {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 150px;
+            color: #777777;
+        }
+
+        .resultsList img,
+        .resultsList video,
+        .resultsList iframe {
+            max-width: 60%;
+            height: auto;
+            display: block;
+            margin: 15px auto;
+            border-radius: 8px;
+        }
+    }
+
+    .sidebar {
+        width: 300px;
+    }
+}
+@media (max-width: 768px) {
+    .searchResultsPage {
+        padding: 60px 10px 20px;
+
+        .contentContainer {
+            flex-direction: column;
+        }
+    }
+    .sidebar {
+        display: none;
+    }
+}

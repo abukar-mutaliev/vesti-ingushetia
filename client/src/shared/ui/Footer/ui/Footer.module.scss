@@ -1,0 +1,18 @@
+.footer {
+  width: 100%;
+  max-width: 100%;
+  background-color: #0965a0;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  box-sizing: border-box;
+  margin-top: 10%;
+  -webkit-box-shadow: 0px -2px 8px 3px rgba(0, 0, 0, 0.26);
+  -moz-box-shadow: 0px -2px 8px 3px rgba(0, 0, 0, 0.26);
+  box-shadow: 0px -2px 8px 3px rgba(0, 0, 0, 0.26);
+
+  @media (max-width: 868px) {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}

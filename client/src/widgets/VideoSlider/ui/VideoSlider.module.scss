@@ -1,0 +1,122 @@
+@import '@shared/styles/variables';
+@import '@shared/styles/mixins';
+
+
+.videoSlider {
+    padding: 20px;
+    background-color: #0d4c75;
+
+    h2 {
+        margin-bottom: 20px;
+        text-align: left;
+        font-size: 24px;
+        color: #ffffff;
+        padding-left: 15px;
+    }
+
+    .slick-slide {
+        display: flex;
+        justify-content: center;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+    .videoCard {
+        width: 100%;
+        max-width: 300px;
+        overflow: hidden;
+        transition: 0.3s ease, transform 0.3s ease;
+        padding-left: 15px;
+        &:hover svg {
+            color: $primary-color-hover;
+        }
+        .imageWrapper {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            overflow: hidden;
+
+            img,
+            video {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .playButtonOverlay {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: rgba(255, 255, 255, 0.8);
+                pointer-events: none;
+            }
+
+            .playButton {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: $primary-background;
+                pointer-events: none;
+                transition: color 0.3s ease-in-out;
+                svg{
+                    transition: 0.3s ease, transform 0.3s ease;
+                }
+            }
+
+        }
+
+        .videoInfo {
+            padding: 10px;
+            text-align: left;
+            background-color: #0d4c75;
+            h3 {
+                font-size: 14px;
+                color: #dddddd;
+                margin: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                font-family: "RussiaLights", Arial, sans-serif;
+                text-overflow: ellipsis;
+                transition: 0.3s ease, transform 0.3s ease;
+                &:hover {
+                    color: $primary-color-hover;
+                    transition: 0.3s ease, transform 0.3s ease;
+                }
+            }
+
+            p {
+                font-size: 12px;
+                color: #8c8c8c;
+                margin-top: 5px;
+            }
+        }
+    }
+
+    .slick-prev,
+    .slick-next {
+        width: 60px !important;
+        height: 60px !important;
+        z-index: 1;
+        background-color: #333 !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        opacity: 1 !important;
+
+        &:hover {
+            background-color: #555 !important;
+            opacity: 1 !important;
+        }
+
+        &:before {
+            font-size: 30px !important;
+            color: #ffffff !important;
+        }
+    }
+}
