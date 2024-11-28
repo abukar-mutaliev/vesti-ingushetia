@@ -11,7 +11,7 @@ import { selectNewsList } from '@entities/news/model/newsSelectors.js';
 import { VideoSlider } from '@widgets/VideoSlider/index.js';
 import { NewsCardDetailPage } from '@widgets/NewsCardDetailPage/index.js';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
-import { FaBars, FaTimes } from 'react-icons/fa';
+import { FaTimes } from 'react-icons/fa';
 import { SlArrowRight } from 'react-icons/sl';
 
 export const HomePage = () => {

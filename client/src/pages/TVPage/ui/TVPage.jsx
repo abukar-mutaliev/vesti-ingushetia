@@ -20,10 +20,7 @@ export const TVPage = () => {
 
     const selectedDate = useSelector((state) => state.news.selectedDate);
     const newsList = useSelector(selectNewsWithVideos, shallowEqual);
-    const filteredNewsList = useSelector(
-        selectFilteredNewsWithVideosByDate,
-        shallowEqual,
-    );
+
     const loading = useSelector((state) => state.news.newsLoading);
     const categories = useSelector(selectCategories, shallowEqual);
 
@@ -58,6 +55,7 @@ export const TVPage = () => {
             <div className={styles.newsContent}>
                 <NewsList selectedDate={selectedDate} onlyWithVideos={true} />
                 <div className={styles.sidebarContainer}>
+                    <p>Архивные телепередачи</p>
                     <CustomCalendar
                         onDateChange={handleDateChange}
                         newsDates={newsDates}

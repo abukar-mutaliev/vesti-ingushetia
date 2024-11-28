@@ -5,6 +5,7 @@
     width: 90rem;
     margin-top: 8%;
     border-radius: 8px;
+    box-sizing: border-box;
     h1 {
         text-align: center;
         font-size: 2.5rem;
@@ -25,9 +26,21 @@
     gap: 20px;
     width: 100%;
 
+    @media (max-width: 1324px) {
+        gap: 10px;
+        max-width: 70%;
+    }
+    @media (max-width: 1024px) {
+        gap: 10px;
+        max-width: 70%;
+    }
+    @media (max-width: 968px) {
+        max-width: 60%;
+    }
     @media (max-width: 768px) {
         flex-direction: column;
         gap: 15px;
+        max-width: 90%;
     }
 }
 
@@ -53,7 +66,11 @@
     flex-direction: column;
     flex: 1;
     gap: 20px;
-
+    p {
+        font-family: 'Russia', Arial, sans-serif;
+        color: white;
+        font-weight: bolder;
+    }
     @media (max-width: 768px) {
         max-width: 100%;
         width: 100%;

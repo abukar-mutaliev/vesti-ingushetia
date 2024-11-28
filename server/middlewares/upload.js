@@ -1,24 +1,35 @@
 const multer = require("multer");
 const path = require("path");
 require("dotenv").config();
+const fs = require("fs");
 
 const uploadDir = process.env.UPLOAD_DIR || "uploads";
 const avatarsDir = path.join(uploadDir, "avatars");
 const imagesDir = path.join(uploadDir, "images");
 const videosDir = path.join(uploadDir, "videos");
-const maxImageSize = process.env.MAX_IMAGE_SIZE; // 10 MB
-const maxAvatarSize = process.env.MAX_AVATAR_SIZE; // 10 MB
-const maxVideoSize = process.env.MAX_VIDEO_SIZE; // 200 MB
+const audioDir = path.join(uploadDir, "audio");
+
+[uploadDir, avatarsDir, imagesDir, videosDir, audioDir].forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
+
+const maxAvatarSize = parseInt(process.env.MAX_AVATAR_SIZE || "10485760", 10); // 10 MB
 
 const fileDestination = (req, file, cb) => {
-  if (file.fieldname === "avatar") {
-    cb(null, avatarsDir);
-  } else if (file.mimetype.startsWith("image")) {
-    cb(null, imagesDir);
-  } else if (file.mimetype.startsWith("video")) {
-    cb(null, videosDir);
+  const destMap = {
+    avatar: avatarsDir,
+    images: imagesDir,
+    videos: videosDir,
+    audio: audioDir,
+  };
+
+  const destination = destMap[file.fieldname];
+  if (destination) {
+    cb(null, destination);
   } else {
-    cb(new Error("Неверный тип файла"));
+    cb(new Error("Неверное имя файла или тип файла"));
   }
 };
 
@@ -42,42 +53,29 @@ const fileFilter = (req, file, cb) => {
   if (allowedTypes.includes(ext)) {
     cb(null, true);
   } else {
-    cb(
-      new Error(
-        "Неверный тип файла. Поддерживаются только: " + allowedTypes.join(", ")
-      )
-    );
+    cb(new Error("Неверный тип файла: " + ext));
   }
 };
 
 const upload = multer({
   storage,
-  limits: {
-    fileSize: (req, file, cb) => {
-      if (file.mimetype.startsWith("image/")) {
-        cb(null, maxImageSize);
-      } else if (file.mimetype.startsWith("avatar/")) {
-        cb(null, maxAvatarSize);
-      } else if (file.mimetype.startsWith("video/")) {
-        cb(null, maxVideoSize);
-      } else {
-        cb(new Error("Неподдерживаемый тип файла"), false);
-      }
-    },
-    fileFilter,
-  },
+  limits: { fileSize: maxAvatarSize },
+  fileFilter,
 }).fields([
   { name: "images", maxCount: 10 },
   { name: "videos", maxCount: 5 },
-  { name: "avatar", maxCount: 10 },
+  { name: "avatar", maxCount: 1 },
+  { name: "audio", maxCount: 5 },
 ]);
 
 const handleMulterErrors = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
+    console.error("Ошибка Multer:", err);
     return res
       .status(400)
       .json({ error: `Ошибка загрузки файлов: ${err.message}` });
   } else if (err) {
+    console.error("Ошибка загрузки файлов:", err);
     return res.status(400).json({ error: err.message });
   }
   next();

@@ -4,6 +4,7 @@
   width: 100%;
   padding: 20px;
   height: 100%;
+
   .logo {
     margin-bottom: 40px;
     h2 {
@@ -16,10 +17,17 @@
     list-style: none;
     padding: 0;
     width: 100%;
+    position: sticky;
+    top: 8%;
+    align-self: flex-start;
+    transition: transform 0.3s ease-in-out;
+    z-index: 0;
+
     li {
-      padding: 15px 0;
-      text-align: center;
+      padding: 15px;
+      text-align: left;
       cursor: pointer;
+
       &:hover {
         background-color: #1976d2;
       }

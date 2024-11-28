@@ -73,6 +73,10 @@ export const Header = () => {
         setIsMobileMenuOpen(false);
     };
 
+    const handleOverlayClick = () => {
+        setIsMobileMenuOpen(false);
+    };
+
     return (
         <header className={styles.header}>
             <div
@@ -148,6 +152,39 @@ export const Header = () => {
                         </li>
                         <li>
                             <NavLink
+                                to="/program"
+                                className={({ isActive }) =>
+                                    isActive ? styles.active : ''
+                                }
+                                onClick={handleNavLinkClick}
+                            >
+                                Телепередачи
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink
+                                to="/projects"
+                                className={({ isActive }) =>
+                                    isActive ? styles.active : ''
+                                }
+                                onClick={handleNavLinkClick}
+                            >
+                                Проекты
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink
+                                to="/radio"
+                                className={({ isActive }) =>
+                                    isActive ? styles.active : ''
+                                }
+                                onClick={handleNavLinkClick}
+                            >
+                                Радио
+                            </NavLink>
+                        </li>
+                        <li className={styles.live}>
+                            <NavLink
                                 to="/live"
                                 className={({ isActive }) =>
                                     isActive ? styles.active : ''
@@ -185,6 +222,13 @@ export const Header = () => {
                     <MdSearch size={30} />
                 </div>
             </div>
+
+            {isMobileMenuOpen && (
+                <div
+                    className={styles.overlay}
+                    onClick={handleOverlayClick}
+                ></div>
+            )}
 
             <div
                 className={`${styles.searchOverlay} ${showSearch ? styles.show : styles.hide}`}

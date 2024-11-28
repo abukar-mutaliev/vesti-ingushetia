@@ -4,6 +4,7 @@ import styles from './NewsCard.module.scss';
 import { FaPlayCircle } from 'react-icons/fa';
 import defaultImage from '@assets/default.jpg';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
+import DOMPurify from 'dompurify';
 
 export const NewsCard = React.memo(
     ({ news, showDate, showContent, keywords = '' }) => {
@@ -45,17 +46,19 @@ export const NewsCard = React.memo(
                         state={{ id: news.id }}
                         className={styles.imageLink}
                     >
-                        <img
-                            src={`http://localhost:5000/${imageUrl}`}
-                            alt={news.title}
-                            className={styles.newsImage}
-                            onError={() => setImageError(true)}
-                        />
-                        {hasVideo && (
-                            <div className={styles.playButton}>
-                                <FaPlayCircle size={50} />
-                            </div>
-                        )}
+                        <div className={styles.videoWrapper}>
+                            <img
+                                src={`${imageUrl}`}
+                                alt={news.title}
+                                className={styles.newsImage}
+                                onError={() => setImageError(true)}
+                            />
+                            {hasVideo && (
+                                <div className={styles.playButton}>
+                                    <FaPlayCircle size={50} />
+                                </div>
+                            )}
+                        </div>
                     </Link>
                 );
             } else if (videoUrl && !videoError) {
@@ -65,7 +68,7 @@ export const NewsCard = React.memo(
                             <div className={styles.videoWrapper}>
                                 <video
                                     className={styles.newsVideo}
-                                    src={`http://localhost:5000/${videoUrl}`}
+                                    src={`${videoUrl}`}
                                     controls={false}
                                     muted
                                     preload="metadata"
@@ -75,9 +78,9 @@ export const NewsCard = React.memo(
                                         e.target.pause();
                                     }}
                                 />
-                                <div className={styles.playButtonOverlay}>
-                                    <FaPlayCircle size={50} />
-                                </div>
+                            </div>
+                            <div className={styles.playButtonOverlay}>
+                                <FaPlayCircle size={50} />
                             </div>
                         </Link>
                     </div>
@@ -108,13 +111,24 @@ export const NewsCard = React.memo(
         ]);
 
         const processedContent = useMemo(() => {
+            let contentToProcess;
             if (showContent) {
-                return highlightKeywordsInHtml(news.content, keywords);
+                contentToProcess = news.content;
             } else {
-                const preview =
+                contentToProcess =
                     news.content.split('. ').slice(0, 1).join('. ') + '.';
-                return highlightKeywordsInHtml(preview, keywords);
             }
+
+            let sanitizedContent = DOMPurify.sanitize(contentToProcess);
+
+            let highlightedContent = highlightKeywordsInHtml(
+                sanitizedContent,
+                keywords,
+            );
+
+            highlightedContent = DOMPurify.sanitize(highlightedContent);
+
+            return highlightedContent;
         }, [news.content, showContent, keywords]);
 
         return (
@@ -127,9 +141,12 @@ export const NewsCard = React.memo(
                         state={{ id: news.id }}
                     >
                         <h2 className={styles.title}>{news.title}</h2>
-                        <div className={styles.content}>
-                            {processedContent}{' '}
-                        </div>
+                        <div
+                            className={styles.content}
+                            dangerouslySetInnerHTML={{
+                                __html: processedContent,
+                            }}
+                        />
                         {showDate && (
                             <span className={styles.date}>{formattedDate}</span>
                         )}

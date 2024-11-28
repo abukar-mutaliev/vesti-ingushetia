@@ -1,0 +1,104 @@
+.projectCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+
+    .projectCardImage {
+      opacity: 0.7;
+    }
+    .projectCardContent {
+      opacity: 1;
+    }
+  }
+
+  .projectCardImage {
+    width: 100%;
+    max-height: 199px;
+    height: 100%;
+    display: block;
+    transition: opacity 0.3s ease;
+    overflow: hidden;
+    object-fit: cover;
+  }
+
+  .projectCardContent {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .projectCardTitle {
+    font-size: 1.2rem;
+    margin: 0;
+  }
+
+  .projectCardDescription {
+    font-size: 0.9rem;
+    margin: 5px 0 0;
+  }
+
+  @media (max-width: 768px) {
+    .projectCard {
+      border-radius: 8px;
+
+      &:hover {
+        transform: none;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+    }
+
+    .projectCardImage {
+      max-height: 150px;
+    }
+
+    .projectCardContent {
+      opacity: 1;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 8px;
+    }
+
+    .projectCardTitle {
+      font-size: 1rem;
+    }
+
+    .projectCardDescription {
+      font-size: 0.8rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .projectCard {
+      border-radius: 5px;
+    }
+
+    .projectCardImage {
+      max-height: 120px;
+    }
+
+    .projectCardContent {
+      padding: 6px;
+    }
+
+    .projectCardTitle {
+      font-size: 0.9rem;
+    }
+
+    .projectCardDescription {
+      font-size: 0.7rem;
+    }
+  }
+}

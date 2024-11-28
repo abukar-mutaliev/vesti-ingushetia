@@ -3,10 +3,9 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  padding: 40px 20px;
-  max-width: 1200px;
+  max-width: 90vw;
   margin: 0 auto;
-
+  padding: 5%;
   @media (max-width: 768px) {
     display: block;
     max-width: 100%;

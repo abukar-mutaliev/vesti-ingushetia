@@ -8,35 +8,29 @@ const {
   Media,
 } = require("../models");
 
-const addCategory = async (req, res) => {
+exports.addCategory = async (req, res) => {
   const { name } = req.body;
-
-  if (!name) {
-    return res
-      .status(400)
-      .json({ message: "Обязательно указать название категории" });
-  }
 
   try {
     const newCategory = await Category.create({ name });
     return res.status(201).json(newCategory);
   } catch (error) {
     console.error("Ошибка добавления категории:", error);
-    return res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Ошибка сервера" });
   }
 };
 
-const getCategories = async (req, res) => {
+exports.getCategories = async (req, res) => {
   try {
     const categories = await Category.findAll();
     return res.status(200).json(categories);
   } catch (error) {
     console.error("Ошибка загрузки категорий:", error);
-    return res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Ошибка сервера" });
   }
 };
 
-const getNewsByCategory = async (req, res) => {
+exports.getNewsByCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
 
@@ -66,7 +60,7 @@ const getNewsByCategory = async (req, res) => {
   }
 };
 
-const updateCategory = async (req, res) => {
+exports.updateCategory = async (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
   try {
@@ -86,7 +80,7 @@ const updateCategory = async (req, res) => {
   }
 };
 
-const deleteCategory = async (req, res) => {
+exports.deleteCategory = async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -100,14 +94,6 @@ const deleteCategory = async (req, res) => {
     return res.status(200).json({ message: "Категория удалена" });
   } catch (error) {
     console.error("Ошибка удаления категории:", error);
-    return res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Ошибка сервера" });
   }
-};
-
-module.exports = {
-  addCategory,
-  getCategories,
-  deleteCategory,
-  updateCategory,
-  getNewsByCategory,
 };

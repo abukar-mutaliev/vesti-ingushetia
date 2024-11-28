@@ -14,14 +14,14 @@ export const NewsCardSidebar = React.memo(({ item }) => {
             <Link to={`/news/${item.id}`} className={styles.newsLink}>
                 {image ? (
                     <img
-                        src={`http://localhost:5000/${image.url}`}
+                        src={`${image.url}`}
                         alt={item.title}
                         className={styles.newsImage}
                     />
                 ) : hasVideo ? (
                     <div className={styles.videoContainer}>
                         <video
-                            src={`http://localhost:5000/${video.url}`}
+                            src={`${video.url}`}
                             className={styles.newsImage}
                             preload="metadata"
                             onLoadedMetadata={(e) => {

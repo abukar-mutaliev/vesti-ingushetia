@@ -11,6 +11,7 @@ import {
 } from '@entities/news/model/newsSlice.js';
 import { selectNewsList } from '@entities/news/model/newsSelectors.js';
 import { selectCategories } from '@entities/categories/model/categorySelectors.js';
+import { ScrollToTop } from '@shared/lib/ScrollToTop/ScrollToTop.js';
 
 export const NewsListPage = () => {
     const dispatch = useDispatch();
@@ -31,6 +32,7 @@ export const NewsListPage = () => {
     const handleResetDate = () => {
         dispatch(filterNewsByDate(null));
         dispatch(setPage(0));
+        window.scrollTo(0, 0);
     };
 
     const newsDates = newsList.map((news) =>
@@ -42,6 +44,7 @@ export const NewsListPage = () => {
             <div className={styles.newsContent}>
                 <NewsList selectedDate={selectedDate} />
                 <div className={styles.sidebarContainer}>
+                    <p>Архивные новости</p>
                     <CustomCalendar
                         onDateChange={handleDateChange}
                         newsDates={newsDates}

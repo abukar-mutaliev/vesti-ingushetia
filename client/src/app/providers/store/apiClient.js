@@ -1,5 +1,4 @@
 import axios from 'axios';
-
 import { refreshToken } from '@entities/user/auth/model/authSlice';
 
 const API_URL = 'http://localhost:5000/api';
@@ -12,34 +11,19 @@ const api = axios.create({
 let isRefreshing = false;
 let failedQueue = [];
 
-const processQueue = (error, token = null) => {
+const processQueue = (error) => {
     failedQueue.forEach((prom) => {
         if (error) {
             prom.reject(error);
         } else {
-            prom.resolve(token);
+            prom.resolve();
         }
     });
     failedQueue = [];
 };
 
-api.interceptors.request.use(
-    async (config) => {
-        const { user } = (await import('./store')).default.getState().auth;
-        if (user && user.token) {
-            config.headers['Authorization'] = `Bearer ${user.token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    },
-);
-
 api.interceptors.response.use(
-    (response) => {
-        return response;
-    },
+    (response) => response,
     async (error) => {
         const originalRequest = error.config;
 
@@ -48,14 +32,10 @@ api.interceptors.response.use(
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
                 })
-                    .then((token) => {
-                        originalRequest.headers['Authorization'] =
-                            `Bearer ${token}`;
+                    .then(() => {
                         return api(originalRequest);
                     })
-                    .catch((err) => {
-                        return Promise.reject(err);
-                    });
+                    .catch((err) => Promise.reject(err));
             }
 
             originalRequest._retry = true;
@@ -63,23 +43,20 @@ api.interceptors.response.use(
 
             try {
                 const store = (await import('./store')).default;
-                const { payload: refreshedUser } =
-                    await store.dispatch(refreshToken());
+                const actionResult = await store.dispatch(refreshToken());
 
-                isRefreshing = false;
-                processQueue(null, refreshedUser.accessToken);
-                originalRequest.headers['Authorization'] =
-                    `Bearer ${refreshedUser.accessToken}`;
-
-                store.dispatch({
-                    type: 'auth/updateUser',
-                    payload: refreshedUser,
-                });
-
-                return api(originalRequest);
+                if (actionResult.meta.requestStatus === 'fulfilled') {
+                    isRefreshing = false;
+                    processQueue(null);
+                    return api(originalRequest);
+                } else {
+                    isRefreshing = false;
+                    processQueue(actionResult.payload);
+                    return Promise.reject(actionResult.payload);
+                }
             } catch (refreshError) {
                 isRefreshing = false;
-                processQueue(refreshError, null);
+                processQueue(refreshError);
                 return Promise.reject(refreshError);
             }
         }

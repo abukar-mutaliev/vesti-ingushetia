@@ -1,20 +1,9 @@
 const { User, Comment, News, CommentLike } = require("../models");
+const baseUrl = process.env.BASE_URL;
 
 exports.createComment = async (req, res) => {
   const { content, newsId, authorName } = req.body;
   const userId = req.user ? req.user.id : null;
-
-  if (!content) {
-    return res
-      .status(400)
-      .json({ error: "Необходимо указать содержимое комментария" });
-  }
-
-  if (!authorName) {
-    return res
-      .status(400)
-      .json({ error: "Необходимо указать имя пользователя" });
-  }
 
   try {
     const news = await News.findByPk(newsId);
@@ -31,7 +20,7 @@ exports.createComment = async (req, res) => {
 
     res.status(201).json(comment);
   } catch (err) {
-    console.error("Error creating comment:", err);
+    console.error("Ошибка создания комментария:", err);
     res.status(500).json({ error: "Ошибка добавления комментария" });
   }
 };
@@ -79,51 +68,93 @@ exports.getCommentsForNews = async (req, res) => {
       ],
     });
 
-    if (!comments) {
-      return res.status(404).json({ error: "Комментариев нету" });
-    }
-
     const commentsData = comments.map((comment) => ({
-      id: comment.id,
-      content: comment.content,
-      authorName: comment.authorName,
-      newsId: comment.newsId,
-      userId: comment.userId,
-      parentCommentId: comment.parentCommentId,
-      createdAt: comment.createdAt,
-      updatedAt: comment.updatedAt,
+      ...comment.toJSON(),
       likesCount: comment.likedBy.length,
       likedByCurrentUser: req.user
         ? comment.likedBy.some((user) => user.id === req.user.id)
         : false,
       authorDetails: comment.user
         ? {
-            id: comment.user.id,
-            username: comment.user.username,
-            avatarUrl: comment.user.avatarUrl,
+            ...comment.user,
+            avatarUrl: comment.user.avatarUrl
+              ? `${baseUrl}/${comment.user.avatarUrl}`
+              : null,
           }
         : null,
       replies: comment.replies.map((reply) => ({
-        id: reply.id,
-        content: reply.content,
-        authorName: reply.authorName,
-        newsId: reply.newsId,
-        userId: reply.userId,
-        parentCommentId: reply.parentCommentId,
-        createdAt: reply.createdAt,
-        updatedAt: reply.updatedAt,
+        ...reply.toJSON(),
         likesCount: reply.likedBy.length,
         likedByCurrentUser: req.user
           ? reply.likedBy.some((user) => user.id === req.user.id)
           : false,
         authorDetails: reply.user
           ? {
-              id: reply.user.id,
-              username: reply.user.username,
-              avatarUrl: reply.user.avatarUrl,
+              ...reply.user,
+              avatarUrl: reply.user.avatarUrl
+                ? `${baseUrl}/${reply.user.avatarUrl}`
+                : null,
             }
           : null,
-        replies: [],
+      })),
+    }));
+
+    res.json(commentsData);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: `Ошибка получения комментариев: ${err.message}` });
+  }
+};
+
+exports.getAllComments = async (req, res) => {
+  try {
+    const comments = await Comment.findAll({
+      include: [
+        {
+          model: News,
+          as: "news",
+          attributes: ["id", "title"],
+        },
+        {
+          model: User,
+          as: "user",
+          attributes: ["id", "username", "avatarUrl"],
+        },
+        {
+          model: Comment,
+          as: "replies",
+          include: [
+            {
+              model: User,
+              as: "user",
+              attributes: ["id", "username", "avatarUrl"],
+            },
+          ],
+        },
+      ],
+    });
+
+    const commentsData = comments.map((comment) => ({
+      ...comment.toJSON(),
+      authorDetails: comment.user
+        ? {
+            ...comment.user,
+            avatarUrl: comment.user.avatarUrl
+              ? `${baseUrl}/${comment.user.avatarUrl}`
+              : null,
+          }
+        : null,
+      replies: comment.replies.map((reply) => ({
+        ...reply.toJSON(),
+        authorDetails: reply.user
+          ? {
+              ...reply.user,
+              avatarUrl: reply.user.avatarUrl
+                ? `${baseUrl}/${reply.user.avatarUrl}`
+                : null,
+            }
+          : null,
       })),
     }));
 
@@ -147,7 +178,7 @@ exports.deleteComment = async (req, res) => {
     await comment.destroy();
     res.status(200).json({ message: "Комментарий успешно удален" });
   } catch (err) {
-    console.error("Error deleting comment:", err);
+    console.error("Ошибка удаления комментария:", err);
     res.status(500).json({ error: "Ошибка удаления комментария" });
   }
 };
@@ -196,20 +227,8 @@ exports.replyToComment = async (req, res) => {
   const { content } = req.body;
   const { parentCommentId } = req.params;
 
-  if (!content) {
-    return res
-      .status(400)
-      .json({ error: "Необходимо указать содержимое комментария" });
-  }
-
   const authorName = req.user ? req.user.username : req.body.authorName;
   const userId = req.user ? req.user.id : null;
-
-  if (!authorName) {
-    return res
-      .status(400)
-      .json({ error: "Необходимо указать имя пользователя" });
-  }
 
   try {
     const parentComment = await Comment.findByPk(parentCommentId);
@@ -221,15 +240,15 @@ exports.replyToComment = async (req, res) => {
 
     const replyComment = await Comment.create({
       content,
-      userId: userId || null,
+      userId,
       authorName,
       newsId: parentComment.newsId,
       parentCommentId: parentComment.id,
     });
-    console.log("Создан ответ:", replyComment.dataValues);
+
     res.status(201).json(replyComment);
   } catch (err) {
-    console.error("Error replying to comment:", err);
+    console.error("Ошибка добавления ответа на комментарий:", err);
     res.status(500).json({ error: "Ошибка добавления ответа на комментарий" });
   }
 };

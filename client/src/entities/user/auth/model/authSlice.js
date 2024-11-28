@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as authApi from '../api/authApi.js';
 import * as profileApi from '../api/profileApi.js';
-import { fetchUsersApi } from '../api/authApi.js';
 
 const initialState = {
     user: null,
@@ -82,7 +81,7 @@ export const fetchUserProfile = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const response = await authApi.fetchUserProfileApi();
-            return response.data.user;
+            return response.data;
         } catch (err) {
             const errorMessage =
                 err.response?.data?.error ||
@@ -141,7 +140,7 @@ export const updateAvatar = createAsyncThunk(
             formData.append('avatar', avatarFile);
 
             const response = await profileApi.updateAvatarApi(formData);
-            return response.data.user;
+            return response.data;
         } catch (err) {
             const errorMessage =
                 err.response?.data?.message || 'Ошибка обновления аватара';
@@ -189,7 +188,6 @@ const authSlice = createSlice({
             state.user = action.payload.user;
             state.isAdmin = action.payload.user.isAdmin;
             state.isAuthenticated = true;
-            state.user.token = action.payload.accessToken;
         },
     },
     extraReducers: (builder) => {
@@ -209,12 +207,19 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.isAuthenticated = false;
                 state.isAdmin = false;
+                state.user = null;
             })
             .addCase(refreshToken.fulfilled, (state, action) => {
                 state.user = action.payload.user;
                 state.isAdmin = action.payload.isAdmin;
                 state.isAuthenticated = true;
-                state.user.token = action.payload.accessToken;
+                state.error = null;
+            })
+            .addCase(refreshToken.rejected, (state) => {
+                state.isAuthenticated = false;
+                state.user = null;
+                state.error =
+                    'Сессия истекла, пожалуйста, выполните вход снова';
             })
             .addCase(registerUser.pending, (state) => {
                 state.loading = true;
@@ -289,11 +294,14 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.user = action.payload;
                 state.isAuthenticated = !!action.payload;
-                state.isAdmin = action.payload.isAdmin;
+                state.isAdmin = action.payload.isAdmin || false;
             })
             .addCase(fetchUserProfile.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+                state.isAuthenticated = false;
+                state.user = null;
+                state.isAdmin = false;
             })
             .addCase(fetchUserReplies.pending, (state) => {
                 state.loading = true;
@@ -313,7 +321,9 @@ const authSlice = createSlice({
             })
             .addCase(updateAvatar.fulfilled, (state, action) => {
                 state.loading = false;
-                state.user = action.payload;
+                if (state.user) {
+                    state.user.avatarUrl = action.payload.avatarUrl;
+                }
             })
             .addCase(updateAvatar.rejected, (state, action) => {
                 state.loading = false;

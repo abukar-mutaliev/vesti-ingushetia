@@ -11,25 +11,50 @@ const {
 } = require("../controllers/news.controller");
 const { authenticateAdmin } = require("../middlewares/auth.middleware");
 const { handleMulterErrors, upload } = require("../middlewares/upload");
+const { validate } = require("../middlewares/validation.middleware");
 
-router.post("/add", upload, authenticateAdmin, handleMulterErrors, createNews);
+const {
+  createNewsValidator,
+  updateNewsValidator,
+  getNewsByDateValidator,
+  getNewsByIdValidator,
+  deleteNewsValidator,
+} = require("../validation/newsValidation");
+
+router.post(
+  "/add",
+  authenticateAdmin,
+  upload,
+  createNewsValidator,
+  validate,
+  handleMulterErrors,
+  createNews
+);
 
 router.get("/all", getAllNews);
 
 router.get("/videos", getAllVideos);
 
-router.get("/date", getNewsByDate);
+router.get("/date", validate, getNewsByDateValidator, getNewsByDate);
 
-router.get("/:id", getNewsById);
+router.get("/:id", validate, getNewsByIdValidator, getNewsById);
 
 router.put(
   "/update/:id",
   authenticateAdmin,
   upload,
+  updateNewsValidator,
+  validate,
   handleMulterErrors,
   updateNews
 );
 
-router.delete("/delete/:id", authenticateAdmin, deleteNews);
+router.delete(
+  "/delete/:id",
+  deleteNewsValidator,
+  authenticateAdmin,
+  validate,
+  deleteNews
+);
 
 module.exports = router;

@@ -2,6 +2,7 @@ import React from 'react';
 import styles from './Sidebar.module.scss';
 import { ListedNews } from '../../ListedNews/';
 import { NewsCardSidebar } from '@widgets/NewsCardSidebar/index.js';
+import { VideoAdPlayer } from '@widgets/VideoAdPlayer/index.js';
 
 export const Sidebar = React.memo(({ newsList, categories }) => {
     if (!categories || !categories.length) {
@@ -35,6 +36,7 @@ export const Sidebar = React.memo(({ newsList, categories }) => {
 
     return (
         <div className={styles.sidebar}>
+            <VideoAdPlayer />
             {categorizedNews.map(({ category, news }) => (
                 <div key={category.id} className={styles.categorySection}>
                     <ul className={styles.newsList}>

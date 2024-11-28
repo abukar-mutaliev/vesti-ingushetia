@@ -1,32 +1,18 @@
-import parse from 'html-react-parser';
-
 export const highlightKeywordsInHtml = (htmlContent, keywords) => {
-    if (typeof htmlContent !== 'string') {
+    if (typeof htmlContent !== 'string' || !keywords) {
         return htmlContent;
     }
 
-    const regex = new RegExp(`(${keywords})`, 'gi');
-
-    const options = {
-        replace: (node) => {
-            if (node.type === 'text') {
-                const parts = node.data.split(regex);
-                return parts.map((part, index) => {
-                    if (part.toLowerCase() === keywords.toLowerCase()) {
-                        return (
-                            <span
-                                key={index}
-                                style={{ color: '#FF6347', fontWeight: 'bold' }}
-                            >
-                                {part}
-                            </span>
-                        );
-                    }
-                    return part;
-                });
-            }
-        },
+    const escapeRegExp = (string) => {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     };
 
-    return parse(htmlContent, options);
+    const regex = new RegExp(`(${escapeRegExp(keywords)})`, 'gi');
+
+    const highlightedContent = htmlContent.replace(
+        regex,
+        '<span style="color: #FF6347; font-weight: bold;">$1</span>',
+    );
+
+    return highlightedContent;
 };

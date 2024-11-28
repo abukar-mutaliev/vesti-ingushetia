@@ -37,6 +37,12 @@ module.exports = (sequelize) => {
       otherKey: "newsId",
       as: "news",
     });
+    Media.belongsToMany(models.Project, {
+      through: "ProjectMedia",
+      foreignKey: "mediaId",
+      otherKey: "projectId",
+      as: "projects",
+    });
   };
 
   return Media;

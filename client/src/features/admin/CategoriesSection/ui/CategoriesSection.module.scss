@@ -1,12 +1,22 @@
-@import '@shared/styles/variables';
-@import '@shared/styles/mixins';
 
 .section {
-  margin-top: 15%;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 90%;
+  margin: 20px 0 0 0;
+  .error {
+    color: #f44336;
+    font-size: 14px;
+    margin-top: 10px;
+    margin-bottom: 15px;
+  }
   .topbar {
     display: flex;
     justify-content: space-between;
     margin-bottom: 20px;
+    width: 90%;
 
     h1 {
       font-size: 24px;
@@ -39,10 +49,6 @@
     }
   }
 
-  .error {
-    color: red;
-    margin-bottom: 10px;
-  }
 
   .editForm {
     display: flex;
@@ -81,7 +87,7 @@
       }
 
       .cancelButton {
-        background-color: #757575;
+        background-color: #f44336;
         color: white;
         padding: 10px 15px;
         border: none;
@@ -96,9 +102,8 @@
   }
 
   .table {
-    width: 100%;
     border-collapse: collapse;
-
+    width: 90%;
     th, td {
       padding: 12px;
       border-bottom: 1px solid #e0e0e0;
@@ -116,8 +121,8 @@
     }
 
     .actionsCell {
-      display: flex;
-      gap: 10px;
+      padding: 12px;
+      border-bottom: 1px solid #e0e0e0;
     }
 
     .editButton {

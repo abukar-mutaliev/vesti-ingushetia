@@ -6,7 +6,6 @@ export const AddReplyForm = ({ parentId, onCancel }) => {
     const dispatch = useDispatch();
     const [content, setContent] = useState('');
     const user = useSelector((state) => state.auth.user);
-    console.log('userId', user);
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!content.trim()) return;

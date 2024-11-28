@@ -1,7 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as commentsApi from '@entities/comments/api/commentApi.js';
+import { createCommentApi } from '@entities/comments/api/commentApi.js';
+import { fetchCategories } from '@entities/categories/model/categorySlice.js';
 
 const initialState = {
+    comments: [],
     commentsByNews: {},
     loading: false,
     error: null,
@@ -57,8 +60,22 @@ export const fetchCommentsForNews = createAsyncThunk(
     'comments/fetchForNews',
     async (newsId, { rejectWithValue }) => {
         try {
-            const response = await commentsApi.getCommentsForNews(newsId);
+            const response = await commentsApi.getCommentsForNewsApi(newsId);
             return { newsId, comments: response.data };
+        } catch (err) {
+            return rejectWithValue(
+                err.response?.data || 'Ошибка загрузки комментариев',
+            );
+        }
+    },
+);
+
+export const fetchAllComments = createAsyncThunk(
+    'comments/fetchAllComments',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await commentsApi.getAllCommentsApi();
+            return response.data;
         } catch (err) {
             return rejectWithValue(
                 err.response?.data || 'Ошибка загрузки комментариев',
@@ -71,7 +88,7 @@ export const addComment = createAsyncThunk(
     'comments/addComment',
     async ({ newsId, content, authorName, userId }, { rejectWithValue }) => {
         try {
-            const response = await commentsApi.createComment({
+            const response = await commentsApi.createCommentApi({
                 newsId,
                 content,
                 authorName,
@@ -130,11 +147,14 @@ export const replyToComment = createAsyncThunk(
         { rejectWithValue },
     ) => {
         try {
-            const response = await commentsApi.replyToComment(parentCommentId, {
-                content,
-                authorName,
-                userId,
-            });
+            const response = await commentsApi.replyToCommentApi(
+                parentCommentId,
+                {
+                    content,
+                    authorName,
+                    userId,
+                },
+            );
             const reply = {
                 ...response.data,
                 likesCount: 0,
@@ -180,6 +200,18 @@ const commentSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
             })
+            .addCase(fetchAllComments.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchAllComments.fulfilled, (state, action) => {
+                state.loading = false;
+                state.comments = action.payload;
+            })
+            .addCase(fetchAllComments.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
             .addCase(addComment.pending, (state) => {
                 state.loading = true;
             })
@@ -200,6 +232,7 @@ const commentSlice = createSlice({
                         commentId,
                     );
                 });
+                state.comments = removeCommentById(state.comments, commentId);
             })
             .addCase(addComment.rejected, (state, action) => {
                 state.error = action.payload;

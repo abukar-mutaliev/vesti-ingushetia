@@ -6,15 +6,16 @@ import store, { persistor } from './providers/store/store.js';
 import { BrowserRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 import { Loader } from '@shared/ui/Loader/index.js';
+import Modal from 'react-modal';
+
+Modal.setAppElement('#root');
 
 createRoot(document.getElementById('root')).render(
     <StrictMode>
         <Provider store={store}>
-            <PersistGate loading={null} persistor={persistor}>
-                <BrowserRouter>
-                    <PersistGate loading={<Loader />} persistor={persistor}>
-                        <App />
-                    </PersistGate>
+            <PersistGate loading={<Loader />} persistor={persistor}>
+                <BrowserRouter future={{ v7_startTransition: true }}>
+                    <App />
                 </BrowserRouter>
             </PersistGate>
         </Provider>

@@ -1,12 +1,14 @@
-@import '@shared/styles/variables';
-@import '@shared/styles/mixins';
 
 .section {
   max-width: 90%;
+  margin: 15px 0 0 0;
+  padding: 15px;
+
   @media (max-width: 768px) {
     margin-top: 10%;
     max-width: 100%;
   }
+
   .topbar {
     display: flex;
     justify-content: space-between;
@@ -49,7 +51,7 @@
   .table {
     width: 100%;
     border-collapse: collapse;
-
+    text-align: justify;
     th, td {
       padding: 12px;
       border-bottom: 1px solid #e0e0e0;

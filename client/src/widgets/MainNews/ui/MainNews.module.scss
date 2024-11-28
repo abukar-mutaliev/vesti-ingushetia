@@ -1,6 +1,9 @@
-@import '../../../shared/styles/variables';
-@import '../../../shared/styles/mixins';
 
+.mainNewsContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 .mainNews {
     background-color: $primary-background;
     padding: 10px;
@@ -11,10 +14,13 @@
     flex-direction: column;
     border: 1px solid #ddd;
     overflow: hidden;
-    max-width: 48rem;
+    max-width: 100%;
     width: 100%;
     box-sizing: border-box;
 
+    @media (max-width: 1240px) {
+        max-width: 95%;
+    }
     @media (max-width: 768px) {
         width: 100%;
         box-sizing: border-box;
@@ -27,7 +33,7 @@
     h2 {
         font-size: 24px;
         font-weight: bold;
-        margin: 5% 10px;
+
     }
 
     p {
@@ -39,15 +45,17 @@
 .mainNewsImage,
 .mainNewsVideo {
     width: 100%;
-    height: 100%;
+    height: 400px;
     object-fit: cover;
     border-radius: 8px;
 }
 
 .mainNewsContent {
     padding: 10% 5px 0;
+
     @media (max-width: 768px) {
         display: grid;
+        padding: 15% 5px 0;
     }
 }
 
@@ -59,6 +67,7 @@
 .mainNewsDescription {
     font-size: 1rem;
     color: #555;
+    padding: 10px 0 10px 0;
 }
 
 .mainNewsTitleLink {

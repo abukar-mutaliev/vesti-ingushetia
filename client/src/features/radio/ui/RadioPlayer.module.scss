@@ -1,0 +1,73 @@
+.RadioPlayerWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding:  1rem;
+  background-color: #f8f8f8;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 80%;
+  height: 100vh;
+  text-align: center;
+
+  h2 {
+    padding: 20px;
+    width: 100%;
+    text-align: center;
+  }
+  h3 {
+    display: grid;
+  }
+}
+
+.TrackList {
+  list-style: none;
+  padding: 5% 0;
+  width: 100%;
+  margin: 0;
+}
+
+.TrackItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem;
+  border-bottom: 1px solid #ccc;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #e0e0e0;
+  }
+
+  &.active {
+    color: #007bff;
+    font-weight: bold;
+  }
+}
+
+.Button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+}
+
+.radioPlayer {
+  width: 100%;
+  display: grid;
+
+  h2 {
+    color: #333333;
+    font-family: "RussiaMedium";
+    text-align: center;
+  }
+}

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as newsApi from '@entities/news/api/newsApi.js';
+import { updateNewsApi } from '@entities/news/api/newsApi.js';
 
 const initialState = {
     newsList: [],
@@ -19,7 +20,7 @@ export const fetchAllNews = createAsyncThunk(
     'news/fetchAll',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await newsApi.fetchNews();
+            const response = await newsApi.fetchNewsApi();
             return response.data;
         } catch (err) {
             return rejectWithValue(err.response.data);
@@ -50,7 +51,7 @@ export const fetchNewsByDate = createAsyncThunk(
     async (date, { rejectWithValue }) => {
         try {
             const serializedDate = date.toISOString();
-            const response = await newsApi.fetchNewsByDate(serializedDate);
+            const response = await newsApi.fetchNewsByDateApi(serializedDate);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response.data);
@@ -61,7 +62,7 @@ export const fetchNewsByDate = createAsyncThunk(
 export const createNews = createAsyncThunk(
     'news/createNews',
     async (newsData) => {
-        const response = await newsApi.createNews(newsData);
+        const response = await newsApi.createNewsApi(newsData);
         return response.data;
     },
 );
@@ -70,7 +71,7 @@ export const updateNews = createAsyncThunk(
     'news/updateNews',
     async ({ id, newsData }, { rejectWithValue }) => {
         try {
-            const response = await newsApi.updateNews(id, newsData);
+            const response = await newsApi.updateNewsApi(id, newsData);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response.data);
@@ -82,7 +83,7 @@ export const deleteNews = createAsyncThunk(
     'news/deleteNews',
     async (id, { rejectWithValue }) => {
         try {
-            await newsApi.deleteNews(id);
+            await newsApi.deleteNewsApi(id);
             return id;
         } catch (err) {
             return rejectWithValue(err.response.data);

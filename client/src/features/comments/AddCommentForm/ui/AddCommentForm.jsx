@@ -49,13 +49,6 @@ export const AddCommentForm = React.memo(({ newsId }) => {
             setError(newError);
             return;
         }
-        console.log(
-            'addComment:',
-            authorName,
-            user?.id ? user.id : null,
-            'user.username',
-            user?.username,
-        );
         dispatch(
             addComment({
                 newsId,

@@ -63,11 +63,7 @@ export const NewsDetailPage = React.memo(() => {
     }, [id]);
 
     if (!newsList || loadingNewsById) {
-        return (
-            <div>
-                <Loader />
-            </div>
-        );
+        return <Loader />;
     }
 
     return (
@@ -79,18 +75,19 @@ export const NewsDetailPage = React.memo(() => {
                     loading={loadingNewsById}
                     comments={comments}
                 />
-                <div className={styles.sidebarContainer}></div>
-                <Sidebar
-                    newsList={newsList}
-                    loading={loadingNews}
-                    categories={categories}
-                />
+                <div className={styles.sidebarContainer}>
+                    <Sidebar
+                        newsList={newsList}
+                        loading={loadingNews}
+                        categories={categories}
+                    />
+                </div>
             </div>
             <div className={styles.videoSliderContainer}>
                 <VideoSlider />
             </div>
             <div className={styles.newsCardContainer}>
-                <h2>Так же читайте</h2>
+                <h3>Так же читайте</h3>
                 <div className={styles.newsGrid}>
                     {shuffledNewsList.map((newsItem) => (
                         <NewsCardDetailPage key={newsItem.id} news={newsItem} />

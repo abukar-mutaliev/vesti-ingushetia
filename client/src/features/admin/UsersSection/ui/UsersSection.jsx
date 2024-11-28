@@ -76,6 +76,7 @@ export const UsersSection = () => {
                 });
         }
     };
+    const sortedUsers = [...users].sort((a, b) => b.isAdmin - a.isAdmin);
 
     return (
         <div className={styles.section}>
@@ -84,7 +85,7 @@ export const UsersSection = () => {
             </div>
             <div className={styles.tableContainer}>
                 {users &&
-                    users.map((user) => (
+                    sortedUsers.map((user) => (
                         <div className={styles.userCard} key={user.id}>
                             <div className={styles.userField}>
                                 <strong>Id:</strong> {user.id}
@@ -101,29 +102,33 @@ export const UsersSection = () => {
                                 {user.isAdmin
                                     ? 'Администратор'
                                     : 'Пользователь'}
-                            </div>
-                            <div className={styles.actions}>
-                                {user.isAdmin ? (
-                                    user.id !== currentUser.id && (
+                                <div className={styles.actions}>
+                                    {user.isAdmin ? (
+                                        user.id !== currentUser.id && (
+                                            <button
+                                                className={
+                                                    styles.revokeAdminButton
+                                                }
+                                                onClick={() =>
+                                                    openRevokeAdminModal(
+                                                        user.id,
+                                                    )
+                                                }
+                                            >
+                                                Отозвать права
+                                            </button>
+                                        )
+                                    ) : (
                                         <button
-                                            className={styles.revokeAdminButton}
+                                            className={styles.makeAdminButton}
                                             onClick={() =>
-                                                openRevokeAdminModal(user.id)
+                                                openMakeAdminModal(user.id)
                                             }
                                         >
-                                            Отозвать права
+                                            Назначить администратором
                                         </button>
-                                    )
-                                ) : (
-                                    <button
-                                        className={styles.makeAdminButton}
-                                        onClick={() =>
-                                            openMakeAdminModal(user.id)
-                                        }
-                                    >
-                                        Назначить администратором
-                                    </button>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ))}

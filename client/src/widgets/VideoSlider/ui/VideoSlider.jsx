@@ -1,12 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import Slider from 'react-slick';
-import { selectNewsList } from '@entities/news/model/newsSelectors.js';
+import {
+    selectNewsList,
+    selectNewsWithVideos,
+} from '@entities/news/model/newsSelectors.js';
 import { fetchAllNews } from '@entities/news/model/newsSlice.js';
 import { FaPlayCircle } from 'react-icons/fa';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import styles from './VideoSlider.module.scss';
+import { Loader } from '@shared/ui/Loader/index.js';
 
 const sliderSettings = {
     className: 'center',
@@ -36,10 +40,11 @@ const sliderSettings = {
     ],
 };
 
-export const VideoSlider = React.memo(() => {
+export const VideoSlider = () => {
     const dispatch = useDispatch();
     const newsList = useSelector(selectNewsList, shallowEqual);
     const loading = useSelector((state) => state.news.newsLoading);
+    const videoNews = useSelector(selectNewsWithVideos, shallowEqual);
 
     const [dragging, setDragging] = useState(false);
     const [startX, setStartX] = useState(0);
@@ -68,12 +73,6 @@ export const VideoSlider = React.memo(() => {
         setDragging(false);
     };
 
-    const videoNews = useMemo(() => {
-        return newsList.filter((news) =>
-            news.mediaFiles?.some((media) => media.type === 'video'),
-        );
-    }, [newsList]);
-
     const videoNewsElements = useMemo(() => {
         return videoNews.map((news) => {
             const video = news.mediaFiles.find(
@@ -84,18 +83,9 @@ export const VideoSlider = React.memo(() => {
             );
 
             const mediaElement = image ? (
-                <img
-                    src={`http://localhost:5000/${image.url}`}
-                    alt={news.title}
-                    className={styles.mediaImage}
-                />
+                <img src={`${image.url}`} alt={news.title} />
             ) : (
-                <video
-                    src={`http://localhost:5000/${video.url}`}
-                    className={styles.mediaVideo}
-                    preload="metadata"
-                    controls
-                />
+                <video src={`${video.url}`} preload="metadata" controls />
             );
 
             return (
@@ -122,8 +112,12 @@ export const VideoSlider = React.memo(() => {
         });
     }, [videoNews, dragging]);
 
-    if (loading) {
-        return <div>Загрузка...</div>;
+    if (loading || !newsList.length) {
+        return (
+            <div>
+                <Loader />
+            </div>
+        );
     }
 
     if (!videoNews.length) {
@@ -132,8 +126,8 @@ export const VideoSlider = React.memo(() => {
 
     return (
         <div className={styles.videoSlider}>
-            <h2 className={styles.sliderTitle}>ТВ</h2>
+            <h2>ТВ</h2>
             <Slider {...sliderSettings}>{videoNewsElements}</Slider>
         </div>
     );
-});
+};

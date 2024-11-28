@@ -4,13 +4,20 @@ const { User } = require("../models");
 const path = require("path");
 const { Comment } = require("../models");
 const { Op } = require("sequelize");
-
+require("dotenv").config();
+const fs = require("fs");
+require("dotenv").config();
 const JWT_SECRET = process.env.SECRET_KEY;
+const BASE_URL = process.env.BASE_URL;
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const user = await User.findAll();
-    res.json(user);
+    const users = await User.findAll();
+    const usersWithFullAvatarUrl = users.map((user) => ({
+      ...user.toJSON(),
+      avatarUrl: user.avatarUrl ? `${BASE_URL}/${user.avatarUrl}` : null,
+    }));
+    res.json(usersWithFullAvatarUrl);
   } catch (err) {
     res.status(500).json({ error: `Ошибка получения пользователей: ${err}` });
   }
@@ -25,13 +32,6 @@ exports.registerUser = async (req, res) => {
   }
 
   try {
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      return res
-        .status(400)
-        .json({ error: "Пользователь с таким email уже существует" });
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
@@ -40,7 +40,11 @@ exports.registerUser = async (req, res) => {
       password: hashedPassword,
       avatarUrl,
     });
-    res.status(201).json(user);
+
+    res.status(201).json({
+      ...user.toJSON(),
+      avatarUrl: avatarUrl ? `${BASE_URL}/${avatarUrl}` : null,
+    });
   } catch (err) {
     res
       .status(500)
@@ -103,41 +107,38 @@ exports.loginUser = async (req, res) => {
       {
         id: user.id,
         username: user.username,
-        email: user.email,
         isAdmin: user.isAdmin,
       },
       JWT_SECRET,
-      { expiresIn: "24h" }
+      { expiresIn: "30m" }
     );
 
-    const refreshToken = jwt.sign(
-      { id: user.id, username: user.username },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res.cookie("refresh_token", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+    const refreshToken = jwt.sign({ id: user.id }, JWT_SECRET, {
+      expiresIn: "7d",
     });
 
     res.cookie("auth_token", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 15 * 60 * 1000,
+      sameSite: "lax",
+      maxAge: 30 * 60 * 1000,
+    });
+
+    res.cookie("refresh_token", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.json({
-      message: "Авторизация прошла успешно",
+      message: "Успешная авторизация",
       user: {
         id: user.id,
         username: user.username,
         email: user.email,
         isAdmin: user.isAdmin,
       },
-      accessToken,
     });
   } catch (err) {
     res.status(500).json({ error: `Ошибка авторизации: ${err.message}` });
@@ -171,16 +172,37 @@ exports.refreshToken = async (req, res) => {
           isAdmin: dbUser.isAdmin,
         },
         JWT_SECRET,
-        { expiresIn: "15m" }
+        { expiresIn: "30m" }
       );
+
+      const newRefreshToken = jwt.sign({ id: dbUser.id }, JWT_SECRET, {
+        expiresIn: "7d",
+      });
 
       res.cookie("auth_token", newAccessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        maxAge: 15 * 60 * 1000,
+        sameSite: "lax",
+        maxAge: 30 * 60 * 1000,
       });
 
-      res.json({ message: "Токен обновлен", accessToken: newAccessToken });
+      res.cookie("refresh_token", newRefreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      res.json({
+        message: "Токен обновлен",
+        accessToken: newAccessToken,
+        user: {
+          id: dbUser.id,
+          username: dbUser.username,
+          email: dbUser.email,
+          isAdmin: dbUser.isAdmin,
+        },
+      });
     });
   } catch (err) {
     return res
@@ -195,7 +217,11 @@ exports.updateUser = async (req, res) => {
   let avatarUrl;
 
   if (req.file) {
-    avatarUrl = path.posix.join("uploads", "avatars", req.file.filename);
+    avatarUrl = `${BASE_URL}/${path.posix.join(
+      "uploads",
+      "avatars",
+      req.file.filename
+    )}`;
   }
 
   try {
@@ -211,13 +237,17 @@ exports.updateUser = async (req, res) => {
       avatarUrl: avatarUrl || user.avatarUrl,
     });
 
-    res.status(200).json(user);
+    res.status(200).json({
+      ...user.toJSON(),
+      avatarUrl: user.avatarUrl ? `${BASE_URL}/${user.avatarUrl}` : null,
+    });
   } catch (err) {
     res
       .status(500)
       .json({ error: `Ошибка обновления пользователя: ${err.message}` });
   }
 };
+
 exports.updateUserRole = async (req, res) => {
   const { id } = req.params;
   const { isAdmin } = req.body;
@@ -279,9 +309,34 @@ exports.updateAvatar = async (req, res) => {
       return res.status(404).json({ error: "Пользователь не найден" });
     }
 
+    if (user.avatarUrl) {
+      const oldAvatarPath = path.join(
+        __dirname,
+        "..",
+        "../uploads",
+        "avatars",
+        user.avatarUrl.replace("uploads/avatars/", "")
+      );
+
+      fs.exists(oldAvatarPath, (exists) => {
+        if (exists) {
+          fs.unlink(oldAvatarPath, (err) => {
+            if (err) {
+              console.error("Ошибка при удалении старого аватара:", err);
+            }
+          });
+        } else {
+          console.log("Файл не существует:", oldAvatarPath);
+        }
+      });
+    }
+
     await user.update({ avatarUrl });
 
-    res.status(200).json({ user });
+    res.status(200).json({
+      ...user.toJSON(),
+      avatarUrl: `${BASE_URL}/${avatarUrl}`,
+    });
   } catch (err) {
     res
       .status(500)
@@ -301,7 +356,15 @@ exports.getUserProfile = async (req, res) => {
         "isAdmin",
       ],
     });
-    res.json({ user });
+
+    if (!user) {
+      return res.status(404).json({ error: "Пользователь не найден" });
+    }
+
+    res.json({
+      ...user.toJSON(),
+      avatarUrl: user.avatarUrl ? `${BASE_URL}/${user.avatarUrl}` : null,
+    });
   } catch (err) {
     res.status(500).json({ error: "Ошибка получения профиля пользователя" });
   }

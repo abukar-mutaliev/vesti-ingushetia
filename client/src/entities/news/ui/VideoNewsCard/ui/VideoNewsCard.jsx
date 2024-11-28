@@ -10,7 +10,7 @@ export const VideoNewsCard = ({ news }) => {
         return null;
     }
 
-    const videoUrl = `http://localhost:5000/${video.url}`;
+    const videoUrl = `${video.url}`;
 
     return (
         <div className={styles.videoNewsCard}>

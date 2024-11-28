@@ -21,6 +21,10 @@ const Rating = require("./Rating.model")(sequelize);
 const Subscription = require("./Subscription.model")(sequelize);
 const Tag = require("./Tag.model")(sequelize);
 const NewsMedia = require("./NewsMedia.model")(sequelize);
+const Broadcast = require("./Broadcast.model")(sequelize);
+const TvProgram = require("./TvProgram.model")(sequelize);
+const VideoAd = require("./VideoAd.model")(sequelize);
+const Project = require("./Projects.model")(sequelize);
 
 const models = {
   User,
@@ -35,6 +39,10 @@ const models = {
   Tag,
   Author,
   NewsMedia,
+  Broadcast,
+  TvProgram,
+  VideoAd,
+  Project,
 };
 
 Object.values(models).forEach((model) => {

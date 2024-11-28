@@ -1,23 +1,27 @@
-@import '../../../shared/styles/variables';
-@import '../../../shared/styles/mixins';
 
 .sideMenu {
+    position: sticky;
+    top: 120px;
     font-family: Arial, sans-serif;
-    background-color: #f8f8f8;
-    padding: 15px;
+    padding: 30px;
     width: 12rem;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 
+    @media (max-width: 1364px) {
+        top: 40px;
+    }
     @media (max-width: 768px) {
+        position: static;
         box-shadow: none;
         margin-top: 20px;
     }
+
     @media (max-width: 568px) {
         width: 100%;
         margin: 0;
         box-shadow: none;
     }
+
     h3 {
         margin-bottom: 10px;
         font-size: 18px;

@@ -7,6 +7,3 @@ export const fetchAuthorByIdApi = (id) => api.get(`${API_URL}/${id}`);
 export const fetchNewsByAuthorApi = (id) => api.get(`${API_URL}/news/${id}`);
 export const createAuthorApi = (author) =>
     api.post(`${API_URL}/authors/news/${id}`, author);
-export const updateAuthorApi = (id, author) =>
-    api.put(`${API_URL}/update/${id}`, author);
-export const deleteAuthorApi = (id) => api.delete(`${API_URL}/delete/${id}`);

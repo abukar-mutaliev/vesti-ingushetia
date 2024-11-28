@@ -11,10 +11,8 @@ export const NewsCardDetailPage = React.memo(({ news }) => {
     const mediaElement = useMemo(() => {
         const image = mediaFiles?.find((media) => media.type === 'image');
         const video = mediaFiles?.find((media) => media.type === 'video');
-        const imageUrl = image ? `http://localhost:5000/${image.url}` : null;
-        const videoUrl = video
-            ? `http://localhost:5000/${video.url}#t=0.5`
-            : null;
+        const imageUrl = image ? `${image.url}` : null;
+        const videoUrl = video ? `${video.url}#t=0.5` : null;
 
         if (imageUrl && !mediaError) {
             return (

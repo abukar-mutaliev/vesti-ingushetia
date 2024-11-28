@@ -7,7 +7,7 @@ export const Logo = () => {
         <div className={styles.logo}>
             <Link to="/">
                 ВЕСТИ
-                <span>Ингушетии</span>
+                <span>ИНГУШЕТИЯ</span>
             </Link>
         </div>
     );

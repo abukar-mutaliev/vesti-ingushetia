@@ -1,6 +1,4 @@
-@import '@shared/styles/variables';
-@import '@shared/styles/mixins';
-
+@use 'sass:color';
 
 .container {
   min-height: 100vh;
@@ -113,7 +111,7 @@
     }
 
     &:disabled {
-      background-color: lighten($primary-color, 20%);
+      background-color: color.adjust($primary-color, $lightness: 20%);
       cursor: not-allowed;
     }
   }

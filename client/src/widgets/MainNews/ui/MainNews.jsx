@@ -11,7 +11,7 @@ export const MainNews = React.memo(() => {
     const latestNews = useSelector(selectLatestNews, shallowEqual);
 
     if (!latestNews) {
-        return <div>Новостей нет</div>;
+        return <div className={styles.mainNews}>Новостей нет</div>;
     }
 
     const imageUrl = latestNews.mediaFiles?.find(
@@ -24,65 +24,67 @@ export const MainNews = React.memo(() => {
     const rawContent =
         latestNews.content.split('. ').slice(0, 2).join('. ') + '.';
 
-    const sanitizedContent = DOMPurify.sanitize(rawContent);
+    let sanitizedContent = DOMPurify.sanitize(rawContent);
 
-    const contentPreview = highlightKeywordsInHtml(sanitizedContent, '');
+    let highlightedContent = highlightKeywordsInHtml(sanitizedContent, '');
+
+    highlightedContent = DOMPurify.sanitize(highlightedContent);
 
     return (
-        <div className={styles.mainNews}>
-            <Link
-                to={`/news/${latestNews.id}`}
-                state={{ news: latestNews }}
-                className={styles.mainNewsLink}
-            >
-                {imageUrl ? (
-                    <div className={styles.imageWrapper}>
-                        <img
-                            src={`http://localhost:5000/${imageUrl}`}
-                            alt={latestNews.title}
-                            className={styles.mainNewsImage}
-                        />
-                        {videoUrl && (
-                            <div className={styles.playButton}>
-                                <FaPlayCircle size={70} />
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    videoUrl && (
-                        <div className={styles.videoWrapper}>
-                            <video
-                                src={`http://localhost:5000/${videoUrl}`}
-                                className={styles.mainNewsVideo}
-                                preload="metadata"
-                            />
-                            <div className={styles.playButton}>
-                                <FaPlayCircle size={70} />
-                            </div>
-                        </div>
-                    )
-                )}
-            </Link>
-            <div className={styles.mainNewsContent}>
-                <h2 className={styles.mainNewsTitle}>
-                    <Link
-                        to={`/news/${latestNews.id}`}
-                        state={{ news: latestNews }}
-                        className={styles.mainNewsTitleLink}
-                    >
-                        {latestNews.title}
-                    </Link>
-                </h2>
-                <div className={styles.mainNewsDescription}>
-                    {contentPreview}
-                </div>
+        <div className={styles.mainNewsContainer}>
+            <div className={styles.mainNews}>
                 <Link
                     to={`/news/${latestNews.id}`}
-                    state={{ news: latestNews }}
-                    className={styles.readMoreButton}
+                    className={styles.mainNewsLink}
                 >
-                    Читать полностью
+                    {imageUrl ? (
+                        <div className={styles.imageWrapper}>
+                            <img
+                                src={`${imageUrl}`}
+                                alt={latestNews.title}
+                                className={styles.mainNewsImage}
+                            />
+                            {videoUrl && (
+                                <div className={styles.playButton}>
+                                    <FaPlayCircle size={70} />
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        videoUrl && (
+                            <div className={styles.videoWrapper}>
+                                <video
+                                    src={`${videoUrl}`}
+                                    className={styles.mainNewsVideo}
+                                    preload="metadata"
+                                />
+                                <div className={styles.playButton}>
+                                    <FaPlayCircle size={70} />
+                                </div>
+                            </div>
+                        )
+                    )}
                 </Link>
+                <div className={styles.mainNewsContent}>
+                    <h2 className={styles.mainNewsTitle}>
+                        <Link
+                            to={`/news/${latestNews.id}`}
+                            className={styles.mainNewsTitleLink}
+                        >
+                            {latestNews.title}
+                        </Link>
+                    </h2>
+                    <div
+                        className={styles.mainNewsDescription}
+                        dangerouslySetInnerHTML={{ __html: highlightedContent }}
+                    />
+                    <Link
+                        to={`/news/${latestNews.id}`}
+                        className={styles.readMoreButton}
+                    >
+                        Читать полностью
+                    </Link>
+                </div>
             </div>
         </div>
     );

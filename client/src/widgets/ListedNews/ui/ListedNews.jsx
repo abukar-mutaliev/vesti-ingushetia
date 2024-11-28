@@ -32,7 +32,7 @@ export const ListedNews = React.memo(({ newsList }) => {
                     if (imageUrl) {
                         mediaElement = (
                             <img
-                                src={`http://localhost:5000/${imageUrl}`}
+                                src={`${imageUrl}`}
                                 alt={newsItem.title}
                                 className={styles.smallImageNewsImage}
                             />

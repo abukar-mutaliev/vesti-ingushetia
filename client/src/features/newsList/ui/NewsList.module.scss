@@ -1,10 +1,6 @@
-@import '../../../shared/styles/variables';
-@import '../../../shared/styles/mixins';
 
 .newsListContainer {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
+    max-width: 100%;
 
     @media (max-width: 768px) {
         flex-direction: column;
@@ -23,9 +19,15 @@
     gap: 16px;
     max-width: 100%;
 
+    @media (max-width: 1344px) {
+        width: 100%;
+
+    }
+
+
     @media (max-width: 768px) {
         width: 100%;
-        max-width: 80%;
+        max-width: 50%;
         padding: 10px;
         justify-content: center;
         align-content: center;
@@ -37,8 +39,6 @@
     @media (max-width: 480px) {
         gap: 12px;
     }
-
-
     h3 {
         font-size: 1.5em;
         font-family: 'Russia', Arial, sans-serif;
@@ -93,7 +93,11 @@
         background-color: #747bff;
         color: white;
     }
-
+    @media (max-width: 1244px) {
+        padding: 4px 4px;
+        margin: 0 3px;
+        font-size: 14px;
+    }
     @media (max-width: 780px) {
         padding: 4px 4px;
         margin: 2px;

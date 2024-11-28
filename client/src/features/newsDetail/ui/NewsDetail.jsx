@@ -1,14 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import styles from './NewsDetail.module.scss';
 import { Link } from 'react-router-dom';
 import { FaEye } from 'react-icons/fa';
-import { VideoPlayer } from '../../../shared/ui/VideoPlayer';
+import { VideoPlayer } from '@shared/ui/VideoPlayer';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllNews } from '@entities/news/model/newsSlice.js';
 import { SocialIcons } from '@shared/ui/SocialIcons';
 import { CommentSection } from '@entities/comments/ui/CommentSection';
 import { selectCommentsByNewsId } from '@entities/comments/model/commentSelectors';
 import { fetchCommentsForNews } from '@entities/comments/model/commentsSlice.js';
+import DOMPurify from 'dompurify';
+import { Loader } from '@shared/ui/Loader/index.js';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
 
 export const NewsDetail = React.memo(
@@ -17,35 +19,40 @@ export const NewsDetail = React.memo(
         const comments = useSelector(selectCommentsByNewsId(newsId));
 
         useEffect(() => {
-            dispatch(fetchAllNews());
+            if (!news) {
+                dispatch(fetchAllNews());
+            }
             dispatch(fetchCommentsForNews(newsId));
-        }, [dispatch, newsId]);
+        }, [dispatch, newsId, news]);
 
-        if (!news) {
-            return (
-                <div
-                    style={{
-                        color: 'black',
-                        marginTop: '15%',
-                        width: '100rem',
-                        textAlign: 'center',
-                    }}
-                >
-                    Новость не найдена. Пожалуйста, вернитесь назад и попробуйте
-                    снова.
-                </div>
-            );
+        if (loading || !news) {
+            return <Loader />;
         }
 
-        const firstImage = news.mediaFiles?.find(
-            (media) => media.type === 'image',
-        );
-        const firstVideo = news.mediaFiles?.find(
-            (media) => media.type === 'video',
-        );
-        const otherMediaFiles = news.mediaFiles?.filter(
-            (media) => media !== firstImage && media !== firstVideo,
-        );
+        const { firstImage, firstVideo, otherMediaFiles } = useMemo(() => {
+            let firstImage = null;
+            let firstVideo = null;
+            const otherMediaFiles = [];
+
+            for (const media of news.mediaFiles || []) {
+                if (!firstVideo && media.type === 'video') {
+                    firstVideo = media;
+                } else if (!firstImage && media.type === 'image') {
+                    firstImage = media;
+                } else {
+                    otherMediaFiles.push(media);
+                }
+            }
+
+            return { firstImage, firstVideo, otherMediaFiles };
+        }, [news.mediaFiles]);
+
+        const processedContent = useMemo(() => {
+            let content = DOMPurify.sanitize(news.content);
+            content = highlightKeywordsInHtml(content, '');
+            content = DOMPurify.sanitize(content);
+            return content;
+        }, [news.content]);
 
         return (
             <div className={styles.newsDetail}>
@@ -77,15 +84,15 @@ export const NewsDetail = React.memo(
                 {firstVideo ? (
                     <div className={styles.videoWrapper}>
                         <VideoPlayer
-                            videoUrl={`http://localhost:5000/${firstVideo.url}`}
-                            posterUrl={`http://localhost:5000/${firstImage?.url || ''}`}
+                            videoUrl={firstVideo.url}
+                            posterUrl={firstImage?.url || ''}
                         />
                     </div>
                 ) : (
                     firstImage && (
                         <div className={styles.imageWrapper}>
                             <img
-                                src={`http://localhost:5000/${firstImage.url}`}
+                                src={firstImage.url}
                                 alt={news.title}
                                 className={styles.newsImage}
                             />
@@ -96,20 +103,23 @@ export const NewsDetail = React.memo(
                 <div className={styles.newsContentWrapper}>
                     <SocialIcons />
                     <div className={styles.content}>
-                        <div className={styles.paragraph}>
-                            {highlightKeywordsInHtml(news.content, '')}
-                        </div>
+                        <div
+                            className={styles.paragraph}
+                            dangerouslySetInnerHTML={{
+                                __html: processedContent,
+                            }}
+                        />
 
                         <div className={styles.otherMediaWrapper}>
-                            {otherMediaFiles?.map((media, index) => {
+                            {otherMediaFiles.map((media) => {
                                 if (media.type === 'image') {
                                     return (
                                         <div
-                                            key={index}
+                                            key={media.id}
                                             className={styles.imageWrapper}
                                         >
                                             <img
-                                                src={`http://localhost:5000/${media.url}`}
+                                                src={media.url}
                                                 alt={news.title}
                                                 className={styles.newsImage}
                                             />
@@ -118,12 +128,12 @@ export const NewsDetail = React.memo(
                                 } else if (media.type === 'video') {
                                     return (
                                         <div
-                                            key={index}
+                                            key={media.id}
                                             className={styles.videoWrapper}
                                         >
                                             <VideoPlayer
-                                                videoUrl={`http://localhost:5000/${media.url}`}
-                                                posterUrl={`http://localhost:5000/${media.poster || ''}`}
+                                                videoUrl={media.url}
+                                                posterUrl={media.poster || ''}
                                             />
                                         </div>
                                     );

@@ -23,7 +23,7 @@ export const CommentItem = memo(({ comment, isReply }) => {
 
     const avatarUrl =
         comment.authorDetails && comment.authorDetails.avatarUrl
-            ? `http://localhost:5000/${comment.authorDetails.avatarUrl}`
+            ? `${comment.authorDetails.avatarUrl}`
             : defaultAvatar;
 
     const handleLike = useCallback(() => {
