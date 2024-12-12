@@ -1,4 +1,3 @@
-import React from 'react';
 import smotrim from '@assets/smotrim_logo.png';
 import styles from './FooterSmotrim.module.scss';
 

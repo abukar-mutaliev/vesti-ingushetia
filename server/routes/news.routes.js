@@ -1,60 +1,65 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const {
-  createNews,
-  getAllNews,
-  getNewsById,
-  getNewsByDate,
-  updateNews,
-  deleteNews,
-  getAllVideos,
-} = require("../controllers/news.controller");
-const { authenticateAdmin } = require("../middlewares/auth.middleware");
-const { handleMulterErrors, upload } = require("../middlewares/upload");
-const { validate } = require("../middlewares/validation.middleware");
+const csrfProtection = require('../middlewares/csrfProtection.middleware');
 
 const {
-  createNewsValidator,
-  updateNewsValidator,
-  getNewsByDateValidator,
-  getNewsByIdValidator,
-  deleteNewsValidator,
-} = require("../validation/newsValidation");
+    createNews,
+    getAllNews,
+    getNewsById,
+    getNewsByDate,
+    updateNews,
+    deleteNews,
+} = require('../controllers/news.controller');
+const { authenticateAdmin } = require('../middlewares/auth.middleware');
+const {
+    handleMulterErrors,
+    upload,
+} = require('../middlewares/uploads.middleware');
+const { validate } = require('../middlewares/validation.middleware');
+
+const {
+    createNewsValidator,
+    updateNewsValidator,
+    getNewsByDateValidator,
+    getNewsByIdValidator,
+    deleteNewsValidator,
+} = require('../validation/newsValidation');
 
 router.post(
-  "/add",
-  authenticateAdmin,
-  upload,
-  createNewsValidator,
-  validate,
-  handleMulterErrors,
-  createNews
+    '/add',
+    authenticateAdmin,
+    csrfProtection,
+    upload,
+    createNewsValidator,
+    validate,
+    handleMulterErrors,
+    createNews,
 );
 
-router.get("/all", getAllNews);
+router.get('/all', getAllNews);
 
-router.get("/videos", getAllVideos);
+router.get('/date', validate, getNewsByDateValidator, getNewsByDate);
 
-router.get("/date", validate, getNewsByDateValidator, getNewsByDate);
-
-router.get("/:id", validate, getNewsByIdValidator, getNewsById);
+router.get('/:id', validate, getNewsByIdValidator, getNewsById);
 
 router.put(
-  "/update/:id",
-  authenticateAdmin,
-  upload,
-  updateNewsValidator,
-  validate,
-  handleMulterErrors,
-  updateNews
+    '/update/:id',
+    authenticateAdmin,
+    csrfProtection,
+    upload,
+    updateNewsValidator,
+    validate,
+    handleMulterErrors,
+    updateNews,
 );
 
 router.delete(
-  "/delete/:id",
-  deleteNewsValidator,
-  authenticateAdmin,
-  validate,
-  deleteNews
+    '/delete/:id',
+    authenticateAdmin,
+    csrfProtection,
+    deleteNewsValidator,
+    validate,
+    deleteNews,
 );
 
 module.exports = router;

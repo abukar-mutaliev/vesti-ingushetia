@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { MdSearch, MdClose } from 'react-icons/md';
 import styles from './Header.module.scss';
@@ -87,7 +87,10 @@ export const Header = () => {
                 </div>
                 <div className={styles.mobileIcons}>
                     <div
-                        className={`${styles.searchIconMobile} ${location.pathname.includes('/search/results') ? styles.active : ''}`}
+                        className={
+                        `${styles.searchIconMobile}
+                         ${location.pathname.includes('/search/results') ? styles.active : ''}`
+                    }
                         onClick={handleSearchIconClick}
                     >
                         <MdSearch size={30} />

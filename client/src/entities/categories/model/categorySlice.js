@@ -10,10 +10,14 @@ import {
 const initialState = {
     categories: [],
     newsByCategory: {},
+    categoriesLastFetched: null,
+    newsLastFetched: {},
     loading: false,
     newsLoading: false,
     error: null,
 };
+
+const CACHE_DURATION  = import.meta.env.CACHE_DURATION ;
 
 export const fetchCategories = createAsyncThunk(
     'categories/fetchAll',
@@ -22,9 +26,22 @@ export const fetchCategories = createAsyncThunk(
             const response = await fetchCategoriesApi();
             return response.data;
         } catch (err) {
-            return rejectWithValue(err.response.data);
+            return rejectWithValue(err.response?.data || 'Ошибка при загрузке категорий');
         }
     },
+    {
+        condition: (_, { getState }) => {
+            const { categoriesLastFetched } = getState().categories;
+            if (categoriesLastFetched) {
+                const now = Date.now();
+                const diff = now - categoriesLastFetched;
+                if (diff < CACHE_DURATION) {
+                    return false;
+                }
+            }
+            return true;
+        },
+    }
 );
 
 export const createCategory = createAsyncThunk(
@@ -68,12 +85,27 @@ export const fetchNewsByCategory = createAsyncThunk(
     async (categoryId, { rejectWithValue }) => {
         try {
             const response = await fetchNewsByCategoryApi(categoryId);
-            return { categoryId, categories: response.data };
+            return { categoryId, news: response.data };
         } catch (error) {
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response?.data || 'Ошибка при загрузке новостей');
         }
     },
+    {
+        condition: (categoryId, { getState }) => {
+            const { newsLastFetched } = getState().categories;
+            const lastFetched = newsLastFetched[categoryId];
+            if (lastFetched) {
+                const now = Date.now();
+                const diff = now - lastFetched;
+                if (diff < CACHE_DURATION) {
+                    return false;
+                }
+            }
+            return true;
+        },
+    }
 );
+
 
 const categorySlice = createSlice({
     name: 'categories',
@@ -81,76 +113,81 @@ const categorySlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(fetchCategories.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetchCategories.fulfilled, (state, action) => {
-                state.loading = false;
-                state.categories = action.payload;
-            })
-            .addCase(fetchCategories.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload;
-            })
-            .addCase(fetchNewsByCategory.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetchNewsByCategory.fulfilled, (state, action) => {
-                const { categoryId, categories } = action.payload;
-                state.newsByCategory[categoryId] = categories;
-                state.loading = false;
-            })
-            .addCase(fetchNewsByCategory.rejected, (state, action) => {
-                state.loading = false;
-                state.error =
-                    action.error.message || 'Ошибка получения новостей';
-            })
-            .addCase(createCategory.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(createCategory.fulfilled, (state, action) => {
-                state.loading = false;
-                state.categories.push(action.payload);
-            })
-            .addCase(createCategory.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload;
-            })
-            .addCase(deleteCategory.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(deleteCategory.fulfilled, (state, action) => {
-                state.loading = false;
-                state.categories = state.categories.filter(
-                    (category) => category.id !== action.payload,
-                );
-            })
-            .addCase(deleteCategory.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload;
-            })
-            .addCase(updateCategory.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(updateCategory.fulfilled, (state, action) => {
-                state.loading = false;
-                const index = state.categories.findIndex(
-                    (category) => category.id === action.payload.id,
-                );
-                if (index !== -1) {
-                    state.categories[index] = action.payload;
-                }
-            })
-            .addCase(updateCategory.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload;
-            });
+        .addCase(fetchCategories.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(fetchCategories.fulfilled, (state, action) => {
+            state.loading = false;
+            state.categories = action.payload;
+            state.categoriesLastFetched = Date.now();
+        })
+        .addCase(fetchCategories.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload || action.error.message;
+        })
+        .addCase(fetchNewsByCategory.pending, (state) => {
+            state.newsLoading = true;
+            state.error = null;
+        })
+        .addCase(fetchNewsByCategory.fulfilled, (state, action) => {
+            const { categoryId, news } = action.payload;
+            state.newsByCategory[categoryId] = news;
+            state.newsLastFetched[categoryId] = Date.now();
+            state.newsLoading = false;
+        })
+        .addCase(fetchNewsByCategory.rejected, (state, action) => {
+            state.newsLoading = false;
+            state.error = action.payload || action.error.message;
+        })
+        .addCase(createCategory.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(createCategory.fulfilled, (state, action) => {
+            state.loading = false;
+            state.categories.push(action.payload);
+            state.categoriesLastFetched = Date.now();
+        })
+        .addCase(createCategory.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload || action.error.message;
+        })
+        .addCase(deleteCategory.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(deleteCategory.fulfilled, (state, action) => {
+            state.loading = false;
+            state.categories = state.categories.filter(
+                (category) => category.id !== action.payload
+            );
+            state.categoriesLastFetched = Date.now();
+        })
+        .addCase(deleteCategory.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload || action.error.message;
+        })
+        .addCase(updateCategory.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(updateCategory.fulfilled, (state, action) => {
+            state.loading = false;
+            const index = state.categories.findIndex(
+                (category) => category.id === action.payload.id
+            );
+            if (index !== -1) {
+                state.categories[index] = action.payload;
+            }
+            state.categoriesLastFetched = Date.now();
+        })
+        .addCase(updateCategory.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload || action.error.message;
+        });
     },
 });
+
 
 export default categorySlice.reducer;

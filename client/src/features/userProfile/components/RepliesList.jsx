@@ -1,10 +1,10 @@
-import React from 'react';
 import styles from '../ui/UserProfile.module.scss';
 import defaultAvatar from '@assets/default-avatar.jpg';
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 export const RepliesList = ({ replies }) => {
+
     return (
         <div className={styles.repliesSection}>
             <h3>Ответы на ваши комментарии</h3>

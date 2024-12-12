@@ -1,4 +1,3 @@
-import React from 'react';
 import styles from '../ui/UserProfile.module.scss';
 import { FaUpload } from 'react-icons/fa';
 import defaultAvatar from '@assets/default-avatar.jpg';

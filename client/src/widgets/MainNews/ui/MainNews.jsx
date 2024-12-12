@@ -14,12 +14,27 @@ export const MainNews = React.memo(() => {
         return <div className={styles.mainNews}>Новостей нет</div>;
     }
 
-    const imageUrl = latestNews.mediaFiles?.find(
-        (media) => media.type === 'image',
-    )?.url;
-    const videoUrl = latestNews.mediaFiles?.find(
-        (media) => media.type === 'video',
-    )?.url;
+    const getVideoPoster = () => {
+        const videoMedia = latestNews.mediaFiles?.find(
+            (media) => media.type === 'video'
+        );
+
+        if (videoMedia && videoMedia.poster) {
+            return videoMedia.poster.url;
+        }
+
+        return null;
+    };
+
+    const getFirstImage = () => {
+        const imageMedia = latestNews.mediaFiles?.find(
+            (media) => media.type === 'image'
+        );
+        return imageMedia ? imageMedia.url : null;
+    };
+
+    const posterUrl = getVideoPoster();
+    const imageUrl = getFirstImage();
 
     const rawContent =
         latestNews.content.split('. ').slice(0, 2).join('. ') + '.';
@@ -32,60 +47,82 @@ export const MainNews = React.memo(() => {
 
     return (
         <div className={styles.mainNewsContainer}>
-            <div className={styles.mainNews}>
-                <Link
-                    to={`/news/${latestNews.id}`}
+
+            <Link className={styles.mainNews}
+                  to={`/news/${latestNews.id}`}
+            >
+                <div
+
                     className={styles.mainNewsLink}
                 >
-                    {imageUrl ? (
+                    {posterUrl ? (
                         <div className={styles.imageWrapper}>
                             <img
-                                src={`${imageUrl}`}
+                                src={posterUrl}
                                 alt={latestNews.title}
                                 className={styles.mainNewsImage}
                             />
-                            {videoUrl && (
+                            <div className={styles.playButton}>
+                                <FaPlayCircle size={70} />
+                            </div>
+                        </div>
+                    ) : imageUrl ? (
+                        <div className={styles.imageWrapper}>
+                            <img
+                                src={imageUrl}
+                                alt={latestNews.title}
+                                className={styles.mainNewsImage}
+                            />
+                            {latestNews.mediaFiles?.some(
+                                (media) => media.type === 'video'
+                            ) && (
                                 <div className={styles.playButton}>
                                     <FaPlayCircle size={70} />
                                 </div>
                             )}
                         </div>
-                    ) : (
-                        videoUrl && (
-                            <div className={styles.videoWrapper}>
-                                <video
-                                    src={`${videoUrl}`}
-                                    className={styles.mainNewsVideo}
-                                    preload="metadata"
-                                />
-                                <div className={styles.playButton}>
-                                    <FaPlayCircle size={70} />
-                                </div>
+                    ) : latestNews.mediaFiles?.some(
+                        (media) => media.type === 'video'
+                    ) ? (
+                        <div className={styles.videoWrapper}>
+                            <video
+                                src={latestNews.mediaFiles.find(
+                                    (media) => media.type === 'video'
+                                ).url}
+                                className={styles.mainNewsVideo}
+                                preload="metadata"
+                            />
+                            <div className={styles.playButton}>
+                                <FaPlayCircle size={70} />
                             </div>
-                        )
+                        </div>
+                    ) : (
+                        <div className={styles.placeholder}>
+                            <FaPlayCircle size={70} />
+                        </div>
                     )}
-                </Link>
+                </div>
                 <div className={styles.mainNewsContent}>
                     <h2 className={styles.mainNewsTitle}>
-                        <Link
+                        <div
                             to={`/news/${latestNews.id}`}
                             className={styles.mainNewsTitleLink}
                         >
                             {latestNews.title}
-                        </Link>
+                        </div>
                     </h2>
                     <div
                         className={styles.mainNewsDescription}
                         dangerouslySetInnerHTML={{ __html: highlightedContent }}
                     />
-                    <Link
+                    <div
                         to={`/news/${latestNews.id}`}
                         className={styles.readMoreButton}
                     >
                         Читать полностью
-                    </Link>
+                    </div>
                 </div>
-            </div>
+            </Link>
         </div>
     );
 });

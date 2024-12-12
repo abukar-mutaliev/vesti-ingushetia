@@ -1,4 +1,3 @@
-import { createSelector } from '@reduxjs/toolkit';
 
 export const selectRadioList = (state) => state.radio.radio;
 

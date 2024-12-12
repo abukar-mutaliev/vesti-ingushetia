@@ -1,8 +1,8 @@
-
 .mainNewsContainer {
     display: flex;
     justify-content: center;
     align-items: center;
+
 }
 .mainNews {
     background-color: $primary-background;
@@ -17,7 +17,7 @@
     max-width: 100%;
     width: 100%;
     box-sizing: border-box;
-
+    cursor: pointer;
     @media (max-width: 1240px) {
         max-width: 95%;
     }
@@ -33,7 +33,6 @@
     h2 {
         font-size: 24px;
         font-weight: bold;
-
     }
 
     p {

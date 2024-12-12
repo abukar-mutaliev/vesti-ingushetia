@@ -1,6 +1,6 @@
 import api from '@app/providers/store/apiClient';
 
-const API_URL = 'http://localhost:5000/api/broadcast';
+const API_URL = `${import.meta.env.VITE_API_URL}/broadcast`;
 
 export const createRadioApi = async (formData) =>
     api.post(`${API_URL}/add`, formData, {

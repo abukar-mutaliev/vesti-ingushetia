@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { fetchProjectById } from '@entities/projects/model/projectSlice';
@@ -14,7 +14,7 @@ import {
 } from '@entities/news/model/newsSelectors.js';
 import { selectCategories } from '@entities/categories/model/categorySelectors.js';
 
-export const ProjectDetailPage = () => {
+const ProjectDetailPage = () => {
     const { id } = useParams();
     const dispatch = useDispatch();
     const project = useSelector(selectCurrentProject, shallowEqual);
@@ -58,3 +58,4 @@ export const ProjectDetailPage = () => {
         </div>
     );
 };
+export default ProjectDetailPage;

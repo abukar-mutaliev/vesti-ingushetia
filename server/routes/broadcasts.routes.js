@@ -1,55 +1,59 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const broadcastController = require("../controllers/broadcast.controller");
+const broadcastController = require('../controllers/broadcast.controller');
 const {
-  uploadAudio,
-  handleMulterErrors,
-} = require("../middlewares/uploadAudio");
-const { authenticateAdmin } = require("../middlewares/auth.middleware");
+    uploadAudio,
+    handleMulterErrors,
+} = require('../middlewares/uploadAudio.middleware');
+const { authenticateAdmin } = require('../middlewares/auth.middleware');
 
 const {
-  createBroadcastValidation,
-  updateBroadcastValidation,
-  getBroadcastByIdValidation,
-  deleteBroadcastValidation,
-} = require("../validation/broadcastValidation");
-const { validate } = require("../middlewares/validation.middleware");
+    createBroadcastValidation,
+    updateBroadcastValidation,
+    getBroadcastByIdValidation,
+    deleteBroadcastValidation,
+} = require('../validation/broadcastValidation');
+const { validate } = require('../middlewares/validation.middleware');
+const csrfProtection = require('../middlewares/csrfProtection.middleware');
 
 router.post(
-  "/add",
-  authenticateAdmin,
-  uploadAudio,
-  handleMulterErrors,
-  createBroadcastValidation,
-  validate,
-  broadcastController.createBroadcast
+    '/add',
+    authenticateAdmin,
+    csrfProtection,
+    uploadAudio,
+    handleMulterErrors,
+    createBroadcastValidation,
+    validate,
+    broadcastController.createBroadcast,
 );
 
-router.get("/all", broadcastController.getAllBroadcasts);
+router.get('/all', broadcastController.getAllBroadcasts);
 
 router.get(
-  "/:id",
-  getBroadcastByIdValidation,
-  validate,
-  broadcastController.getBroadcastById
+    '/:id',
+    getBroadcastByIdValidation,
+    validate,
+    broadcastController.getBroadcastById,
 );
 
 router.put(
-  "/update/:id",
-  authenticateAdmin,
-  uploadAudio,
-  handleMulterErrors,
-  updateBroadcastValidation,
-  validate,
-  broadcastController.updateBroadcast
+    '/update/:id',
+    authenticateAdmin,
+    csrfProtection,
+    uploadAudio,
+    handleMulterErrors,
+    updateBroadcastValidation,
+    validate,
+    broadcastController.updateBroadcast,
 );
 
 router.delete(
-  "/delete/:id",
-  authenticateAdmin,
-  deleteBroadcastValidation,
-  validate,
-  broadcastController.deleteBroadcast
+    '/delete/:id',
+    authenticateAdmin,
+    csrfProtection,
+    deleteBroadcastValidation,
+    validate,
+    broadcastController.deleteBroadcast,
 );
 
 module.exports = router;

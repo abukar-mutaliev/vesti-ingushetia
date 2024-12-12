@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import styles from './HomePage.module.scss';
 import { SideMenu } from '@widgets/SideMenu/';
 import { MainNews } from '@widgets/MainNews/';
@@ -13,25 +13,26 @@ import { NewsCardDetailPage } from '@widgets/NewsCardDetailPage/index.js';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { FaTimes } from 'react-icons/fa';
 import { SlArrowRight } from 'react-icons/sl';
+import ReactPaginate from 'react-paginate';
 
-export const HomePage = () => {
+const HomePage = () => {
     const dispatch = useDispatch();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const newsList = useSelector(selectNewsList, shallowEqual);
     const categories = useSelector(selectCategories);
 
-    const loadNews = () => {
+    const loadNews = useCallback(() => {
         if (!newsList.length) {
             dispatch(fetchAllNews());
         }
-    };
+    }, [dispatch, newsList.length]);
 
-    const loadCategories = () => {
+    const loadCategories = useCallback(() => {
         if (!categories.length) {
             dispatch(fetchCategories());
         }
-    };
+    }, [dispatch, categories.length]);
 
     useEffect(() => {
         loadNews();
@@ -45,6 +46,26 @@ export const HomePage = () => {
     const closeMenu = () => {
         setIsMenuOpen(false);
     };
+
+    const [currentPage, setCurrentPage] = useState(0);
+    const itemsPerPage = 6;
+
+    const pageCount = Math.ceil(newsList.length / itemsPerPage);
+
+    const currentNews = useMemo(() => {
+        const start = currentPage * itemsPerPage;
+        return newsList.slice(start, start + itemsPerPage);
+    }, [currentPage, newsList, itemsPerPage]);
+
+    const newsContainerRef = useRef(null);
+
+    const handlePageClick = useCallback(({ selected }) => {
+        setCurrentPage(selected);
+        if (newsContainerRef.current) {
+            const topOffset = newsContainerRef.current.offsetTop - 150;
+            window.scrollTo({ top: topOffset, behavior: 'smooth' });
+        }
+    }, []);
 
     return (
         <div>
@@ -73,14 +94,33 @@ export const HomePage = () => {
             <div className={styles.videoSliderContainer}>
                 <VideoSlider />
             </div>
-            <div className={styles.newsCardContainer}>
-                <h2>Так же читайте</h2>
+            <div className={styles.newsCardContainer} ref={newsContainerRef}>
+                <h2>Также читайте</h2>
                 <div className={styles.newsGrid}>
-                    {newsList.map((newsItem) => (
+                    {currentNews.map((newsItem) => (
                         <NewsCardDetailPage key={newsItem.id} news={newsItem} />
                     ))}
                 </div>
+                {pageCount > 1 && (
+                    <ReactPaginate
+                        previousLabel={'← Предыдущая'}
+                        nextLabel={'Следующая →'}
+                        breakLabel={'...'}
+                        pageCount={pageCount}
+                        marginPagesDisplayed={2}
+                        pageRangeDisplayed={3}
+                        onPageChange={handlePageClick}
+                        containerClassName={styles.pagination}
+                        activeClassName={styles.activePage}
+                        pageLinkClassName={styles.pageLink}
+                        previousLinkClassName={styles.pageLink}
+                        nextLinkClassName={styles.pageLink}
+                        breakLinkClassName={styles.pageLink}
+                    />
+                )}
             </div>
         </div>
     );
 };
+
+export default HomePage;

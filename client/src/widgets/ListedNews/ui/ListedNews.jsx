@@ -5,18 +5,17 @@ import { FaPlayCircle } from 'react-icons/fa';
 import defaultImage from '@assets/default.jpg';
 
 export const ListedNews = React.memo(({ newsList }) => {
+
     const sortedByViewsNews = useMemo(() => {
         return [...newsList].sort((a, b) => b.views - a.views).slice(0, 6);
     }, [newsList]);
-
-    const topViewedNews = sortedByViewsNews.slice(0, 6);
 
     return (
         <div className={styles.listedNews}>
             <h2>ПОПУЛЯРНОЕ</h2>
             <hr />
             <div className={styles.smallImageNewsSection}>
-                {topViewedNews.slice(0, 3).map((newsItem) => {
+                {sortedByViewsNews.slice(0, 3).map((newsItem) => {
                     const imageUrl =
                         newsItem.mediaFiles?.find(
                             (media) => media.type === 'image',
@@ -27,38 +26,30 @@ export const ListedNews = React.memo(({ newsList }) => {
                         )?.url || null;
                     const hasVideo = Boolean(videoUrl);
 
-                    let mediaElement;
-
-                    if (imageUrl) {
-                        mediaElement = (
-                            <img
-                                src={`${imageUrl}`}
-                                alt={newsItem.title}
-                                className={styles.smallImageNewsImage}
-                            />
-                        );
-                    } else if (hasVideo) {
-                        mediaElement = (
-                            <div className={styles.imageContainer}>
-                                <img
-                                    src={defaultImage}
-                                    alt={newsItem.title}
-                                    className={styles.smallImageNewsImage}
-                                />
-                                <div className={styles.playButton}>
-                                    <FaPlayCircle size={30} />
-                                </div>
-                            </div>
-                        );
-                    } else {
-                        mediaElement = (
+                    const mediaElement = imageUrl ? (
+                        <img
+                            src={`${imageUrl}`}
+                            alt={newsItem.title}
+                            className={styles.smallImageNewsImage}
+                        />
+                    ) : hasVideo ? (
+                        <div className={styles.imageContainer}>
                             <img
                                 src={defaultImage}
                                 alt={newsItem.title}
                                 className={styles.smallImageNewsImage}
                             />
-                        );
-                    }
+                            <div className={styles.playButton}>
+                                <FaPlayCircle size={30} />
+                            </div>
+                        </div>
+                    ) : (
+                        <img
+                            src={defaultImage}
+                            alt={newsItem.title}
+                            className={styles.smallImageNewsImage}
+                        />
+                    );
 
                     return (
                         <Link
@@ -77,7 +68,7 @@ export const ListedNews = React.memo(({ newsList }) => {
                 })}
             </div>
             <ul className={styles.listedNewsSection}>
-                {topViewedNews.slice(3, 6).map((newsItem) => (
+                {sortedByViewsNews.slice(3, 6).map((newsItem) => (
                     <Link
                         key={newsItem.id}
                         to={`/news/${newsItem.id}`}

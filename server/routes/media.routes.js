@@ -1,7 +1,7 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const { getMediaFile } = require("../controllers/media.controller");
+const { getMediaFile } = require('../controllers/media.controller');
 
-router.get("/:type/:filename", getMediaFile);
+router.get('/:type/:filename', getMediaFile);
 
 module.exports = router;

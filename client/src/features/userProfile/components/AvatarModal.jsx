@@ -1,4 +1,3 @@
-import React from 'react';
 import Modal from 'react-modal';
 import styles from '../ui/UserProfile.module.scss';
 import defaultAvatar from '@assets/default-avatar.jpg';

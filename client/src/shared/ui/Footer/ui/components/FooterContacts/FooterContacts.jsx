@@ -1,4 +1,3 @@
-import React from 'react';
 import styles from './FooterContacts.module.scss';
 
 export const FooterContacts = () => {

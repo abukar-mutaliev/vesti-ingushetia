@@ -1,8 +1,6 @@
-import React from 'react';
 import styles from './FooterSocialIcons.module.scss';
 import { FaTelegramPlane, FaVk, FaYoutube } from 'react-icons/fa';
-import RuTube from '../../../../../../assets/ruTube-icon.svg';
-import { FooterSmotrim } from '@shared/ui/Footer/ui/components/FooterSmotrim/FooterSmotrim.jsx';
+import RuTube from '@assets/ruTube-icon.svg';
 
 export const FooterSocialIcons = () => {
     return (

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import Slider from 'react-slick';
 import {
@@ -11,6 +11,8 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import styles from './VideoSlider.module.scss';
 import { Loader } from '@shared/ui/Loader/index.js';
+import { Link } from 'react-router-dom';
+import defaultImage from '@assets/default.jpg';
 
 const sliderSettings = {
     className: 'center',
@@ -46,8 +48,8 @@ export const VideoSlider = () => {
     const loading = useSelector((state) => state.news.newsLoading);
     const videoNews = useSelector(selectNewsWithVideos, shallowEqual);
 
-    const [dragging, setDragging] = useState(false);
-    const [startX, setStartX] = useState(0);
+    const isDragging = useRef(false);
+    const startX = useRef(0);
 
     useEffect(() => {
         if (!newsList.length) {
@@ -55,23 +57,17 @@ export const VideoSlider = () => {
         }
     }, [dispatch, newsList.length]);
 
-    const handleMouseDown = (e) => {
-        setStartX(e.clientX);
-        setDragging(false);
-    };
+    const handleMouseDown = useCallback((e) => {
+        startX.current = e.clientX;
+        isDragging.current = false;
+    }, []);
 
-    const handleMouseMove = (e) => {
-        if (Math.abs(e.clientX - startX) > 5) {
-            setDragging(true);
+    const handleMouseMove = useCallback((e) => {
+        if (Math.abs(e.clientX - startX.current) > 5) {
+            isDragging.current = true;
         }
-    };
+    }, []);
 
-    const handleMouseUp = (e) => {
-        if (dragging) {
-            e.preventDefault();
-        }
-        setDragging(false);
-    };
 
     const videoNewsElements = useMemo(() => {
         return videoNews.map((news) => {
@@ -82,10 +78,14 @@ export const VideoSlider = () => {
                 (media) => media.type === 'image',
             );
 
-            const mediaElement = image ? (
-                <img src={`${image.url}`} alt={news.title} />
+            const posterUrl = video?.poster?.url || image?.url || '';
+
+            const mediaElement = posterUrl ? (
+                <img src={posterUrl} alt={news.title} className={styles.image} />
             ) : (
-                <video src={`${video.url}`} preload="metadata" controls />
+                <div className={styles.placeholder}>
+                    <img src={defaultImage} alt={news.title} className={styles.image}/>
+                </div>
             );
 
             return (
@@ -94,9 +94,17 @@ export const VideoSlider = () => {
                     className={styles.videoCard}
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
-                    onMouseUp={handleMouseUp}
+
                 >
-                    <a href="#" onClick={(e) => dragging && e.preventDefault()}>
+                    <Link
+                        to={`/news/${news.id}`}
+                        onClick={(e) => {
+                            if (isDragging.current) {
+                                e.preventDefault();
+                            }
+                        }}
+                        className={styles.link}
+                    >
                         <div className={styles.imageWrapper}>
                             {mediaElement}
                             <div className={styles.playButton}>
@@ -106,11 +114,11 @@ export const VideoSlider = () => {
                         <div className={styles.videoInfo}>
                             <h3>{news.title}</h3>
                         </div>
-                    </a>
+                    </Link>
                 </div>
             );
         });
-    }, [videoNews, dragging]);
+    }, [videoNews, handleMouseDown, handleMouseMove]);
 
     if (loading || !newsList.length) {
         return (
@@ -121,7 +129,11 @@ export const VideoSlider = () => {
     }
 
     if (!videoNews.length) {
-        return <div>Видео новости отсутствуют</div>;
+        return (
+            <div className={styles.videoSliderNotFound}>
+                Видео новости отсутствуют
+            </div>
+        );
     }
 
     return (

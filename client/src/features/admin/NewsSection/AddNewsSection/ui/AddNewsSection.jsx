@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './AddNewsSection.module.scss';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectCategories } from '@entities/categories/model/categorySelectors.js';
@@ -10,9 +10,11 @@ import { FaDeleteLeft } from 'react-icons/fa6';
 export const AddNewsSection = ({ onSave, onCancel }) => {
     const [newsTitle, setNewsTitle] = useState('');
     const [newsContent, setNewsContent] = useState('');
-    const [newsMedia, setNewsMedia] = useState([[]]);
+    const [newsMedia, setNewsMedia] = useState([[]]); // только изображения
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
+    const [videoUrl, setVideoUrl] = useState(''); // поле для ссылки на видео
     const [errors, setErrors] = useState({});
+
     const categories = useSelector(selectCategories);
     const dispatch = useDispatch();
 
@@ -44,7 +46,14 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 break;
             case 'media':
                 if (!value || !value.some((group) => group.length > 0)) {
-                    error = 'Добавьте хотя бы один файл.';
+                    error = 'Необходимо добавить хотя бы одно изображение.';
+                }
+                break;
+            case 'videoUrl':
+                const rutubeRegex = /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
+                const youtubeRegex = /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
+                if (value && !(rutubeRegex.test(value) || youtubeRegex.test(value))) {
+                    error = 'Видео ссылка должна быть URL от Rutube или YouTube';
                 }
                 break;
             default:
@@ -59,10 +68,13 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         const isTitleValid = validateField('title', newsTitle);
         const isContentValid = validateField('content', newsContent);
         const isCategoryValid = validateField('category', selectedCategoryId);
-        const isMediaValid = validateField('media', newsMedia);
+
+        const isMediaValid = true;
+
+        const isVideoUrlValid = validateField('videoUrl', videoUrl);
 
         return (
-            isTitleValid && isContentValid && isCategoryValid && isMediaValid
+            isTitleValid && isContentValid && isCategoryValid && isMediaValid && isVideoUrlValid
         );
     };
 
@@ -74,23 +86,25 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         formData.append('content', newsContent);
         formData.append('categoryId', selectedCategoryId);
 
+        if (videoUrl.trim() !== '') {
+            formData.append('videoUrl', videoUrl.trim());
+        }
+
         newsMedia.flat().forEach((file) => {
-            if (file.type.startsWith('image')) {
-                formData.append('images', file);
-            } else if (file.type.startsWith('video')) {
-                formData.append('videos', file);
-            }
+                if (file.type.startsWith('image')) {
+                    formData.append('images', file);
+                }
         });
 
         dispatch(createNews(formData))
-            .unwrap()
-            .then(() => {
-                dispatch(fetchAllNews());
-                onSave();
-            })
-            .catch((error) => {
-                console.error('Ошибка при создании новости:', error);
-            });
+        .unwrap()
+        .then(() => {
+            dispatch(fetchAllNews());
+            onSave();
+        })
+        .catch((error) => {
+            console.error('Ошибка при создании новости:', error);
+        });
     };
 
     const handleInputChange = (field, value) => {
@@ -103,6 +117,9 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 break;
             case 'category':
                 setSelectedCategoryId(value);
+                break;
+            case 'videoUrl':
+                setVideoUrl(value);
                 break;
             default:
                 break;
@@ -134,18 +151,6 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         validateField('media', newsMedia);
     };
 
-    const isFormValid = () => {
-        return (
-            !errors.title &&
-            !errors.content &&
-            !errors.category &&
-            !errors.media &&
-            newsTitle.trim().length > 0 &&
-            newsContent.trim().length > 0 &&
-            selectedCategoryId &&
-            newsMedia.some((mediaGroup) => mediaGroup.length > 0)
-        );
-    };
 
     return (
         <div className={styles.addNewsSection}>
@@ -186,12 +191,22 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                     <p className={styles.error}>{errors.category}</p>
                 )}
 
-                <label>Медиафайлы</label>
+                <label>Ссылка на видео (YouTube или Rutube)</label>
+                <input
+                    type="text"
+                    value={videoUrl}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    onChange={(e) => handleInputChange('videoUrl', e.target.value)}
+                />
+                {errors.videoUrl && <p className={styles.error}>{errors.videoUrl}</p>}
+
+                <label>Изображения</label>
                 {newsMedia.map((mediaGroup, index) => (
                     <div key={index}>
                         <input
                             type="file"
                             multiple
+                            accept="image/*"
                             onChange={(e) => handleMediaChange(e, index)}
                             className={styles.fileInput}
                         />
@@ -210,17 +225,11 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                                     >
                                         <FaDeleteLeft />
                                     </button>
-                                    {file.type.startsWith('image') ? (
+                                    {file.type.startsWith('image') && (
                                         <img
                                             src={URL.createObjectURL(file)}
                                             alt="Preview"
                                             className={styles.imagePreview}
-                                        />
-                                    ) : (
-                                        <video
-                                            src={URL.createObjectURL(file)}
-                                            controls
-                                            className={styles.videoPreview}
                                         />
                                     )}
                                 </div>

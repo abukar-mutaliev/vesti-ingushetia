@@ -1,6 +1,6 @@
 import api from '@app/providers/store/apiClient';
 
-const API_URL = 'http://localhost:5000/api/projects';
+const API_URL = `${import.meta.env.VITE_API_URL}/projects`;
 
 export const fetchAllProjectsApi = () => api.get(`${API_URL}/all`);
 export const fetchProjectByIdApi = (id) => api.get(`${API_URL}/${id}`);

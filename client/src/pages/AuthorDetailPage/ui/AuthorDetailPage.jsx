@@ -17,7 +17,7 @@ import { fetchAllNews } from '@entities/news/model/newsSlice.js';
 import { selectCategories } from '@entities/categories/model/categorySelectors.js';
 import { NewsCard } from '@widgets/NewsCard/index.js';
 
-export const AuthorDetailPage = React.memo(() => {
+const AuthorDetailPage = React.memo(() => {
     const { authorId } = useParams();
     const dispatch = useDispatch();
 
@@ -75,3 +75,4 @@ export const AuthorDetailPage = React.memo(() => {
         </div>
     );
 });
+export default AuthorDetailPage;

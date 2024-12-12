@@ -1,10 +1,21 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import styles from './Sidebar.module.scss';
 import { ListedNews } from '../../ListedNews/';
 import { NewsCardSidebar } from '@widgets/NewsCardSidebar/index.js';
 import { VideoAdPlayer } from '@widgets/VideoAdPlayer/index.js';
 
 export const Sidebar = React.memo(({ newsList, categories }) => {
+
+    const memoizedGroupedNews = useMemo(() => {
+        return newsList.reduce((acc, news) => {
+            if (!acc[news.categoryId]) {
+                acc[news.categoryId] = [];
+            }
+            acc[news.categoryId].push(news);
+            return acc;
+        }, {});
+    }, [newsList]);
+
     if (!categories || !categories.length) {
         return null;
     }
@@ -21,31 +32,24 @@ export const Sidebar = React.memo(({ newsList, categories }) => {
         return shuffledArray;
     };
 
-    const getLastThreeNewsByCategory = (categoryId) => {
-        const filteredNews = newsList.filter(
-            (news) => news.categoryId === categoryId,
-        );
-        const shuffledNews = shuffleArray(filteredNews);
-        return shuffledNews.slice(0, 3);
-    };
-
-    const categorizedNews = categories.map((category) => ({
-        category,
-        news: getLastThreeNewsByCategory(category.id),
-    }));
 
     return (
         <div className={styles.sidebar}>
             <VideoAdPlayer />
-            {categorizedNews.map(({ category, news }) => (
-                <div key={category.id} className={styles.categorySection}>
-                    <ul className={styles.newsList}>
-                        {news.map((item) => (
-                            <NewsCardSidebar key={item.id} item={item} />
-                        ))}
-                    </ul>
-                </div>
-            ))}
+            {categories.map((category) => {
+                const categoryNews = memoizedGroupedNews[category.id] || [];
+                const shuffledNews = shuffleArray(categoryNews).slice(0, 3);
+
+                return (
+                    <div key={category.id} className={styles.categorySection}>
+                        <ul className={styles.newsList}>
+                            {shuffledNews.map((item) => (
+                                <NewsCardSidebar key={item.id} item={item} />
+                            ))}
+                        </ul>
+                    </div>
+                );
+            })}
             <div className={styles.listedNewsContainer}>
                 <ListedNews newsList={newsList} />
             </div>

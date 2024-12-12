@@ -1,7 +1,6 @@
-import React from 'react';
 import { UserProfile } from '@features/userProfile';
 
-export const ProfilePage = () => {
+const ProfilePage = () => {
     return <UserProfile />;
 };
 

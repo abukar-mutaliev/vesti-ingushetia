@@ -61,7 +61,9 @@
         position: relative;
         padding: 10px 15px;
         color: $primary-color-header;
-        transition: color 0.3s ease, transform 0.3s ease;
+        transition:
+            color 0.3s ease,
+            transform 0.3s ease;
         height: 44px;
 
         &::after {
@@ -105,7 +107,6 @@
     .hamburgerMenu {
         display: none;
         cursor: pointer;
-
     }
 
     .nav {
@@ -121,7 +122,6 @@
             line-height: 80px;
             margin: 0;
 
-
             li {
                 position: relative;
 
@@ -132,14 +132,16 @@
                     line-height: 80px;
                     position: relative;
                     padding: 15px;
-                    transition: 0.3s ease, transform 0.3s ease;
+                    transition:
+                        0.3s ease,
+                        transform 0.3s ease;
 
-                    @media screen and (max-width: 1244px){
+                    @media screen and (max-width: 1244px) {
                         font-size: 15px;
                         padding: 2px;
                         gap: 5px;
                     }
-                    @media screen and (max-width: 856px){
+                    @media screen and (max-width: 856px) {
                         font-size: 14px;
                         padding: 5px;
                         gap: 0;
@@ -175,14 +177,13 @@
             }
             .live {
                 background: #cd151c;
-                a:hover{
+                a:hover {
                     color: #dddddd;
                 }
                 a.active {
                     color: #dddddd;
                 }
                 a {
-
                     &.active {
                         color: $primary-background;
 
@@ -193,7 +194,6 @@
                     }
                 }
             }
-
         }
     }
     .searchOverlay {
@@ -203,7 +203,10 @@
         width: 100%;
         height: 80px;
         border-bottom: 2px solid #0044cc;
-        background-color: color.adjust($primary-background-header, $lightness: 5%);
+        background-color: color.adjust(
+            $primary-background-header,
+            $lightness: 5%
+        );
         display: flex;
         align-items: center;
         justify-content: center;
@@ -211,7 +214,10 @@
         visibility: hidden;
         opacity: 0;
         transform: translateY(-100%);
-        transition: visibility 0.3s, opacity 0.3s, transform 0.3s;
+        transition:
+            visibility 0.3s,
+            opacity 0.3s,
+            transform 0.3s;
         -webkit-box-shadow: 0px 12px 8px -5px rgba(0, 0, 0, 0.26);
         -moz-box-shadow: 0px 12px 8px -5px rgba(0, 0, 0, 0.26);
         box-shadow: 0px 12px 8px -5px rgba(0, 0, 0, 0.26);
@@ -274,7 +280,6 @@
                     cursor: pointer;
                     color: $primary-color-header;
 
-
                     svg {
                         width: 30px;
                         height: 30px;
@@ -284,94 +289,13 @@
         }
     }
 }
-    @media screen and (max-width: 1020px) {
-        .header {
-            .logoContainer {
-                width: 25%;
-                height: 80px;
-                line-height: 80px;
-            }
-            .login,
-            .searchIcon {
-                display: none;
-            }
-            .mobileIcons {
-                display: flex;
-                align-items: center;
-                gap: 20px;
-                svg {
-                    width: 25px;
-                    height: 25px;
-                }
-            }
-
-            .hamburgerMenu {
-                display: block;
-            }
-            .nav{
-                max-height: 0;
-                opacity: 0;
-                overflow: hidden;
-                flex-direction: column;
-                position: absolute;
-                top: 79px;
-                right: 0;
-                width: 100%;
-                background-color: $primary-background-header;
-                z-index: 999;
-                transition: max-height 0.5s ease, opacity 0.5s ease;
-
-                .navList {
-                    gap:  10px;
-                    display: grid;
-                }
-            }
-
-            .nav.open {
-                max-height: 100vh;
-                opacity: 1;
-                display: flex;
-                -webkit-box-shadow: 0px 12px 8px -5px rgba(0, 0, 0, 0.26);
-                -moz-box-shadow: 0px 12px 8px -5px rgba(0, 0, 0, 0.26);
-                box-shadow: 0px 12px 8px -5px rgba(0, 0, 0, 0.26);
-            }
-
-
-            .navList li {
-                width: 90%;
-                padding: 0 30px;
-                gap: 0;
-            }
-
-            .navList li a {
-                width: 90%;
-                text-align: left;
-                gap: 0;
-                font-size: 18px;
-                color: $primary-color-header;
-                text-decoration: none;
-                transition: background-color 0.3s ease;
-            }
-
-            .navList li a:hover {
-                background-color: transparent;
-            }
-
-            .logo {
-                flex: 1;
-            }
+@media screen and (max-width: 1020px) {
+    .header {
+        .logoContainer {
+            width: 25%;
+            height: 80px;
+            line-height: 80px;
         }
-        .overlay {
-            position: fixed;
-            top: 80px;
-            left: 0;
-            width: 100vw;
-            height: calc(100vh - 80px);
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 900;
-        }
-    }
-    @media screen and (max-width: 768px) {
         .login,
         .searchIcon {
             display: none;
@@ -380,31 +304,48 @@
             display: flex;
             align-items: center;
             gap: 20px;
+            svg {
+                width: 25px;
+                height: 25px;
+            }
         }
+
         .hamburgerMenu {
             display: block;
         }
-        .nav{
-            display: none;
+        .nav {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            flex-direction: column;
+            position: absolute;
+            top: 79px;
+            right: 0;
+            width: 100%;
+            background-color: $primary-background-header;
+            z-index: 999;
+            transition:
+                max-height 0.5s ease,
+                opacity 0.5s ease;
+
+            .navList {
+                gap: 10px;
+                display: grid;
+            }
         }
+
         .nav.open {
             max-height: 100vh;
             opacity: 1;
-            top: 49px;
-        }
-
-        .navList {
             display: flex;
-            flex-direction: column;
-            gap: 0;
-            width: 100%;
-            padding: 0;
-            list-style: none;
+            -webkit-box-shadow: 0px 12px 8px -5px rgba(0, 0, 0, 0.26);
+            -moz-box-shadow: 0px 12px 8px -5px rgba(0, 0, 0, 0.26);
+            box-shadow: 0px 12px 8px -5px rgba(0, 0, 0, 0.26);
         }
 
         .navList li {
             width: 90%;
-            padding: 0 50px;
+            padding: 0 30px;
             gap: 0;
         }
 
@@ -416,7 +357,6 @@
             color: $primary-color-header;
             text-decoration: none;
             transition: background-color 0.3s ease;
-            padding: 10px;
         }
 
         .navList li a:hover {
@@ -427,4 +367,69 @@
             flex: 1;
         }
     }
+    .overlay {
+        position: fixed;
+        top: 80px;
+        left: 0;
+        width: 100vw;
+        height: calc(100vh - 80px);
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 900;
+    }
+}
+@media screen and (max-width: 768px) {
+    .login,
+    .searchIcon {
+        display: none;
+    }
+    .mobileIcons {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    .hamburgerMenu {
+        display: block;
+    }
+    .nav {
+        display: none;
+    }
+    .nav.open {
+        max-height: 100vh;
+        opacity: 1;
+        top: 49px;
+    }
 
+    .navList {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        width: 100%;
+        padding: 0;
+        list-style: none;
+    }
+
+    .navList li {
+        width: 90%;
+        padding: 0 50px;
+        gap: 0;
+    }
+
+    .navList li a {
+        width: 90%;
+        text-align: left;
+        gap: 0;
+        font-size: 18px;
+        color: $primary-color-header;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+        padding: 10px;
+    }
+
+    .navList li a:hover {
+        background-color: transparent;
+    }
+
+    .logo {
+        flex: 1;
+    }
+}

@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { selectNewsList } from '@entities/news/model/newsSelectors.js';
 import {
     deleteNews,
     fetchAllNews,
-    loadNewsFromLocalStorage,
+    loadNewsFromLocalStorageAction,
 } from '@entities/news/model/newsSlice.js';
 import styles from './NewsSection.module.scss';
 import { ConfirmDeleteModal } from '@shared/ui/ConfirmDeleteModal/index.js';
@@ -18,7 +18,7 @@ export const NewsSection = ({ onEditNews, onAddNews }) => {
     const [newsIdToDelete, setNewsIdToDelete] = useState(null);
 
     useEffect(() => {
-        dispatch(loadNewsFromLocalStorage());
+        dispatch(loadNewsFromLocalStorageAction());
     }, [dispatch]);
 
     const openDeleteModal = (id) => {

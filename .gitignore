@@ -39,3 +39,4 @@ Desktop.ini
 
 public/static
 *.lock
+package-lock.json

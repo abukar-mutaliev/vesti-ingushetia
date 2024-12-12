@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import {
     fetchAllNews,
@@ -6,7 +6,6 @@ import {
     setPage,
 } from '@entities/news/model/newsSlice';
 import {
-    selectFilteredNewsWithVideosByDate,
     selectNewsWithVideos,
 } from '@entities/news/model/newsSelectors';
 import { CustomCalendar } from '@widgets/Calendar';
@@ -15,7 +14,7 @@ import { NewsList } from '@features/newsList';
 import { Sidebar } from '@widgets/Sidebar';
 import { selectCategories } from '@entities/categories/model/categorySelectors';
 
-export const TVPage = () => {
+const TVPage = () => {
     const dispatch = useDispatch();
 
     const selectedDate = useSelector((state) => state.news.selectedDate);
@@ -74,3 +73,4 @@ export const TVPage = () => {
         </div>
     );
 };
+export default TVPage;

@@ -10,17 +10,26 @@ import {
     PURGE,
     REGISTER,
 } from 'redux-persist';
+import { setStore } from './apiClient'
 
 const persistConfig = {
     key: 'root',
     storage,
-    whitelist: ['auth'],
+    whitelist: [
+        'auth',
+        'categories',
+        'newsList',
+        'videoAd',
+        'radio',
+        'projects'
+    ],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 const store = configureStore({
     reducer: persistedReducer,
+
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
             serializableCheck: {
@@ -33,9 +42,11 @@ const store = configureStore({
                     REGISTER,
                 ],
             },
+            immutableCheck: import.meta.env.NODE_ENV !== 'production',
         }),
 });
 
+setStore(store);
 export const persistor = persistStore(store);
 
 export default store;

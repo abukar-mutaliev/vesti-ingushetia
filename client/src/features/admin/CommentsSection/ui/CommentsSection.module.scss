@@ -1,98 +1,99 @@
 .section {
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  max-width: 90%;
-  margin: 0 0 0 20px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    max-width: 90%;
+    margin: 0 0 0 20px;
 
-  .error {
-    color: #f44336;
-    font-size: 14px;
-    margin-top: 10px;
-    margin-bottom: 15px;
-  }
-  @media (max-width: 768px) {
-    margin-top: 10%;
-  }
+    .error {
+        color: #f44336;
+        font-size: 14px;
+        margin-top: 10px;
+        margin-bottom: 15px;
+    }
+    @media (max-width: 768px) {
+        margin-top: 10%;
+    }
 }
 
 .topbar {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
 
-  h1 {
-    font-size: 24px;
-    font-weight: bold;
-    color: #333;
-  }
+    h1 {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+    }
 }
 
 .commentsList {
-  .newsTitle {
-    color: #0044cc;
-    padding-bottom: 15px;
-    transition: color 0.3s ease, transform 0.3s ease;
-    &:hover {
-      color: #646cff;
-    }
-  }
-  .newsSection{
-    padding: 10px;
-    border-bottom: 1px solid #333333;
-  }
-  .comment {
-    padding: 15px;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    background-color: #f9f9f9;
-
-    .commentHeader {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      .author {
-        font-weight: bold;
-        font-size: 16px;
-        color: #555;
-      }
-
-      .deleteButton {
-        background-color: #f44336;
-        color: #fff;
-        border: none;
-        padding: 5px 10px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background-color 0.3s ease;
-
+    .newsTitle {
+        color: #0044cc;
+        padding-bottom: 15px;
+        transition:
+            color 0.3s ease,
+            transform 0.3s ease;
         &:hover {
-          background-color: #d32f2f;
+            color: #646cff;
         }
-      }
     }
-
-    .content {
-      margin-top: 10px;
-      font-size: 14px;
-      color: #444;
+    .newsSection {
+        padding: 10px;
+        border-bottom: 1px solid #333333;
     }
+    .comment {
+        padding: 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        margin-bottom: 15px;
+        background-color: #f9f9f9;
 
-    .replies {
-      margin-top: 15px;
-      padding-left: 20px;
-      border-left: 2px solid #e0e0e0;
+        .commentHeader {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
 
-      .comment {
-        background-color: #fff;
-      }
+            .author {
+                font-weight: bold;
+                font-size: 16px;
+                color: #555;
+            }
+
+            .deleteButton {
+                background-color: #f44336;
+                color: #fff;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+                transition: background-color 0.3s ease;
+
+                &:hover {
+                    background-color: #d32f2f;
+                }
+            }
+        }
+
+        .content {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #444;
+        }
+
+        .replies {
+            margin-top: 15px;
+            padding-left: 20px;
+            border-left: 2px solid #e0e0e0;
+
+            .comment {
+                background-color: #fff;
+            }
+        }
     }
-  }
-
 }
 .notComment {
-  width: 40vw;
+    width: 40vw;
 }

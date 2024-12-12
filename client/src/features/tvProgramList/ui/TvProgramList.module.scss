@@ -1,47 +1,47 @@
 .tvProgramList {
-  max-width: 800px;
-  margin: 15% auto;
-  padding: 20px;
-  font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 15% auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
 
-  .programSection {
-    margin-bottom: 20px;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-  }
-
-  .programContent {
-    font-size: 16px;
-    color: #333;
-    line-height: 1.6;
-  }
-
-  .archiveSection {
-    margin-top: 30px;
-
-    h2 {
-      font-size: 20px;
-      margin-bottom: 15px;
-      color: #555;
+    .programSection {
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
     }
-  }
 
-  .archiveButton {
-    display: block;
-    margin: 20px auto;
-    padding: 10px 20px;
-    font-size: 16px;
-    color: #fff;
-    background-color: #007bff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-
-    &:hover {
-      background-color: #0056b3;
+    .programContent {
+        font-size: 16px;
+        color: #333;
+        line-height: 1.6;
     }
-  }
+
+    .archiveSection {
+        margin-top: 30px;
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #555;
+        }
+    }
+
+    .archiveButton {
+        display: block;
+        margin: 20px auto;
+        padding: 10px 20px;
+        font-size: 16px;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+
+        &:hover {
+            background-color: #0056b3;
+        }
+    }
 }

@@ -1,16 +1,15 @@
-
 .footerTop {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  max-width: 90vw;
-  margin: 0 auto;
-  padding: 5%;
-  @media (max-width: 768px) {
-    display: block;
-    max-width: 100%;
-    > * {
-      margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    max-width: 90vw;
+    margin: 0 auto;
+    padding: 5%;
+    @media (max-width: 768px) {
+        display: block;
+        max-width: 100%;
+        > * {
+            margin-bottom: 20px;
+        }
     }
-  }
 }

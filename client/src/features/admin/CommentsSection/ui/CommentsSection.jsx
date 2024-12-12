@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styles from './CommentsSection.module.scss';
 import { Link } from 'react-router-dom';

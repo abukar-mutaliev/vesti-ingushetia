@@ -1,18 +1,21 @@
-import React, { useState } from 'react';
+import { memo, useRef, useCallback } from 'react';
 import Plyr from 'plyr-react';
 import 'plyr-react/plyr.css';
 import styles from './VideoPlayer.module.scss';
 
-export const VideoPlayer = ({ videoUrl, posterUrl }) => {
-    const [isPlaying, setIsPlaying] = useState(false);
+export const VideoPlayer = memo(({ videoUrl, posterUrl }) => {
+    const playerRef = useRef(null);
 
-    const handlePlay = () => {
-        setIsPlaying(true);
-    };
+    const handlePlay = useCallback(() => {
+        if (playerRef.current) {
+            playerRef.current.plyr.play();
+        }
+    }, []);
 
     return (
         <div className={styles.videoPlayerWrapper}>
             <Plyr
+                ref={playerRef}
                 source={{
                     type: 'video',
                     sources: [
@@ -23,11 +26,14 @@ export const VideoPlayer = ({ videoUrl, posterUrl }) => {
                     ],
                     poster: posterUrl,
                 }}
-                options={{ autoplay: isPlaying }}
+                options={{
+                    autoplay: false,
+                    controls: ['play', 'progress', 'volume', 'fullscreen'],
+                }}
             />
-            {!isPlaying && (
-                <div onClick={handlePlay} className={styles.playOverlay} />
-            )}
+            <div className={styles.playOverlay} onClick={handlePlay}>
+            </div>
         </div>
     );
-};
+});
+

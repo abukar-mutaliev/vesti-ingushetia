@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './EditTvProgramSection.module.scss';
 import { RichTextEditor } from '@shared/ui/RichTextEditor';
 import {
     fetchAllTvPrograms,
     updateTvProgram,
 } from '@entities/tvProgram/model/tvProgramSlice.js';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 
 export const EditTvProgramSection = ({ tvProgram, onCancel }) => {
     const dispatch = useDispatch();

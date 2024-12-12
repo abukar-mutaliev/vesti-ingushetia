@@ -1,8 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import{ useEffect, useRef } from 'react';
 import styles from './LiveStreamPage.module.scss';
 import Hls from 'hls.js';
 
-export const LiveStreamPage = () => {
+const LiveStreamPage = () => {
     const videoRef = useRef(null);
     const hlsStreamUrl =
         'https://live-gtrkingushetia.cdnvideo.ru/gtrkingushetia/gtrkingushetia.sdp/playlist.m3u8';
@@ -41,7 +41,6 @@ export const LiveStreamPage = () => {
                 hls.destroy();
             };
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // Для браузеров с поддержкой HLS (например, Safari)
             video.src = hlsStreamUrl;
             video.addEventListener('loadedmetadata', () => {
                 video.play();
@@ -67,3 +66,4 @@ export const LiveStreamPage = () => {
         </div>
     );
 };
+export default LiveStreamPage;

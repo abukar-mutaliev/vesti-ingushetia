@@ -1,4 +1,3 @@
-
 .listedNews {
     margin-top: 15%;
     background-color: $primary-background;
@@ -11,7 +10,6 @@
             margin-bottom: 10px;
         }
     }
-
 }
 
 .smallImageNewsSection {
@@ -58,9 +56,12 @@
     color: #333;
     padding: 0 3% 0;
     border-bottom: 0.5px solid #e0e0e0;
-    transition:
-        color 0.3s ease,
-        transform 0.3s ease;
+    transition: color 0.3s ease, transform 0.3s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
 
     @media (max-width: 768px) {
         display: -webkit-box;
@@ -68,13 +69,13 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
+
     &:hover {
         color: $primary-color-hover;
-        transition:
-            0.3s ease,
-            transform 0.3s ease;
+        transition: 0.3s ease, transform 0.3s ease;
     }
 }
+
 
 .listedNewsSection {
     list-style: none;
@@ -129,7 +130,6 @@
     position: relative;
     display: inline-block;
 }
-
 
 .playButton {
     position: absolute;

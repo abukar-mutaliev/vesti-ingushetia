@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import {
     createTvProgram,
@@ -56,7 +56,6 @@ export const AddTvProgramsSection = ({ onSave, onCancel }) => {
 
     const handleProgramChange = (content) => {
         setProgram(content);
-        // Удаляем ошибку, если поле заполнено
         if (content && content.trim() !== '') {
             setErrors((prevErrors) => {
                 const { program, ...rest } = prevErrors;

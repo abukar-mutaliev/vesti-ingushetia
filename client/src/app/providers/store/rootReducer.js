@@ -11,6 +11,7 @@ import radioReducer from '@entities/radio/model/radioSlice.js';
 import tvProgramReducer from '@entities/tvProgram/model/tvProgramSlice.js';
 import videoAdReducer from '@entities/videoAd/model/videoAdSlice.js';
 import projectsReducer from '@entities/projects/model/projectSlice.js';
+import errorReducer from './errorSlice';
 
 const rootReducer = combineReducers({
     auth: authReducer,
@@ -24,6 +25,7 @@ const rootReducer = combineReducers({
     tvProgram: tvProgramReducer,
     videoAd: videoAdReducer,
     projects: projectsReducer,
+    error: errorReducer,
 });
 
 export default rootReducer;

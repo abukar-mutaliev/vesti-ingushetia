@@ -1,60 +1,72 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
 const {
-  authenticateAdmin,
-  authenticateToken,
-} = require("../middlewares/auth.middleware");
-const {
-  likeComment,
-  createComment,
-  replyToComment,
-  getCommentsForNews,
-  deleteComment,
-  getAllComments,
-} = require("../controllers/comment.controller");
-const { validate } = require("../middlewares/validation.middleware");
+    authenticateAdmin,
+    authenticateToken,
+} = require('../middlewares/auth.middleware');
+const csrfProtection = require('../middlewares/csrfProtection.middleware');
 
 const {
-  createCommentValidation,
-  replyToCommentValidation,
-  getCommentsForNewsValidation,
-  deleteCommentValidation,
-  likeCommentValidation,
-} = require("../validation/commentValidation");
+    likeComment,
+    createComment,
+    replyToComment,
+    getCommentsForNews,
+    deleteComment,
+    getAllComments,
+} = require('../controllers/comment.controller');
+const { validate } = require('../middlewares/validation.middleware');
 
-router.post("/add", createCommentValidation, validate, createComment);
-
-router.get("/all", getAllComments);
+const {
+    createCommentValidation,
+    replyToCommentValidation,
+    getCommentsForNewsValidation,
+    deleteCommentValidation,
+    likeCommentValidation,
+} = require('../validation/commentValidation');
 
 router.post(
-  "/like/:commentId",
-  authenticateToken,
-  likeCommentValidation,
-  validate,
-  likeComment
+    '/add',
+    csrfProtection,
+    authenticateToken,
+    createCommentValidation,
+    validate,
+    createComment,
+);
+
+router.get('/all', getAllComments);
+
+router.post(
+    '/like/:commentId',
+    authenticateToken,
+    csrfProtection,
+    likeCommentValidation,
+    validate,
+    likeComment,
 );
 
 router.post(
-  "/reply/:parentCommentId",
-  authenticateToken,
-  replyToCommentValidation,
-  validate,
-  replyToComment
+    '/reply/:parentCommentId',
+    authenticateToken,
+    csrfProtection,
+    replyToCommentValidation,
+    validate,
+    replyToComment,
 );
 
 router.get(
-  "/:newsId",
-  getCommentsForNewsValidation,
-  validate,
-  getCommentsForNews
+    '/:newsId',
+    getCommentsForNewsValidation,
+    validate,
+    getCommentsForNews,
 );
 
 router.delete(
-  "/delete/:commentId",
-  authenticateAdmin,
-  deleteCommentValidation,
-  validate,
-  deleteComment
+    '/delete/:commentId',
+    authenticateAdmin,
+    csrfProtection,
+    deleteCommentValidation,
+    validate,
+    deleteComment,
 );
 
 module.exports = router;

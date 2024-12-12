@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useSelector, useDispatch, shallowEqual } from 'react-redux';
 import { fetchAllProjects } from '@entities/projects/model/projectSlice';
 import styles from './ProjectsPage.module.scss';
@@ -12,25 +12,31 @@ import {
 import { selectCategories } from '@entities/categories/model/categorySelectors.js';
 import { fetchAllNews } from '@entities/news/model/newsSlice.js';
 import { fetchCategories } from '@entities/categories/model/categorySlice.js';
+import { Loader } from '@shared/ui/Loader/index.js';
 
-export const ProjectsPage = () => {
+const ProjectsPage = () => {
     const dispatch = useDispatch();
-    const projects = useSelector(selectProjectList);
+    const projects = useSelector(selectProjectList, shallowEqual);
     const newsList = useSelector(selectNewsList, shallowEqual);
     const loadingNews = useSelector(selectNewsLoading, shallowEqual);
     const categories = useSelector(selectCategories, shallowEqual);
+    const memoizedNewsList = useMemo(() => newsList, [newsList]);
 
     useEffect(() => {
-        if (projects.length === 0) {
+        if (!projects.length) {
             dispatch(fetchAllProjects());
         }
-        if (newsList.length === 0) {
+        if (!newsList.length && !loadingNews) {
             dispatch(fetchAllNews());
         }
-        if (categories.length === 0) {
+        if (!categories.length) {
             dispatch(fetchCategories());
         }
     }, [dispatch]);
+
+    if (!projects.length || loadingNews) {
+        return <Loader />;
+    }
 
     return (
         <div className={styles.projectsPage}>
@@ -44,7 +50,7 @@ export const ProjectsPage = () => {
             </div>
             <div className={styles.sidebarContainer}>
                 <Sidebar
-                    newsList={newsList}
+                    newsList={memoizedNewsList}
                     loading={loadingNews}
                     categories={categories}
                 />
@@ -52,3 +58,4 @@ export const ProjectsPage = () => {
         </div>
     );
 };
+export default ProjectsPage;

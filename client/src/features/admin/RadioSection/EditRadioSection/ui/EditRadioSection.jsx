@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './EditRadioSection.module.scss';
 import { useDispatch } from 'react-redux';
 import { updateRadio, fetchAllRadio } from '@entities/radio/model/radioSlice';

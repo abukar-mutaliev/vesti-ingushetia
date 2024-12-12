@@ -1,14 +1,13 @@
-import { useEffect, useState } from 'react';
+import {  useState } from 'react';
 import useSound from 'use-sound';
 import qala from '../assets/qala.mp3';
 import { AiFillPlayCircle, AiFillPauseCircle } from 'react-icons/ai';
 import { BiSkipNext, BiSkipPrevious } from 'react-icons/bi';
 import { IconContext } from 'react-icons';
-import styles from './RadioPlayer.module.scss';
 
 export const RadioPlayer = () => {
     const [isPlaying, setIsPlaying] = useState(false);
-    const [play, { pause, duration, sound }] = useSound(qala);
+    const [play, { pause}] = useSound(qala);
     const playingButton = () => {
         if (isPlaying) {
             pause();

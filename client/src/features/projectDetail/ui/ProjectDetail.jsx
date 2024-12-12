@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FaEye } from 'react-icons/fa';
 import { VideoPlayer } from '@shared/ui/VideoPlayer';
@@ -25,7 +25,6 @@ export const ProjectDetail = ({ project }) => {
     );
 
     const processedContent = useMemo(() => {
-        // Очистка контента
         let sanitizedContent = DOMPurify.sanitize(content, {
             ALLOWED_TAGS: [
                 'b',
@@ -43,10 +42,8 @@ export const ProjectDetail = ({ project }) => {
             ALLOWED_ATTR: ['href', 'src', 'alt', 'style'],
         });
 
-        // Применение функции для выделения ключевых слов
         sanitizedContent = highlightKeywordsInHtml(sanitizedContent, '');
 
-        // Дополнительная очистка после обработки
         sanitizedContent = DOMPurify.sanitize(sanitizedContent);
 
         return sanitizedContent;

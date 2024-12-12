@@ -1,9 +1,4 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import {
-    updateTvProgram,
-    fetchAllTvPrograms,
-} from '@entities/tvProgram/model/tvProgramSlice';
+import { useState } from 'react';
 import { Sidebar } from '@features/admin/Sidebar';
 import { NewsSection } from '@features/admin/NewsSection';
 import { UsersSection } from '@features/admin/UsersSection';
@@ -25,6 +20,9 @@ import { AddVideoAdSection } from '@features/admin/VideoAdSection/AddVideoAdSect
 import { ProjectsSection } from '@features/admin/ProjectsSection';
 import { AddProjectSection } from '@features/admin/ProjectsSection/AddProjectSection';
 import { EditProjectSection } from '@features/admin/ProjectsSection/EditProjectSection';
+import { useSelector } from 'react-redux';
+import { selectIsAdmin } from '@entities/user/auth/model/authSelectors.js';
+import { useNavigate } from 'react-router-dom';
 
 export const AdminDashboard = () => {
     const [activeSection, setActiveSection] = useState('news');
@@ -39,6 +37,14 @@ export const AdminDashboard = () => {
     const [videoAdToEdit, setVideoAdToEdit] = useState(null);
     const [projectToEdit, setProjectToEdit] = useState(null);
     const [isAddingProject, setIsAddingProject] = useState(false);
+    const isAdmin = useSelector(selectIsAdmin);
+    const navigate = useNavigate();
+
+
+    if(!isAdmin) {
+        navigate('/login');
+
+    }
 
     const handleSectionChange = (section) => {
         setNewsToEdit(null);
@@ -55,6 +61,7 @@ export const AdminDashboard = () => {
         setIsAddingProject(false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
 
     const renderSection = () => {
         if (isAddingNews) {

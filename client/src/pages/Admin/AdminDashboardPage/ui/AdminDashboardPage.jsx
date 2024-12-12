@@ -8,7 +8,7 @@ import {
     selectUserAuth,
 } from '@entities/user/auth/model/authSelectors.js';
 
-export const AdminDashboardPage = () => {
+const AdminDashboardPage = () => {
     const isAuthenticated = useSelector(selectUserAuth);
     const isAdmin = useSelector(selectIsAdmin);
     const rehydrated = useSelector((state) => state._persist?.rehydrated);
@@ -28,3 +28,4 @@ export const AdminDashboardPage = () => {
 
     return <AdminDashboard />;
 };
+export default AdminDashboardPage;

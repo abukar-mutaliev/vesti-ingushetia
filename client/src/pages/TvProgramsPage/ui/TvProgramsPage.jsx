@@ -1,10 +1,10 @@
-import React from 'react';
 import { TvProgramList } from '@features/tvProgramList/ui/TvProgramList';
 
-export const TvProgramsPage = () => {
+const TvProgramsPage = () => {
     return (
         <div>
             <TvProgramList />
         </div>
     );
 };
+export default TvProgramsPage;

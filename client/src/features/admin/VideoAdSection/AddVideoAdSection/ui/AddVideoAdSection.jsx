@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './AddVideoAdSection.module.scss';
 import { useDispatch } from 'react-redux';
 import {
@@ -94,7 +94,7 @@ export const AddVideoAdSection = ({ onSave, onCancel }) => {
                     value={newTitle}
                     onChange={(e) => {
                         setNewTitle(e.target.value);
-                        setErrors((prev) => ({ ...prev, title: '' })); // Убираем ошибку при изменении поля
+                        setErrors((prev) => ({ ...prev, title: '' }));
                     }}
                 />
                 {errors.title && <p className={styles.error}>{errors.title}</p>}

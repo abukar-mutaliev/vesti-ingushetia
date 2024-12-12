@@ -1,56 +1,54 @@
-
-
 .logo {
-  font-size: 30px;
-  font-weight: bold;
-  color: $primary-color-header;
-  font-family: "Russia", Arial, sans-serif;
-  height: 80px;
-  line-height: 80px;
-
-  a {
-    text-decoration: none;
+    font-size: 30px;
+    font-weight: bold;
     color: $primary-color-header;
+    font-family: 'Russia', Arial, sans-serif;
+    height: 80px;
     line-height: 80px;
-    transition:
+
+    a {
+        text-decoration: none;
+        color: $primary-color-header;
+        line-height: 80px;
+        transition:
             0.5s ease,
             transform 0.5s ease;
 
-    &:hover {
-      color: #dddddd;
+        &:hover {
+            color: #dddddd;
+        }
     }
-  }
 
-  span {
-    background-color: $primary-color-header;
-    color: $primary-background-header;
-    padding: 0 4px;
-    margin-left: 5px;
-    text-align: center;
-    border-radius: 2px;
-    font-size: 25px;
-    transition:
+    span {
+        background-color: $primary-color-header;
+        color: $primary-background-header;
+        padding: 0 4px;
+        margin-left: 5px;
+        text-align: center;
+        border-radius: 2px;
+        font-size: 25px;
+        transition:
             0.5s ease,
             transform 0.5s ease;
 
-    &:hover {
-      background: #dddddd;
+        &:hover {
+            background: #dddddd;
+        }
     }
-  }
 }
 @media screen and (max-width: 920px) {
-  .logo {
-    font-size: 20px;
-    width: 25%;
-    height: 50px;
-    line-height: 50px;
-    span {
-      font-size: 17px;
+    .logo {
+        font-size: 20px;
+        width: 25%;
+        height: 50px;
+        line-height: 50px;
+        span {
+            font-size: 17px;
+        }
     }
-  }
 }
 @media screen and (max-width: 720px) {
-  .logo {
-    font-size: 20px;
-  }
+    .logo {
+        font-size: 20px;
+    }
 }

@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './AddProjectSection.module.scss';
-import { useDispatch, useSelector } from 'react-redux';
-import { selectCategories } from '@entities/categories/model/categorySelectors.js';
+import { useDispatch } from 'react-redux';
 import { fetchCategories } from '@entities/categories/model/categorySlice.js';
 import {
     createProject,

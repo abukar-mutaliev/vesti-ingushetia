@@ -1,70 +1,72 @@
 .adItem {
-  margin-bottom: 15px;
-  position: relative;
-  border-radius: 8px;
-  overflow: hidden;
-  cursor: pointer;
-  width: 100%;
-  height: 200px;
+    margin-bottom: 15px;
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    width: 100%;
+    height: 200px;
 }
 
 .adLink {
-  text-decoration: none;
-  display: block;
-  width: 100%;
-  height: 100%;
-  position: relative;
-  color: white;
-  z-index: 1;
+    text-decoration: none;
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    color: white;
+    z-index: 1;
 }
 
 .adImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
 }
 
 .adItem:hover .adImage {
-  transform: scale(1.05);
+    transform: scale(1.05);
 }
 
 .playButton {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #ffffff;
-  opacity: 0.8;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  z-index: 2;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ffffff;
+    opacity: 0.8;
+    transition:
+        opacity 0.3s ease,
+        transform 0.3s ease;
+    z-index: 2;
 
-  &:hover {
-    color: #0044cc;
-    transform: translate(-50%, -50%) scale(1.1);
-  }
+    &:hover {
+        color: #0044cc;
+        transform: translate(-50%, -50%) scale(1.1);
+    }
 
-  svg {
-    cursor: pointer;
-  }
+    svg {
+        cursor: pointer;
+    }
 }
 
 .adOverlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 10px;
-  box-sizing: border-box;
-  pointer-events: none;
-  z-index: 3;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    box-sizing: border-box;
+    pointer-events: none;
+    z-index: 3;
 }
 
 .adTitle {
-  font-size: 1rem;
-  line-height: 1.3;
-  color: white;
-  margin: 0;
-  pointer-events: all;
+    font-size: 1rem;
+    line-height: 1.3;
+    color: white;
+    margin: 0;
+    pointer-events: all;
 }

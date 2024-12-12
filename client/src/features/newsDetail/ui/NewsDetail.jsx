@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import styles from './NewsDetail.module.scss';
 import { Link } from 'react-router-dom';
 import { FaEye } from 'react-icons/fa';
-import { VideoPlayer } from '@shared/ui/VideoPlayer';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllNews } from '@entities/news/model/newsSlice.js';
 import { SocialIcons } from '@shared/ui/SocialIcons';
@@ -12,8 +11,9 @@ import { fetchCommentsForNews } from '@entities/comments/model/commentsSlice.js'
 import DOMPurify from 'dompurify';
 import { Loader } from '@shared/ui/Loader/index.js';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
+import defaultImage from '@assets/default.jpg';
 
-export const NewsDetail = React.memo(
+export const NewsDetail = memo(
     ({ news, loading, newsId, userId, authorName }) => {
         const dispatch = useDispatch();
         const comments = useSelector(selectCommentsByNewsId(newsId));
@@ -29,22 +29,9 @@ export const NewsDetail = React.memo(
             return <Loader />;
         }
 
-        const { firstImage, firstVideo, otherMediaFiles } = useMemo(() => {
-            let firstImage = null;
-            let firstVideo = null;
-            const otherMediaFiles = [];
-
-            for (const media of news.mediaFiles || []) {
-                if (!firstVideo && media.type === 'video') {
-                    firstVideo = media;
-                } else if (!firstImage && media.type === 'image') {
-                    firstImage = media;
-                } else {
-                    otherMediaFiles.push(media);
-                }
-            }
-
-            return { firstImage, firstVideo, otherMediaFiles };
+        const otherMediaFiles = useMemo(() => {
+            const media = news.mediaFiles || [];
+            return media.filter((m) => m.type !== 'video');
         }, [news.mediaFiles]);
 
         const processedContent = useMemo(() => {
@@ -53,6 +40,40 @@ export const NewsDetail = React.memo(
             content = DOMPurify.sanitize(content);
             return content;
         }, [news.content]);
+
+        const getVideoEmbedUrl = (videoUrl) => {
+            if (!videoUrl) return null;
+
+            const isYouTube =
+                videoUrl.includes('youtube.com/watch?v=') ||
+                videoUrl.includes('youtu.be/');
+            if (isYouTube) {
+                let videoId = '';
+                if (videoUrl.includes('watch?v=')) {
+                    const urlObj = new URL(videoUrl);
+                    videoId = urlObj.searchParams.get('v');
+                } else {
+                    const parts = videoUrl.split('/');
+                    videoId = parts.pop();
+                }
+                return `https://www.youtube.com/embed/${videoId}`;
+            }
+
+            const isRutube = videoUrl.includes('rutube.ru/video/');
+            if (isRutube) {
+                const parts = videoUrl.split('/').filter(Boolean);
+                const videoId = parts[parts.length - 1];
+                return `https://rutube.ru/play/embed/${videoId}`;
+            }
+            return null;
+        };
+
+        const videoMedia = useMemo(() => {
+            const media = news.mediaFiles || [];
+            return media.find((m) => m.type === 'video');
+        }, [news.mediaFiles]);
+
+        const embedUrl = getVideoEmbedUrl(videoMedia?.url);
 
         return (
             <div className={styles.newsDetail}>
@@ -81,23 +102,29 @@ export const NewsDetail = React.memo(
                     </div>
                 </div>
 
-                {firstVideo ? (
+                {embedUrl ? (
                     <div className={styles.videoWrapper}>
-                        <VideoPlayer
-                            videoUrl={firstVideo.url}
-                            posterUrl={firstImage?.url || ''}
-                        />
+                        <iframe
+                            width="560"
+                            height="315"
+                            src={embedUrl}
+                            frameBorder="0"
+                            allowFullScreen
+                            title="Видео"
+                        ></iframe>
                     </div>
                 ) : (
-                    firstImage && (
+                    otherMediaFiles.length > 0 && otherMediaFiles[0]?.url ? (
                         <div className={styles.imageWrapper}>
                             <img
-                                src={firstImage.url}
+                                src={otherMediaFiles[0].url}
                                 alt={news.title}
                                 className={styles.newsImage}
+                                loading="lazy"
+                                onError={(e) => (e.target.src = defaultImage)}
                             />
                         </div>
-                    )
+                    ) : null
                 )}
 
                 <div className={styles.newsContentWrapper}>
@@ -111,35 +138,22 @@ export const NewsDetail = React.memo(
                         />
 
                         <div className={styles.otherMediaWrapper}>
-                            {otherMediaFiles.map((media) => {
-                                if (media.type === 'image') {
-                                    return (
-                                        <div
-                                            key={media.id}
-                                            className={styles.imageWrapper}
-                                        >
-                                            <img
-                                                src={media.url}
-                                                alt={news.title}
-                                                className={styles.newsImage}
-                                            />
-                                        </div>
-                                    );
-                                } else if (media.type === 'video') {
-                                    return (
-                                        <div
-                                            key={media.id}
-                                            className={styles.videoWrapper}
-                                        >
-                                            <VideoPlayer
-                                                videoUrl={media.url}
-                                                posterUrl={media.poster || ''}
-                                            />
-                                        </div>
-                                    );
-                                } else {
-                                    return null;
-                                }
+                            {otherMediaFiles.slice(embedUrl ? 0 : 1).map((media) => {
+                                return (
+                                    <div
+                                        key={media.id}
+                                        className={styles.imageWrapper}
+                                    >
+                                        <img
+                                            src={media.url}
+                                            alt={news.title}
+                                            className={styles.newsImage}
+                                            onError={(e) =>
+                                                (e.target.src = defaultImage)
+                                            }
+                                        />
+                                    </div>
+                                );
                             })}
                         </div>
                     </div>

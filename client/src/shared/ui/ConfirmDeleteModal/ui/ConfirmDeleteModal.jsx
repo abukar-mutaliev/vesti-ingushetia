@@ -1,4 +1,3 @@
-import React from 'react';
 import Modal from 'react-modal';
 import styles from './ConfirmDeleteModal.module.scss';
 
@@ -6,7 +5,6 @@ export const ConfirmDeleteModal = ({
     isOpen,
     onClose,
     onConfirm,
-    title,
     description,
 }) => {
     return (

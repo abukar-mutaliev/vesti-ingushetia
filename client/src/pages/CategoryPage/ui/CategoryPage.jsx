@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import  { useEffect, useState, useCallback } from 'react';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { fetchNewsByCategory } from '@entities/categories/model/categorySlice.js';
 import { Sidebar } from '../../../widgets/Sidebar';
@@ -16,16 +16,17 @@ import {
 import { fetchAllNews } from '@entities/news/model/newsSlice.js';
 import ReactPaginate from 'react-paginate';
 
-export const CategoryPage = () => {
+const CategoryPage = () => {
     const { categoryId } = useParams();
     const dispatch = useDispatch();
 
-    const newsByCategory = useSelector((state) =>
-        selectNewsByCategory(state, categoryId),
+    const newsByCategory = useSelector(
+        (state) => selectNewsByCategory(state, categoryId),
+        shallowEqual,
     );
-    const loading = useSelector(selectNewsLoading);
-    const categories = useSelector(selectCategories);
-    const newsList = useSelector(selectNewsList);
+    const categories = useSelector(selectCategories, shallowEqual);
+    const newsList = useSelector(selectNewsList, shallowEqual);
+    const loading = useSelector(selectNewsLoading, shallowEqual);
 
     const currentCategory = categories.find(
         (cat) => cat.id === parseInt(categoryId),
@@ -49,12 +50,15 @@ export const CategoryPage = () => {
         if (newsList.length === 0) {
             dispatch(fetchAllNews());
         }
+
         dispatch(fetchNewsByCategory(categoryId));
     }, [dispatch, categoryId, newsList.length]);
 
     useEffect(() => {
         setCurrentPage(0);
     }, [categoryId]);
+
+    const isLoading = loading || !categories.length || !newsList.length;
 
     return (
         <div className={styles.categoryPage}>
@@ -92,11 +96,16 @@ export const CategoryPage = () => {
                     />
                 )}
             </div>
-            <Sidebar
-                newsList={newsList}
-                categories={categories}
-                loading={loading}
-            />
+
+            {!isLoading && (
+                <Sidebar
+                    newsList={newsList}
+                    categories={categories}
+                    loading={loading}
+                />
+            )}
         </div>
     );
 };
+
+export default CategoryPage;

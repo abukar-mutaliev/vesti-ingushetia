@@ -1,6 +1,6 @@
 import api from '@app/providers/store/apiClient';
 
-const API_URL = 'http://localhost:5000/api/program';
+const API_URL = `${import.meta.env.VITE_API_URL}/program`;
 
 export const fetchTvProgramsApi = async () => api.get(`${API_URL}/all`);
 

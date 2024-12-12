@@ -1,105 +1,107 @@
 .editRadioSection {
-  padding: 20px;
-  background-color: #f5f5f5;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 90%;
-  margin: 3% auto;
+    padding: 20px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 90%;
+    margin: 3% auto;
 
-  @media (max-width: 768px) {
-    padding: 10px;
-    margin-top: 20%;
-  }
-
-  h2 {
-    margin-bottom: 20px;
-  }
-
-  label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-  }
-
-  input, textarea {
-    width: 95%;
-    padding: 10px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    margin-bottom: 20px;
-  }
-
-  textarea {
-    height: 100px;
-  }
-
-  .audioItem {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-
-    audio {
-      width: 200px;
-    }
-  }
-
-  .audioPreview {
-    margin-top: 10px;
-    font-style: italic;
-  }
-
-  .deleteButton {
-    border: none;
-    color: black;
-    padding: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-
-    &:hover {
-      color: rgba(255, 0, 0, 1);
+    @media (max-width: 768px) {
+        padding: 10px;
+        margin-top: 20%;
     }
 
-    svg {
-      width: 20px;
-      height: 20px;
-    }
-  }
-
-  .buttons {
-    display: flex;
-    justify-content: flex-start;
-    gap: 15px;
-    .saveButton {
-      background-color: #4caf50;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-
-      &:hover {
-        background-color: #388e3c;
-      }
+    h2 {
+        margin-bottom: 20px;
     }
 
-    .cancelButton {
-      background-color: #f44336;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-
-      &:hover {
-        background-color: #616161;
-      }
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
     }
-  }
-  .error {
-    color: #f44336;
-    font-size: 14px;
-    margin-top: -10px;
-  }
+
+    input,
+    textarea {
+        width: 95%;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        margin-bottom: 20px;
+    }
+
+    textarea {
+        height: 100px;
+    }
+
+    .audioItem {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+
+        audio {
+            width: 200px;
+        }
+    }
+
+    .audioPreview {
+        margin-top: 10px;
+        font-style: italic;
+    }
+
+    .deleteButton {
+        border: none;
+        color: black;
+        padding: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+
+        &:hover {
+            color: rgba(255, 0, 0, 1);
+        }
+
+        svg {
+            width: 20px;
+            height: 20px;
+        }
+    }
+
+    .buttons {
+        display: flex;
+        justify-content: flex-start;
+        gap: 15px;
+        .saveButton {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+
+            &:hover {
+                background-color: #388e3c;
+            }
+        }
+
+        .cancelButton {
+            background-color: #f44336;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+
+            &:hover {
+                background-color: #616161;
+            }
+        }
+    }
+    .error {
+        color: #f44336;
+        font-size: 14px;
+        margin-top: -10px;
+        padding: 20px;
+    }
 }

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearSuccess } from '@entities/user/auth/model/authSlice';
 import { selectAuthSuccess } from '@entities/user/auth/model/authSelectors';

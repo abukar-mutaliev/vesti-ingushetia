@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './EditProjectSection.module.scss';
 import { useDispatch } from 'react-redux';
 import { fetchCategories } from '@entities/categories/model/categorySlice.js';

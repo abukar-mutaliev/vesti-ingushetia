@@ -1,85 +1,86 @@
 .editVideoAdSection {
-  max-width: 800px;
-  margin: 5% auto;
-  padding: 20px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #f9f9f9;
+    max-width: 800px;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f9f9f9;
 }
 
 .editForm {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-
-  label {
-    font-weight: bold;
-    color: #333;
-  }
-
-  input[type='text'], textarea {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 14px;
-  }
-
-  textarea {
-    resize: vertical;
-  }
-
-  .fileInput {
-    display: inline-block;
-  }
-
-  .videoPreview {
-    margin-top: 15px;
-    video {
-      width: 100%;
-      border-radius: 4px;
-    }
-  }
-.setExpirationDate {
-  width: 60%;
-  .calendar {
-    cursor: pointer;
-    padding-left: 10px;
-  }
-}
-  .buttons {
     display: flex;
-    justify-content: space-between;
-    gap: 10px;
+    flex-direction: column;
+    gap: 15px;
 
-    .saveButton {
-      background-color: #4caf50;
-      color: #fff;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      &:hover {
-        background-color: #388e3c;
-      }
+    label {
+        font-weight: bold;
+        color: #333;
     }
 
-    .cancelButton {
-      background-color: #f44336;
-      color: #fff;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      &:hover {
-        background-color: #d32f2f;
-      }
+    input[type='text'],
+    textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
     }
-  }
+
+    textarea {
+        resize: vertical;
+    }
+
+    .fileInput {
+        display: inline-block;
+    }
+
+    .videoPreview {
+        margin-top: 15px;
+        video {
+            width: 100%;
+            border-radius: 4px;
+        }
+    }
+    .setExpirationDate {
+        width: 60%;
+        .calendar {
+            cursor: pointer;
+            padding-left: 10px;
+        }
+    }
+    .buttons {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+
+        .saveButton {
+            background-color: #4caf50;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            &:hover {
+                background-color: #388e3c;
+            }
+        }
+
+        .cancelButton {
+            background-color: #f44336;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            &:hover {
+                background-color: #d32f2f;
+            }
+        }
+    }
 }
 
 .error {
-  color: #f44336;
-  font-size: 14px;
-  margin-top: -10px;
+    color: #f44336;
+    font-size: 14px;
+    margin-top: -10px;
 }

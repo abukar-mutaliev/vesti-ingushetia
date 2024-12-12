@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { addComment } from '@entities/comments/model/commentsSlice';
 import styles from './AddCommentForm.module.scss';
-import {
-    selectUser,
-    selectUserAuth,
-} from '@entities/user/auth/model/authSelectors.js';
+import { selectUser } from '@entities/user/auth/model/authSelectors.js';
 import {
     selectCommentsError,
     selectCommentsLoading,
 } from '@entities/comments/model/commentSelectors.js';
+import DOMPurify from 'dompurify';
 
 export const AddCommentForm = React.memo(({ newsId }) => {
     const dispatch = useDispatch();
@@ -49,10 +47,12 @@ export const AddCommentForm = React.memo(({ newsId }) => {
             setError(newError);
             return;
         }
+        const sanitizedComment = DOMPurify.sanitize(commentText);
+
         dispatch(
             addComment({
                 newsId,
-                content: commentText,
+                content: sanitizedComment,
                 authorName: user ? user.username : authorName,
                 userId: user ? user.id : null,
             }),
@@ -86,7 +86,7 @@ export const AddCommentForm = React.memo(({ newsId }) => {
                 rows="4"
             />
             {error.comment && <p className={styles.error}>{error.comment}</p>}
-            <button type="submit" disabled={loading}>
+            <button className={styles.submitButton} type="submit" disabled={loading}>
                 {loading ? 'Отправка...' : 'Отправить'}
             </button>
         </form>

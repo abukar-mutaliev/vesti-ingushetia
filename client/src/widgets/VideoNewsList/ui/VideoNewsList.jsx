@@ -1,4 +1,3 @@
-import React from 'react';
 import styles from './VideoNewsList.module.scss';
 import { NewsCard } from '@widgets/NewsCard/index.js';
 

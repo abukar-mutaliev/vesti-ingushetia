@@ -1,30 +1,30 @@
 .editorContainer {
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 8px;
 }
 
 .toolbar {
-  margin-bottom: 8px;
-  button {
-    margin-right: 4px;
-    padding: 4px 8px;
-    cursor: pointer;
-    border: 1px solid #ddd;
-    background-color: #f9f9f9;
-  }
+    margin-bottom: 8px;
+    button {
+        margin-right: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+        border: 1px solid #ddd;
+        background-color: #f9f9f9;
+    }
 }
 
 .editor {
-  min-height: 200px;
-  padding: 8px;
-  font-size: 16px;
-  line-height: 1.5;
-  border: none;
-  outline: none;
+    min-height: 200px;
+    padding: 8px;
+    font-size: 16px;
+    line-height: 1.5;
+    border: none;
+    outline: none;
 }
 
 img {
-  max-width: 100%;
-  height: auto;
+    max-width: 100%;
+    height: auto;
 }

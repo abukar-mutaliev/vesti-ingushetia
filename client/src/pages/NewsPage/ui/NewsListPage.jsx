@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import styles from './NewsPage.module.scss';
 import { NewsList } from '@features/newsList';
 import { CustomCalendar } from '@widgets/Calendar/';
@@ -11,9 +11,8 @@ import {
 } from '@entities/news/model/newsSlice.js';
 import { selectNewsList } from '@entities/news/model/newsSelectors.js';
 import { selectCategories } from '@entities/categories/model/categorySelectors.js';
-import { ScrollToTop } from '@shared/lib/ScrollToTop/ScrollToTop.js';
 
-export const NewsListPage = () => {
+const NewsListPage = () => {
     const dispatch = useDispatch();
     const selectedDate = useSelector((state) => state.news.selectedDate);
     const newsList = useSelector(selectNewsList, shallowEqual);
@@ -63,3 +62,4 @@ export const NewsListPage = () => {
         </div>
     );
 };
+export default NewsListPage;

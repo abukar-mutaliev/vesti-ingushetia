@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styles from './UserProfile.module.scss';
 import {
@@ -9,7 +9,6 @@ import {
 } from '@entities/user/auth/model/authSlice';
 import {
     selectIsAdmin,
-    selectUser,
     selectUserAuth,
     selectUserReplies,
 } from '@entities/user/auth/model/authSelectors';
@@ -25,7 +24,7 @@ Modal.setAppElement('#root');
 export const UserProfile = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { user, loading, error } = useSelector((state) => state.auth);
+    const { user, loading } = useSelector((state) => state.auth);
     const replies = useSelector(selectUserReplies);
     const fileInputRef = useRef(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
