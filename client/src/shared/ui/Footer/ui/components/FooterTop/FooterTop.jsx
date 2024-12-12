@@ -1,4 +1,3 @@
-import React from 'react';
 import styles from './FooterTop.module.scss';
 import { FooterLogo } from '../FooterLogo/FooterLogo';
 import { FooterNav } from '../FooterNav/FooterNav';

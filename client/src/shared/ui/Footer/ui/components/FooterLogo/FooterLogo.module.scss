@@ -1,5 +1,15 @@
 .footerLogo {
-  .logo {
-    width: 150px;
-  }
+    @media (max-width: 1068px) {
+        display: flex;
+        gap: 30px;
+    }
+    @media (max-width: 960px) {
+        gap: 100px;
+    }
+    @media (max-width: 760px) {
+        justify-content: space-between;
+    }
+    .logo {
+        width: 150px;
+    }
 }

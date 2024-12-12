@@ -1,4 +1,3 @@
-import React from 'react';
 import styles from './Sidebar.module.scss';
 
 export const Sidebar = ({ onSectionChange }) => {
@@ -12,6 +11,12 @@ export const Sidebar = ({ onSectionChange }) => {
                 <li onClick={() => onSectionChange('comments')}>Комментарии</li>
                 <li onClick={() => onSectionChange('categories')}>Категории</li>
                 <li onClick={() => onSectionChange('users')}>Пользователи</li>
+                <li onClick={() => onSectionChange('radio')}>Радио</li>
+                <li onClick={() => onSectionChange('projects')}>Проекты</li>
+                <li onClick={() => onSectionChange('tvPrograms')}>
+                    Телепередачи
+                </li>
+                <li onClick={() => onSectionChange('videoAd')}>Видеореклама</li>
             </ul>
         </div>
     );

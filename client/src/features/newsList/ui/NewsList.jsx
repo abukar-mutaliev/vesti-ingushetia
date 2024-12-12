@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { setPage } from '@entities/news/model/newsSlice';
 import {
@@ -36,6 +36,10 @@ export const NewsList = React.memo(
         const handlePageClick = useCallback(
             ({ selected }) => {
                 dispatch(setPage(selected));
+                if (newsListRef.current) {
+                    const topOffset = newsListRef.current.offsetTop - 150;
+                    window.scrollTo({ top: topOffset, behavior: 'smooth' });
+                }
             },
             [dispatch],
         );
@@ -50,17 +54,19 @@ export const NewsList = React.memo(
             if (!dateString) return 'ВСЕ НОВОСТИ';
             const date = new Date(dateString);
             return `НОВОСТИ ЗА ${date
-                .toLocaleDateString('ru-RU', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                })
-                .toUpperCase()}`;
+            .toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+            })
+            .toUpperCase()}`;
         }, []);
+
+        const newsListRef = useRef(null);
 
         return (
             <div className={styles.newsListContainer}>
-                <div className={styles.newsList}>
+                <div className={styles.newsList} ref={newsListRef}>
                     <h3>{formatDate(selectedDate)}</h3>
                     {currentNewsList.length > 0 ? (
                         currentNewsList.map((news) => (

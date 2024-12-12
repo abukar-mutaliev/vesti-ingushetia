@@ -1,6 +1,4 @@
 import { combineReducers } from 'redux';
-import { persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
 
 import authorReducer from '@entities/authors/model/authorSlice';
 import categoryReducer from '@entities/categories/model/categorySlice.js';
@@ -9,12 +7,11 @@ import searchReducer from '@features/search/model/searchSlice';
 import videoSliderReducer from '@entities/videos/model/videoSliderSlice.js';
 import commentReducer from '@entities/comments/model/commentsSlice.js';
 import authReducer from '@entities/user/auth/model/authSlice.js';
-
-const persistConfig = {
-    key: 'root',
-    storage,
-    whitelist: ['news', 'categories', 'comments', 'authors'],
-};
+import radioReducer from '@entities/radio/model/radioSlice.js';
+import tvProgramReducer from '@entities/tvProgram/model/tvProgramSlice.js';
+import videoAdReducer from '@entities/videoAd/model/videoAdSlice.js';
+import projectsReducer from '@entities/projects/model/projectSlice.js';
+import errorReducer from './errorSlice';
 
 const rootReducer = combineReducers({
     auth: authReducer,
@@ -24,6 +21,11 @@ const rootReducer = combineReducers({
     news: newsReducer,
     search: searchReducer,
     videoSlider: videoSliderReducer,
+    radio: radioReducer,
+    tvProgram: tvProgramReducer,
+    videoAd: videoAdReducer,
+    projects: projectsReducer,
+    error: errorReducer,
 });
 
-export default persistReducer(persistConfig, rootReducer);
+export default rootReducer;

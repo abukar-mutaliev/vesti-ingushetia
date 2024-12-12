@@ -1,56 +1,104 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaPlayCircle } from 'react-icons/fa';
 import defaultImage from '@assets/default.jpg';
 import styles from './NewsCard.module.scss';
 
 export const NewsCardSidebar = React.memo(({ item }) => {
-    const video = item.mediaFiles?.find((media) => media.type === 'video');
-    const image = item.mediaFiles?.find((media) => media.type === 'image');
-    const hasVideo = Boolean(video);
+    const [posterError, setPosterError] = useState(false);
+    const [imageError, setImageError] = useState(false);
 
-    return (
-        <li className={styles.newsItem}>
-            <Link to={`/news/${item.id}`} className={styles.newsLink}>
-                {image ? (
-                    <img
-                        src={`http://localhost:5000/${image.url}`}
-                        alt={item.title}
-                        className={styles.newsImage}
-                    />
-                ) : hasVideo ? (
+    const videoMedia = useMemo(() => {
+        return item.mediaFiles?.find((media) => media.type === 'video') || null;
+    }, [item.mediaFiles]);
+
+    const imageMedia = useMemo(() => {
+        return item.mediaFiles?.find((media) => media.type === 'image') || null;
+    }, [item.mediaFiles]);
+
+    const videoPosterUrl = useMemo(() => {
+        return videoMedia?.poster?.url || null;
+    }, [videoMedia]);
+
+    const imageUrl = useMemo(() => {
+        return imageMedia?.url || null;
+    }, [imageMedia]);
+
+    const hasVideoWithPoster = useMemo(
+        () => Boolean(videoMedia && videoPosterUrl && !posterError),
+        [videoMedia, videoPosterUrl, posterError],
+    );
+
+    const hasImage = useMemo(
+        () => Boolean(imageUrl && !imageError),
+        [imageUrl, imageError],
+    );
+
+    const mediaElement = useMemo(() => {
+        if (hasVideoWithPoster) {
+            return (
+                <Link to={`/news/${item.id}`} className={styles.newsLink}>
                     <div className={styles.videoContainer}>
-                        <video
-                            src={`http://localhost:5000/${video.url}`}
+                        <img
+                            src={videoPosterUrl}
+                            alt={item.title}
                             className={styles.newsImage}
-                            preload="metadata"
-                            onLoadedMetadata={(e) => {
-                                e.target.currentTime = 0;
-                                e.target.pause();
-                            }}
+                            onError={() => setPosterError(true)}
+                            loading="lazy"
                         />
                         <div className={styles.playButton}>
-                            <FaPlayCircle size={50} />
+                            <FaPlayCircle size={30} />
                         </div>
                     </div>
-                ) : (
+                </Link>
+            );
+        } else if (hasImage) {
+            return (
+                <Link to={`/news/${item.id}`} className={styles.newsLink}>
+                    <div className={styles.videoContainer}>
+                        <img
+                            src={imageUrl}
+                            alt={item.title}
+                            className={styles.newsImage}
+                            onError={() => setImageError(true)}
+                            loading="lazy"
+                        />
+                        {videoMedia && (
+                            <div className={styles.playButton}>
+                                <FaPlayCircle size={30} />
+                            </div>
+                        )}
+                    </div>
+                </Link>
+            );
+        } else {
+            return (
+                <Link to={`/news/${item.id}`} className={styles.newsLink}>
                     <img
                         src={defaultImage}
                         alt={item.title}
                         className={styles.newsImage}
+                        loading="lazy"
                     />
-                )}
+                </Link>
+            );
+        }
+    }, [
+        hasVideoWithPoster,
+        videoPosterUrl,
+        item.id,
+        item.title,
+        hasImage,
+        imageUrl,
+        videoMedia,
+    ]);
 
-                {hasVideo && (
-                    <div className={styles.playButton}>
-                        <FaPlayCircle size={50} />
-                    </div>
-                )}
-
-                <div className={styles.newsOverlay}>
-                    <p className={styles.newsTitle}>{item.title}</p>
-                </div>
-            </Link>
+    return (
+        <li className={styles.newsItem}>
+            {mediaElement}
+            <div className={styles.newsOverlay}>
+                <p className={styles.newsTitle}>{item.title}</p>
+            </div>
         </li>
     );
 });

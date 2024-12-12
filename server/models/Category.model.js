@@ -1,15 +1,19 @@
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-    const Category = sequelize.define('Category', {
-        name: {
-            type: DataTypes.STRING,
-            allowNull: false,
+    const Category = sequelize.define(
+        'Category',
+        {
+            name: {
+                type: DataTypes.STRING,
+                allowNull: false,
+            },
         },
-    }, {
-        tableName: 'categories',
-        timestamps: true,
-    });
+        {
+            tableName: 'categories',
+            timestamps: true,
+        },
+    );
 
     Category.associate = (models) => {
         Category.hasMany(models.News, {

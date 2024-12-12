@@ -1,6 +1,3 @@
-@import '../../../shared/styles/variables';
-@import '../../../shared/styles/mixins';
-
 .sidebar {
     background-color: $primary-background;
     padding: 10px;
@@ -9,8 +6,14 @@
     max-width: 25rem;
     position: relative;
 
+    @media screen and (max-width: 1244px) {
+        max-width: 25rem;
+    }
+    @media (max-width: 968px) {
+        max-width: 30rem;
+    }
     @media (max-width: 568px) {
-        width: 100%;
+        width: 90%;
         margin: auto;
     }
 }

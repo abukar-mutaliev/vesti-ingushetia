@@ -11,48 +11,84 @@ export const MainNews = React.memo(() => {
     const latestNews = useSelector(selectLatestNews, shallowEqual);
 
     if (!latestNews) {
-        return <div>Новостей нет</div>;
+        return <div className={styles.mainNews}>Новостей нет</div>;
     }
 
-    const imageUrl = latestNews.mediaFiles?.find(
-        (media) => media.type === 'image',
-    )?.url;
-    const videoUrl = latestNews.mediaFiles?.find(
-        (media) => media.type === 'video',
-    )?.url;
+    const getVideoPoster = () => {
+        const videoMedia = latestNews.mediaFiles?.find(
+            (media) => media.type === 'video'
+        );
+
+        if (videoMedia && videoMedia.poster) {
+            return videoMedia.poster.url;
+        }
+
+        return null;
+    };
+
+    const getFirstImage = () => {
+        const imageMedia = latestNews.mediaFiles?.find(
+            (media) => media.type === 'image'
+        );
+        return imageMedia ? imageMedia.url : null;
+    };
+
+    const posterUrl = getVideoPoster();
+    const imageUrl = getFirstImage();
 
     const rawContent =
         latestNews.content.split('. ').slice(0, 2).join('. ') + '.';
 
-    const sanitizedContent = DOMPurify.sanitize(rawContent);
+    let sanitizedContent = DOMPurify.sanitize(rawContent);
 
-    const contentPreview = highlightKeywordsInHtml(sanitizedContent, '');
+    let highlightedContent = highlightKeywordsInHtml(sanitizedContent, '');
+
+    highlightedContent = DOMPurify.sanitize(highlightedContent);
 
     return (
-        <div className={styles.mainNews}>
-            <Link
-                to={`/news/${latestNews.id}`}
-                state={{ news: latestNews }}
-                className={styles.mainNewsLink}
+        <div className={styles.mainNewsContainer}>
+
+            <Link className={styles.mainNews}
+                  to={`/news/${latestNews.id}`}
             >
-                {imageUrl ? (
-                    <div className={styles.imageWrapper}>
-                        <img
-                            src={`http://localhost:5000/${imageUrl}`}
-                            alt={latestNews.title}
-                            className={styles.mainNewsImage}
-                        />
-                        {videoUrl && (
+                <div
+
+                    className={styles.mainNewsLink}
+                >
+                    {posterUrl ? (
+                        <div className={styles.imageWrapper}>
+                            <img
+                                src={posterUrl}
+                                alt={latestNews.title}
+                                className={styles.mainNewsImage}
+                            />
                             <div className={styles.playButton}>
                                 <FaPlayCircle size={70} />
                             </div>
-                        )}
-                    </div>
-                ) : (
-                    videoUrl && (
+                        </div>
+                    ) : imageUrl ? (
+                        <div className={styles.imageWrapper}>
+                            <img
+                                src={imageUrl}
+                                alt={latestNews.title}
+                                className={styles.mainNewsImage}
+                            />
+                            {latestNews.mediaFiles?.some(
+                                (media) => media.type === 'video'
+                            ) && (
+                                <div className={styles.playButton}>
+                                    <FaPlayCircle size={70} />
+                                </div>
+                            )}
+                        </div>
+                    ) : latestNews.mediaFiles?.some(
+                        (media) => media.type === 'video'
+                    ) ? (
                         <div className={styles.videoWrapper}>
                             <video
-                                src={`http://localhost:5000/${videoUrl}`}
+                                src={latestNews.mediaFiles.find(
+                                    (media) => media.type === 'video'
+                                ).url}
                                 className={styles.mainNewsVideo}
                                 preload="metadata"
                             />
@@ -60,30 +96,33 @@ export const MainNews = React.memo(() => {
                                 <FaPlayCircle size={70} />
                             </div>
                         </div>
-                    )
-                )}
-            </Link>
-            <div className={styles.mainNewsContent}>
-                <h2 className={styles.mainNewsTitle}>
-                    <Link
-                        to={`/news/${latestNews.id}`}
-                        state={{ news: latestNews }}
-                        className={styles.mainNewsTitleLink}
-                    >
-                        {latestNews.title}
-                    </Link>
-                </h2>
-                <div className={styles.mainNewsDescription}>
-                    {contentPreview}
+                    ) : (
+                        <div className={styles.placeholder}>
+                            <FaPlayCircle size={70} />
+                        </div>
+                    )}
                 </div>
-                <Link
-                    to={`/news/${latestNews.id}`}
-                    state={{ news: latestNews }}
-                    className={styles.readMoreButton}
-                >
-                    Читать полностью
-                </Link>
-            </div>
+                <div className={styles.mainNewsContent}>
+                    <h2 className={styles.mainNewsTitle}>
+                        <div
+                            to={`/news/${latestNews.id}`}
+                            className={styles.mainNewsTitleLink}
+                        >
+                            {latestNews.title}
+                        </div>
+                    </h2>
+                    <div
+                        className={styles.mainNewsDescription}
+                        dangerouslySetInnerHTML={{ __html: highlightedContent }}
+                    />
+                    <div
+                        to={`/news/${latestNews.id}`}
+                        className={styles.readMoreButton}
+                    >
+                        Читать полностью
+                    </div>
+                </div>
+            </Link>
         </div>
     );
 });

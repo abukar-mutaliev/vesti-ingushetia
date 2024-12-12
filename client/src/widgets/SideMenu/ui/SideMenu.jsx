@@ -1,4 +1,3 @@
-import React from 'react';
 import styles from './SideMenu.module.scss';
 import { CategoryList } from '@entities/categories/index.js';
 

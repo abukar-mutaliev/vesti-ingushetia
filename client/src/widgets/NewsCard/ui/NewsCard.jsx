@@ -4,11 +4,12 @@ import styles from './NewsCard.module.scss';
 import { FaPlayCircle } from 'react-icons/fa';
 import defaultImage from '@assets/default.jpg';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
+import DOMPurify from 'dompurify';
 
 export const NewsCard = React.memo(
     ({ news, showDate, showContent, keywords = '' }) => {
         const [imageError, setImageError] = useState(false);
-        const [videoError, setVideoError] = useState(false);
+        const [posterError, setPosterError] = useState(false);
 
         const formattedDate = useMemo(() => {
             return new Date(news.createdAt).toLocaleDateString('ru-RU', {
@@ -18,69 +19,74 @@ export const NewsCard = React.memo(
             });
         }, [news.createdAt]);
 
+        const imageMedia = useMemo(() => {
+            return news.mediaFiles?.find((media) => media.type === 'image') || null;
+        }, [news.mediaFiles]);
+
+        const videoMedia = useMemo(() => {
+            return news.mediaFiles?.find((media) => media.type === 'video') || null;
+        }, [news.mediaFiles]);
+
+        const videoPosterUrl = useMemo(() => {
+            return videoMedia?.poster?.url || null;
+        }, [videoMedia]);
+
         const imageUrl = useMemo(() => {
-            return (
-                news.mediaFiles?.find((media) => media.type === 'image')?.url ||
-                null
-            );
-        }, [news.mediaFiles]);
+            return imageMedia?.url || null;
+        }, [imageMedia]);
 
-        const videoUrl = useMemo(() => {
-            return (
-                news.mediaFiles?.find((media) => media.type === 'video')?.url ||
-                null
-            );
-        }, [news.mediaFiles]);
+        const hasVideoWithPoster = useMemo(
+            () => Boolean(videoMedia && videoPosterUrl && !posterError),
+            [videoMedia, videoPosterUrl, posterError],
+        );
 
-        const hasVideo = useMemo(
-            () => Boolean(videoUrl && !videoError),
-            [videoUrl, videoError],
+        const hasImage = useMemo(
+            () => Boolean(imageUrl && !imageError),
+            [imageUrl, imageError],
         );
 
         const mediaElement = useMemo(() => {
-            if (imageUrl && !imageError) {
+            if (hasVideoWithPoster) {
                 return (
                     <Link
                         to={`/news/${news.id}`}
                         state={{ id: news.id }}
                         className={styles.imageLink}
                     >
-                        <img
-                            src={`http://localhost:5000/${imageUrl}`}
-                            alt={news.title}
-                            className={styles.newsImage}
-                            onError={() => setImageError(true)}
-                        />
-                        {hasVideo && (
+                        <div className={styles.videoWrapper}>
+                            <img
+                                src={videoPosterUrl}
+                                alt={news.title}
+                                className={styles.newsImage}
+                                onError={() => setPosterError(true)}
+                            />
                             <div className={styles.playButton}>
                                 <FaPlayCircle size={50} />
                             </div>
-                        )}
+                        </div>
                     </Link>
                 );
-            } else if (videoUrl && !videoError) {
+            } else if (hasImage) {
                 return (
-                    <div className={styles.videoContainer}>
-                        <Link to={`/news/${news.id}`} state={{ id: news.id }}>
-                            <div className={styles.videoWrapper}>
-                                <video
-                                    className={styles.newsVideo}
-                                    src={`http://localhost:5000/${videoUrl}`}
-                                    controls={false}
-                                    muted
-                                    preload="metadata"
-                                    onError={() => setVideoError(true)}
-                                    onLoadedMetadata={(e) => {
-                                        e.target.currentTime = 0;
-                                        e.target.pause();
-                                    }}
-                                />
-                                <div className={styles.playButtonOverlay}>
+                    <Link
+                        to={`/news/${news.id}`}
+                        state={{ id: news.id }}
+                        className={styles.imageLink}
+                    >
+                        <div className={styles.videoWrapper}>
+                            <img
+                                src={imageUrl}
+                                alt={news.title}
+                                className={styles.newsImage}
+                                onError={() => setImageError(true)}
+                            />
+                            {videoMedia && (
+                                <div className={styles.playButton}>
                                     <FaPlayCircle size={50} />
                                 </div>
-                            </div>
-                        </Link>
-                    </div>
+                            )}
+                        </div>
+                    </Link>
                 );
             } else {
                 return (
@@ -98,23 +104,34 @@ export const NewsCard = React.memo(
                 );
             }
         }, [
-            imageUrl,
-            videoUrl,
-            imageError,
-            videoError,
-            hasVideo,
+            hasVideoWithPoster,
+            videoPosterUrl,
             news.id,
             news.title,
+            hasImage,
+            imageUrl,
+            videoMedia,
         ]);
 
         const processedContent = useMemo(() => {
+            let contentToProcess;
             if (showContent) {
-                return highlightKeywordsInHtml(news.content, keywords);
+                contentToProcess = news.content;
             } else {
-                const preview =
+                contentToProcess =
                     news.content.split('. ').slice(0, 1).join('. ') + '.';
-                return highlightKeywordsInHtml(preview, keywords);
             }
+
+            let sanitizedContent = DOMPurify.sanitize(contentToProcess);
+
+            let highlightedContent = highlightKeywordsInHtml(
+                sanitizedContent,
+                keywords,
+            );
+
+            highlightedContent = DOMPurify.sanitize(highlightedContent);
+
+            return highlightedContent;
         }, [news.content, showContent, keywords]);
 
         return (
@@ -127,9 +144,12 @@ export const NewsCard = React.memo(
                         state={{ id: news.id }}
                     >
                         <h2 className={styles.title}>{news.title}</h2>
-                        <div className={styles.content}>
-                            {processedContent}{' '}
-                        </div>
+                        <div
+                            className={styles.content}
+                            dangerouslySetInnerHTML={{
+                                __html: processedContent,
+                            }}
+                        />
                         {showDate && (
                             <span className={styles.date}>{formattedDate}</span>
                         )}

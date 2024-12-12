@@ -1,7 +1,6 @@
-import React from 'react';
 import styles from './AboutUsPage.module.scss';
 
-export const AboutUsPage = () => {
+const AboutUsPage = () => {
     return (
         <div className={styles.aboutUsPage}>
             <div className={styles.container}>
@@ -60,3 +59,4 @@ export const AboutUsPage = () => {
         </div>
     );
 };
+export default AboutUsPage;

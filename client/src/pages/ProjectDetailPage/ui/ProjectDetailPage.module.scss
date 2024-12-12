@@ -1,0 +1,80 @@
+.projectDetailPage {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    background-color: $primary-background;
+    margin-top: 8%;
+    align-items: normal;
+
+    @media (max-width: 868px) {
+        width: 100%;
+    }
+    .mainContent {
+        @media (max-width: 768px) {
+            flex-direction: column;
+            width: 70%;
+            margin-top: 0;
+            gap: 0;
+        }
+    }
+    .notFound {
+        margin-top: 10%;
+    }
+    .projectDetailPageContainer {
+        display: flex;
+        width: 100%;
+        max-width: 1200px;
+        gap: 2rem;
+
+        @media (max-width: 768px) {
+            flex-direction: column;
+            gap: 1rem;
+        }
+    }
+
+    .sidebarContainer {
+        flex: 1;
+        max-width: 300px;
+
+        @media (max-width: 768px) {
+            display: none;
+        }
+    }
+
+    .videoSliderContainer {
+        width: 100%;
+        margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+    }
+
+    .projectCardContainer {
+        width: 100%;
+        margin-top: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: $primary-color;
+        }
+
+        .projectGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 52rem;
+
+            @media (max-width: 768px) {
+                grid-template-columns: 1fr;
+            }
+        }
+    }
+    p {
+        max-width: 90%;
+    }
+}

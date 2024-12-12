@@ -1,280 +1,366 @@
-const { posix } = require("path");
-const { Op } = require("sequelize");
+require('dotenv').config();
+const { Op } = require('sequelize');
 const {
-  News,
-  User,
-  Category,
-  Comment,
-  Tag,
-  Media,
-  Author,
-  sequelize,
-} = require("../models");
+    News,
+    User,
+    Category,
+    Comment,
+    Media,
+    Author,
+    sequelize,
+} = require('../models');
+const fs = require('fs');
+const baseUrl = process.env.BASE_URL;
+
+const path = require('path');
+
+const formatMediaUrls = (newsItems) => {
+    return newsItems.map((item) => {
+        const newsObj = item.toJSON();
+        newsObj.mediaFiles = newsObj.mediaFiles.map((media) => {
+            const mediaObj = { ...media };
+
+            if (/^https?:\/\//i.test(mediaObj.url)) {
+                mediaObj.url = mediaObj.url;
+            } else {
+                mediaObj.url = mediaObj.url.startsWith(baseUrl)
+                    ? mediaObj.url
+                    : `${baseUrl}/${mediaObj.url}`;
+            }
+
+            return mediaObj;
+        });
+        return newsObj;
+    });
+};
+
+
 
 exports.getAllNews = async (req, res) => {
-  try {
-    const news = await News.findAll({
-      order: [["createdAt", "DESC"]],
-      include: [
-        { model: User, as: "authorDetails" },
-        { model: Category, as: "category" },
-        { model: Comment, as: "comments" },
-        { model: Tag, as: "tags" },
-        { model: Media, as: "mediaFiles" },
-        { model: Author, as: "author" },
-      ],
-    });
-    res.json(news);
-  } catch (err) {
-    res
-      .status(500)
-      .json({ error: `Ошибка получения новостей: ${err.message}` });
-  }
+    try {
+        const news = await News.findAll({
+
+            order: [['createdAt', 'DESC']],
+            include: [
+                { model: User, as: 'authorDetails' },
+                { model: Category, as: 'category' },
+                { model: Comment, as: 'comments' },
+                { model: Author, as: 'author' },
+                {
+                    model: Media,
+                    as: 'mediaFiles',
+                },
+            ],
+        });
+
+        const modifiedNews = formatMediaUrls(news);
+        console.log('Response data:', modifiedNews);
+
+        res.json(modifiedNews);
+    } catch (err) {
+        res.status(500).json({
+            error: `Ошибка получения новостей: ${err.message}`,
+        });
+    }
 };
 
 exports.getNewsById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const news = await News.findByPk(id, {
-      include: [
-        { model: Category, as: "category" },
-        { model: User, as: "authorDetails" },
-        { model: Comment, as: "comments" },
-        { model: Tag, as: "tags" },
-        { model: Media, as: "mediaFiles" },
-        { model: Author, as: "author", attributes: ["id", "name", "bio"] },
-      ],
-    });
-    if (!news) return res.status(404).json({ message: "Новость не найдена" });
+    try {
+        const { id } = req.params;
+        const news = await News.findByPk(id, {
+            include: [
+                { model: Category, as: 'category' },
+                { model: User, as: 'authorDetails' },
+                { model: Comment, as: 'comments' },
+                {
+                    model: Media,
+                    as: 'mediaFiles',
+                },
+                {
+                    model: Author,
+                    as: 'author',
+                    attributes: ['id', 'name', 'bio'],
+                },
+            ],
+        });
+        if (!news)
+            return res.status(404).json({ message: 'Новость не найдена' });
 
-    await news.increment("views");
-    res.json(news);
-  } catch (err) {
-    res.status(500).json({ error: `Ошибка получения новости: ${err.message}` });
-  }
+        await news.increment('views');
+
+        const modifiedNews = formatMediaUrls([news])[0];
+        console.log('Response data:', modifiedNews);
+
+        res.json(modifiedNews);
+    } catch (err) {
+        res.status(500).json({
+            error: `Ошибка получения новости: ${err.message}`,
+        });
+    }
 };
 
-exports.getAllVideos = async (req, res) => {
-  try {
-    const videos = await Media.findAll({
-      where: { type: "video" },
-      include: [
-        {
-          model: News,
-          as: "news",
-        },
-      ],
-    });
-    res.json(videos);
-  } catch (err) {
-    res.status(500).json({ error: `Ошибка получения видео: ${err.message}` });
-  }
-};
 
 exports.getNewsByDate = async (req, res) => {
-  try {
-    const { date } = req.query;
+    try {
+        const { date } = req.query;
 
-    if (!date) {
-      return res.status(400).json({ error: "Не указана дата." });
+        const startOfDay = new Date(date);
+        startOfDay.setUTCHours(0, 0, 0, 0);
+        const endOfDay = new Date(date);
+        endOfDay.setUTCHours(23, 59, 59, 999);
+
+        const news = await News.findAll({
+            where: { createdAt: { [Op.between]: [startOfDay, endOfDay] } },
+            include: [
+                { model: User, as: 'authorDetails' },
+                { model: Category, as: 'category' },
+                { model: Comment, as: 'comments' },
+                { model: Media, as: 'mediaFiles' },
+                { model: Author, as: 'author' },
+            ],
+        });
+
+        if (!news || news.length === 0)
+            return res
+            .status(404)
+            .json({ message: 'Новости на эту дату не найдены.' });
+
+        const modifiedNews = formatMediaUrls(news);
+        res.json(modifiedNews);
+    } catch (err) {
+        res.status(500).json({
+            error: `Ошибка получения новостей по дате: ${err.message}`,
+        });
     }
-
-    const startOfDay = new Date(date);
-    startOfDay.setUTCHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(date);
-    endOfDay.setUTCHours(23, 59, 59, 999);
-
-    const news = await News.findAll({
-      where: {
-        createdAt: {
-          [Op.between]: [startOfDay, endOfDay],
-        },
-      },
-      include: [
-        { model: User, as: "authorDetails" },
-        { model: Category, as: "category" },
-        { model: Comment, as: "comments" },
-        { model: Tag, as: "tags" },
-        { model: Media, as: "mediaFiles" },
-        { model: Author, as: "author" },
-      ],
-    });
-
-    if (!news || news.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "Новости на эту дату не найдены." });
-    }
-
-    res.json(news);
-  } catch (err) {
-    res
-      .status(500)
-      .json({ error: `Ошибка получения новостей по дате: ${err.message}` });
-  }
 };
+
 exports.createNews = async (req, res) => {
-  const { title, content, categoryId } = req.body;
-  const mediaFiles = req.files;
-
-  const authorId = req.user.id;
-
-  if (!title) {
-    return res.status(400).json({ error: "Пожалуйста, заполните заголовок" });
-  }
-
-  if (!content) {
-    return res
-      .status(400)
-      .json({ error: "Пожалуйста, заполните поле с содержанием новости" });
-  }
-
-  if (!authorId) {
-    return res
-      .status(400)
-      .json({ error: "Не указан пользователь, добавивший новость" });
-  }
-
-  const categoryExists = await Category.findByPk(categoryId);
-  if (!categoryExists) {
-    return res.status(400).json({ error: "Категория не существует." });
-  }
-
-  let transaction;
-  try {
-    transaction = await sequelize.transaction();
-
-    const news = await News.create(
-      {
-        title,
-        content,
-        authorId,
-        categoryId,
-      },
-      { transaction }
-    );
-
-    if (mediaFiles) {
-      const mediaInstances = [];
-
-      if (mediaFiles.images) {
-        for (let file of mediaFiles.images) {
-          const media = await Media.create({
-            url: posix.join("uploads", "images", file.filename),
-            type: "image",
-          });
-          mediaInstances.push(media);
-        }
-      }
-
-      if (mediaFiles.videos) {
-        for (let file of mediaFiles.videos) {
-          const media = await Media.create({
-            url: posix.join("uploads", "videos", file.filename),
-            type: "video",
-          });
-          mediaInstances.push(media);
-        }
-      }
-
-      await news.addMediaFiles(mediaInstances, { transaction });
-    }
-
-    await transaction.commit();
-    res.status(201).json(news);
-  } catch (err) {
-    if (transaction) await transaction.rollback();
-    res.status(500).json({ error: `Ошибка создания новости: ${err.message}` });
-  }
-};
-
-exports.updateNews = async (req, res) => {
-  const { id } = req.params;
-  const { title, content, categoryId, tags } = req.body;
-  const mediaFiles = req.files;
-
-  const authorId = req.user.id;
-
-  if (!title || !content) {
-    return res
-      .status(400)
-      .json({ error: "Пожалуйста, заполните заголовок и содержание" });
-  }
-
-  try {
-    const news = await News.findByPk(id, {
-      include: [{ model: Media, as: "mediaFiles" }],
-    });
-
-    if (!news) {
-      return res.status(404).json({ error: "Новость не найдена" });
-    }
-
-    const categoryExists = await Category.findByPk(categoryId);
-    if (!categoryExists) {
-      return res.status(400).json({ error: "Категория не существует." });
-    }
+    const { title, content, categoryId, videoUrl  } = req.body;
+    const mediaFiles = req.files;
+    const authorId = req.user.id;
 
     let transaction;
     try {
-      transaction = await sequelize.transaction();
+        transaction = await sequelize.transaction();
 
-      await news.update(
-        {
-          title,
-          content,
-          categoryId,
-          authorId,
-        },
-        { transaction }
-      );
+        const news = await News.create(
+            { title, content, authorId, categoryId },
+            { transaction },
+        );
 
-      if (mediaFiles && (mediaFiles.images || mediaFiles.videos)) {
         const mediaInstances = [];
 
-        if (mediaFiles.images) {
-          for (let file of mediaFiles.images) {
-            const media = await Media.create({
-              url: posix.join("uploads", "images", file.filename),
-              type: "image",
-            });
-            mediaInstances.push(media);
-          }
+        if (mediaFiles && mediaFiles.images) {
+            for (let file of mediaFiles.images) {
+                const imageUrl = path.posix.join(
+                    'uploads',
+                    'images',
+                    file.filename
+                );
+                const media = await Media.create(
+                    {
+                        url: imageUrl,
+                        type: 'image',
+                    },
+                    { transaction },
+                );
+                mediaInstances.push(media);
+            }
         }
 
-        if (mediaFiles.videos) {
-          for (let file of mediaFiles.videos) {
-            const media = await Media.create({
-              url: posix.join("uploads", "videos", file.filename),
-              type: "video",
-            });
+        if (videoUrl ) {
+            const media = await Media.create(
+                {
+                    url: videoUrl ,
+                    type: 'video',
+                },
+                { transaction },
+            );
             mediaInstances.push(media);
-          }
         }
 
-        await news.setMediaFiles(mediaInstances, { transaction });
-      }
+        if (mediaInstances.length > 0) {
+            await news.addMediaFiles(mediaInstances, { transaction });
+        }
 
-      await transaction.commit();
-      res.status(200).json({ message: "Новость успешно обновлена", news });
+        await transaction.commit();
+        res.status(201).json(news);
     } catch (err) {
-      if (transaction) await transaction.rollback();
-      res
-        .status(500)
-        .json({ error: `Ошибка обновления новости: ${err.message}` });
+        if (transaction) await transaction.rollback();
+        console.error('Ошибка создания новости:', err);
+        res.status(500).json({
+            error: `Ошибка создания новости: ${err.message}`,
+        });
     }
-  } catch (err) {
-    res.status(500).json({ error: `Ошибка: ${err.message}` });
-  }
+};
+exports.updateNews = async (req, res) => {
+    const { id } = req.params;
+    const { title, content, categoryId, videoUrl, existingMedia } = req.body;
+    const mediaFiles = req.files;
+    const authorId = req.user.id;
+
+    try {
+        const news = await News.findByPk(id, {
+            include: [{ model: Media, as: 'mediaFiles' }],
+        });
+        if (!news) return res.status(404).json({ error: 'Новость не найдена' });
+
+        let transaction;
+        try {
+            transaction = await sequelize.transaction();
+
+            await news.update(
+                { title, content, categoryId, authorId },
+                { transaction },
+            );
+
+            const existingMediaIds = JSON.parse(existingMedia || '[]');
+
+            const mediaToDelete = news.mediaFiles.filter(
+                (media) => !existingMediaIds.includes(media.id)
+            );
+
+            for (let media of mediaToDelete) {
+                if (media.type === 'image' || media.type === 'audio') {
+                    const mediaPath = path.join(__dirname, '../../', media.url.replace(/\/+/g, path.sep));
+                    fs.unlink(mediaPath, (err) => {
+                        if (err) {
+                            console.error('Ошибка удаления медиафайла:', err);
+                        }
+                    });
+                }
+            }
+
+            await Media.destroy({
+                where: { id: mediaToDelete.map((media) => media.id), type: { [Op.ne]: 'video' } },
+                transaction,
+            });
+
+            const mediaInstances = [];
+            if (mediaFiles && mediaFiles.images) {
+                for (let file of mediaFiles.images) {
+                    const imageUrl = path.posix.join(
+                        'uploads',
+                        'images',
+                        file.filename
+                    );
+                    const media = await Media.create(
+                        {
+                            url: imageUrl,
+                            type: 'image',
+                        },
+                        { transaction },
+                    );
+                    mediaInstances.push(media);
+                }
+            }
+
+            const existingVideo = news.mediaFiles.find((m) => m.type === 'video');
+
+            if (videoUrl && videoUrl.trim() !== '') {
+                if (existingVideo) {
+                    await existingVideo.update({ url: videoUrl.trim() }, { transaction });
+                } else {
+                    const newVideo = await Media.create(
+                        {
+                            url: videoUrl.trim(),
+                            type: 'video',
+                        },
+                        { transaction },
+                    );
+                    mediaInstances.push(newVideo);
+                }
+            } else {
+                if (existingVideo) {
+                    await news.removeMediaFiles(existingVideo, { transaction });
+                    await Media.destroy({
+                        where: { id: existingVideo.id },
+                        transaction,
+                    });
+                }
+            }
+
+            if (mediaInstances.length > 0) {
+                await news.addMediaFiles(mediaInstances, { transaction });
+            }
+
+            await transaction.commit();
+
+            const updatedNews = await News.findByPk(id, {
+                include: [{ model: Media, as: 'mediaFiles' }],
+            });
+
+            const modifiedNews = formatMediaUrls([updatedNews])[0];
+
+            res.status(200).json({
+                message: 'Новость успешно обновлена',
+                news: modifiedNews,
+            });
+        } catch (err) {
+            if (transaction) await transaction.rollback();
+            console.error('Ошибка обновления новости:', err);
+            res.status(500).json({
+                error: `Ошибка обновления новости: ${err.message}`,
+            });
+        }
+    } catch (err) {
+        console.error('Внешняя ошибка:', err);
+        res.status(500).json({ error: `Ошибка: ${err.message}` });
+    }
 };
 
 exports.deleteNews = async (req, res) => {
-  try {
-    const { id } = req.params;
-    await News.destroy({ where: { id } });
-    res.json({ message: "Новость удалена" });
-  } catch (err) {
-    res.status(500).json({ error: `Ошибка удаления новости${err}` });
-  }
+    try {
+        const { id } = req.params;
+        const news = await News.findByPk(id, {
+            include: [{ model: Media, as: 'mediaFiles' }],
+        });
+
+        if (!news) {
+            return res.status(404).json({ error: 'Новость не найдена' });
+        }
+
+        const transaction = await sequelize.transaction();
+
+        try {
+            for (let media of news.mediaFiles) {
+                const mediaPath = path.resolve(__dirname, '../../', media.url);
+                try {
+                    await fs.promises.unlink(mediaPath);
+                } catch (err) {
+                    if (err.code === 'ENOENT') {
+                        console.warn(`Файл для удаления не найден: ${mediaPath}`);
+                    } else {
+                        console.error('Ошибка удаления медиафайла:', err);
+                        throw err;
+                    }
+                }
+            }
+
+            const mediaIds = news.mediaFiles.map(media => media.id);
+            if (mediaIds.length > 0) {
+                await Media.destroy({
+                    where: { id: mediaIds },
+                    transaction,
+                });
+            }
+
+            await news.destroy({ transaction });
+
+            await transaction.commit();
+
+            return res.json({ message: 'Новость успешно удалена.' });
+        } catch (err) {
+            await transaction.rollback();
+            console.error('Ошибка при удалении новости:', err);
+            return res.status(500).json({
+                error: `Ошибка удаления новости: ${err.message}`,
+            });
+        }
+    } catch (err) {
+        console.error('Внутренняя ошибка сервера:', err);
+        return res.status(500).json({
+            error: `Внутренняя ошибка сервера: ${err.message}`,
+        });
+    }
 };

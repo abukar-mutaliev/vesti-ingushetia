@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import styles from './NewsPage.module.scss';
 import { NewsList } from '@features/newsList';
 import { CustomCalendar } from '@widgets/Calendar/';
@@ -12,7 +12,7 @@ import {
 import { selectNewsList } from '@entities/news/model/newsSelectors.js';
 import { selectCategories } from '@entities/categories/model/categorySelectors.js';
 
-export const NewsListPage = () => {
+const NewsListPage = () => {
     const dispatch = useDispatch();
     const selectedDate = useSelector((state) => state.news.selectedDate);
     const newsList = useSelector(selectNewsList, shallowEqual);
@@ -31,6 +31,7 @@ export const NewsListPage = () => {
     const handleResetDate = () => {
         dispatch(filterNewsByDate(null));
         dispatch(setPage(0));
+        window.scrollTo(0, 0);
     };
 
     const newsDates = newsList.map((news) =>
@@ -42,6 +43,7 @@ export const NewsListPage = () => {
             <div className={styles.newsContent}>
                 <NewsList selectedDate={selectedDate} />
                 <div className={styles.sidebarContainer}>
+                    <p>Архивные новости</p>
                     <CustomCalendar
                         onDateChange={handleDateChange}
                         newsDates={newsDates}
@@ -60,3 +62,4 @@ export const NewsListPage = () => {
         </div>
     );
 };
+export default NewsListPage;

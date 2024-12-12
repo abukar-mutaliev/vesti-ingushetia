@@ -1,61 +1,105 @@
 import axios from 'axios';
-
+import Cookies from 'js-cookie';
 import { refreshToken } from '@entities/user/auth/model/authSlice';
+import { setError } from '../store/errorSlice';
 
-const API_URL = 'http://localhost:5000/api';
+let storeInstance;
+
+export const setStore = (_store) => {
+    storeInstance = _store;
+};
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const api = axios.create({
     baseURL: API_URL,
     withCredentials: true,
 });
 
-let isRefreshing = false;
+let isCsrfTokenLoading = false;
+let csrfToken = null;
 let failedQueue = [];
 
-const processQueue = (error, token = null) => {
-    failedQueue.forEach((prom) => {
-        if (error) {
-            prom.reject(error);
-        } else {
-            prom.resolve(token);
+const getCsrfToken = async () => {
+    if (csrfToken) {
+        return csrfToken;
+    }
+
+    if (isCsrfTokenLoading) {
+        return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+        });
+    }
+
+    isCsrfTokenLoading = true;
+
+    try {
+        const response = await axios.get(`${API_URL}/users/csrf-token`, {
+            withCredentials: true,
+        });
+        csrfToken = response.data.csrfToken;
+
+        if (csrfToken) {
+            Cookies.set('csrf-token', csrfToken, {
+                expires: 7,
+                secure: true,
+                sameSite: 'Strict',
+            });
         }
+
+        failedQueue.forEach(({ resolve }) => resolve(csrfToken));
+        failedQueue = [];
+
+        return csrfToken;
+    } catch (error) {
+        failedQueue.forEach(({ reject }) => reject(error));
+        failedQueue = [];
+
+        return null;
+    } finally {
+        isCsrfTokenLoading = false;
+    }
+};
+
+const processQueue = (error) => {
+    failedQueue.forEach(({ resolve, reject }) => {
+        if (error) reject(error);
+        else resolve();
     });
     failedQueue = [];
 };
 
 api.interceptors.request.use(
     async (config) => {
-        const { user } = (await import('./store')).default.getState().auth;
-        if (user && user.token) {
-            config.headers['Authorization'] = `Bearer ${user.token}`;
+        const csrfToken = await getCsrfToken();
+
+        if (csrfToken) {
+            config.headers['x-csrf-token'] = csrfToken;
         }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    },
+    (error) => Promise.reject(error),
 );
 
 api.interceptors.response.use(
-    (response) => {
-        return response;
-    },
+    (response) => response,
     async (error) => {
         const originalRequest = error.config;
+
+        if (error.response?.status === 429) {
+            const retryAfter = error.response.data.retryAfter || error.response.headers['retry-after'] || 60; // секунды
+            storeInstance.dispatch(setError(`${retryAfter} секунд.`));
+
+            return Promise.reject(error);
+        }
 
         if (error.response?.status === 401 && !originalRequest._retry) {
             if (isRefreshing) {
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
                 })
-                    .then((token) => {
-                        originalRequest.headers['Authorization'] =
-                            `Bearer ${token}`;
-                        return api(originalRequest);
-                    })
-                    .catch((err) => {
-                        return Promise.reject(err);
-                    });
+                .then(() => api(originalRequest))
+                .catch((err) => Promise.reject(err));
             }
 
             originalRequest._retry = true;
@@ -63,23 +107,20 @@ api.interceptors.response.use(
 
             try {
                 const store = (await import('./store')).default;
-                const { payload: refreshedUser } =
-                    await store.dispatch(refreshToken());
+                const actionResult = await store.dispatch(refreshToken());
 
-                isRefreshing = false;
-                processQueue(null, refreshedUser.accessToken);
-                originalRequest.headers['Authorization'] =
-                    `Bearer ${refreshedUser.accessToken}`;
-
-                store.dispatch({
-                    type: 'auth/updateUser',
-                    payload: refreshedUser,
-                });
-
-                return api(originalRequest);
+                if (actionResult.meta.requestStatus === 'fulfilled') {
+                    isRefreshing = false;
+                    processQueue(null);
+                    return api(originalRequest);
+                } else {
+                    isRefreshing = false;
+                    processQueue(actionResult.payload);
+                    return Promise.reject(actionResult.payload);
+                }
             } catch (refreshError) {
                 isRefreshing = false;
-                processQueue(refreshError, null);
+                processQueue(refreshError);
                 return Promise.reject(refreshError);
             }
         }

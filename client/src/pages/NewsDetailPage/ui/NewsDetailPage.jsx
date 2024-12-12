@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import styles from './NewsDetailPage.module.scss';
 import { Sidebar } from '@widgets/Sidebar';
 import { NewsDetail } from '@features/newsDetail';
@@ -20,7 +20,7 @@ import { selectCommentsByNewsId } from '@entities/comments/model/commentSelector
 import { fetchCommentsForNews } from '@entities/comments/model/commentsSlice.js';
 import { Loader } from '@shared/ui/Loader/index.js';
 
-export const NewsDetailPage = React.memo(() => {
+const NewsDetailPage = memo(() => {
     const dispatch = useDispatch();
     const { id } = useParams();
     const newsId = id;
@@ -29,7 +29,7 @@ export const NewsDetailPage = React.memo(() => {
     const loadingNews = useSelector(selectNewsLoading, shallowEqual);
     const loadingNewsById = useSelector(selectNewsByIdLoading, shallowEqual);
     const categories = useSelector(selectCategories, shallowEqual);
-    const comments = useSelector(selectCommentsByNewsId(newsId));
+    const comments = useSelector(selectCommentsByNewsId(newsId), shallowEqual);
 
     useEffect(() => {
         if (id && (!currentNews || currentNews.id !== newsId)) {
@@ -63,11 +63,7 @@ export const NewsDetailPage = React.memo(() => {
     }, [id]);
 
     if (!newsList || loadingNewsById) {
-        return (
-            <div>
-                <Loader />
-            </div>
-        );
+        return <Loader />;
     }
 
     return (
@@ -79,18 +75,19 @@ export const NewsDetailPage = React.memo(() => {
                     loading={loadingNewsById}
                     comments={comments}
                 />
-                <div className={styles.sidebarContainer}></div>
-                <Sidebar
-                    newsList={newsList}
-                    loading={loadingNews}
-                    categories={categories}
-                />
+                <div className={styles.sidebarContainer}>
+                    <Sidebar
+                        newsList={newsList}
+                        loading={loadingNews}
+                        categories={categories}
+                    />
+                </div>
             </div>
             <div className={styles.videoSliderContainer}>
                 <VideoSlider />
             </div>
             <div className={styles.newsCardContainer}>
-                <h2>Так же читайте</h2>
+                <h3>Так же читайте</h3>
                 <div className={styles.newsGrid}>
                     {shuffledNewsList.map((newsItem) => (
                         <NewsCardDetailPage key={newsItem.id} news={newsItem} />
@@ -100,3 +97,4 @@ export const NewsDetailPage = React.memo(() => {
         </div>
     );
 });
+export default NewsDetailPage;

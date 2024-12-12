@@ -31,7 +31,6 @@ const searchSlice = createSlice({
             })
             .addCase(fetchSearchResults.fulfilled, (state, action) => {
                 state.loading = false;
-                console.log('API Response:', action.payload);
                 state.searchResults = action.payload;
             })
             .addCase(fetchSearchResults.rejected, (state, action) => {

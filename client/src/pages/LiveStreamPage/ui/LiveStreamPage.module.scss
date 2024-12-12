@@ -1,15 +1,24 @@
 .liveStreamPage {
-  text-align: center;
-  padding: 20px;
-  background-color: #f4f4f4;
+    text-align: center;
+    padding: 20px;
+    background-color: #f4f4f4;
+    margin-top: 15%;
+    width: 100%;
+    max-width: 90rem;
+    height: 80vh;
+    .videoPlayer {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+    }
 }
 
 .liveStreamPageContainer {
-  max-width: 100%;
-  height: auto;
+    max-width: 100%;
+    height: auto;
 }
 
 .liveStreamIframe {
-  max-width: 800px;
-  border: none;
+    max-width: 800px;
+    border: none;
 }

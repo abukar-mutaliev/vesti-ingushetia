@@ -1,7 +1,3 @@
-@import '@shared/styles/variables';
-@import '@shared/styles/mixins';
-
-
 .videoSlider {
     padding: 20px;
     background-color: #0d4c75;
@@ -25,8 +21,11 @@
         width: 100%;
         max-width: 300px;
         overflow: hidden;
-        transition: 0.3s ease, transform 0.3s ease;
+        transition:
+            0.3s ease,
+            transform 0.3s ease;
         padding-left: 15px;
+
         &:hover svg {
             color: $primary-color-hover;
         }
@@ -35,7 +34,6 @@
             width: 100%;
             padding-top: 56.25%;
             overflow: hidden;
-
             img,
             video {
                 position: absolute;
@@ -44,6 +42,10 @@
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
+                transition: transform 0.3s ease;
+                &:hover {
+                    transform: scale(1.05);
+                }
             }
 
             .playButtonOverlay {
@@ -63,11 +65,12 @@
                 color: $primary-background;
                 pointer-events: none;
                 transition: color 0.3s ease-in-out;
-                svg{
-                    transition: 0.3s ease, transform 0.3s ease;
+                svg {
+                    transition:
+                        0.3s ease,
+                        transform 0.3s ease;
                 }
             }
-
         }
 
         .videoInfo {
@@ -80,12 +83,16 @@
                 margin: 0;
                 white-space: nowrap;
                 overflow: hidden;
-                font-family: "RussiaLights", Arial, sans-serif;
+                font-family: 'RussiaLights', Arial, sans-serif;
                 text-overflow: ellipsis;
-                transition: 0.3s ease, transform 0.3s ease;
+                transition:
+                    0.3s ease,
+                    transform 0.3s ease;
                 &:hover {
                     color: $primary-color-hover;
-                    transition: 0.3s ease, transform 0.3s ease;
+                    transition:
+                        0.3s ease,
+                        transform 0.3s ease;
                 }
             }
 
@@ -119,4 +126,10 @@
             color: #ffffff !important;
         }
     }
+}
+.videoSliderNotFound {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    text-align: center;
 }

@@ -1,0 +1,67 @@
+.editTvProgramSection {
+    display: flex;
+    flex-direction: column;
+    max-width: 90%;
+    width: 100%;
+    margin: 3% auto;
+    background: #f5f5f5;
+    padding: 15px;
+
+    @media (max-width: 768px) {
+        margin-top: 15%;
+    }
+    h2 {
+        font-size: 24px;
+        margin-bottom: 15px;
+    }
+    .richTextEditor {
+        padding: 15px 0 15px 0;
+    }
+    .programInput {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        resize: vertical;
+        margin-bottom: 15px;
+    }
+
+    .buttons {
+        display: flex;
+        justify-content: flex-start;
+        margin-top: 10px;
+        .saveButton,
+        .cancelButton {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .saveButton {
+            background-color: #4caf50;
+            color: white;
+
+            &:hover {
+                background-color: #388e3c;
+            }
+        }
+
+        .cancelButton {
+            background-color: #f44336;
+            color: white;
+
+            &:hover {
+                background-color: #d32f2f;
+            }
+        }
+    }
+    .error {
+        color: #f44336;
+        font-size: 14px;
+        margin-top: 10px;
+        margin-bottom: 15px;
+    }
+}

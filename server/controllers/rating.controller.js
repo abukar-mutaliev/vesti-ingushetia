@@ -17,7 +17,7 @@ exports.createRating = async (req, res) => {
         const newRating = await Rating.create({
             userId,
             newsId,
-            rating
+            rating,
         });
         res.status(201).json(newRating);
     } catch (err) {

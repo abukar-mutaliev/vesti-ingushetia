@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { MdSearch, MdClose } from 'react-icons/md';
 import styles from './Header.module.scss';
@@ -73,6 +73,10 @@ export const Header = () => {
         setIsMobileMenuOpen(false);
     };
 
+    const handleOverlayClick = () => {
+        setIsMobileMenuOpen(false);
+    };
+
     return (
         <header className={styles.header}>
             <div
@@ -83,7 +87,10 @@ export const Header = () => {
                 </div>
                 <div className={styles.mobileIcons}>
                     <div
-                        className={`${styles.searchIconMobile} ${location.pathname.includes('/search/results') ? styles.active : ''}`}
+                        className={
+                        `${styles.searchIconMobile}
+                         ${location.pathname.includes('/search/results') ? styles.active : ''}`
+                    }
                         onClick={handleSearchIconClick}
                     >
                         <MdSearch size={30} />
@@ -148,6 +155,39 @@ export const Header = () => {
                         </li>
                         <li>
                             <NavLink
+                                to="/program"
+                                className={({ isActive }) =>
+                                    isActive ? styles.active : ''
+                                }
+                                onClick={handleNavLinkClick}
+                            >
+                                Телепередачи
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink
+                                to="/projects"
+                                className={({ isActive }) =>
+                                    isActive ? styles.active : ''
+                                }
+                                onClick={handleNavLinkClick}
+                            >
+                                Проекты
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink
+                                to="/radio"
+                                className={({ isActive }) =>
+                                    isActive ? styles.active : ''
+                                }
+                                onClick={handleNavLinkClick}
+                            >
+                                Радио
+                            </NavLink>
+                        </li>
+                        <li className={styles.live}>
+                            <NavLink
                                 to="/live"
                                 className={({ isActive }) =>
                                     isActive ? styles.active : ''
@@ -185,6 +225,13 @@ export const Header = () => {
                     <MdSearch size={30} />
                 </div>
             </div>
+
+            {isMobileMenuOpen && (
+                <div
+                    className={styles.overlay}
+                    onClick={handleOverlayClick}
+                ></div>
+            )}
 
             <div
                 className={`${styles.searchOverlay} ${showSearch ? styles.show : styles.hide}`}

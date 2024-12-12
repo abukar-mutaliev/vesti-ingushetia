@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MdSearch } from 'react-icons/md';
@@ -10,10 +10,9 @@ import { selectNewsList } from '@entities/news/model/newsSelectors';
 import { fetchAllNews } from '@entities/news/model/newsSlice.js';
 import { selectCategories } from '@entities/categories/model/categorySelectors.js';
 
-import parse, { domToReact } from 'html-react-parser';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
 
-export const SearchResultsPage = () => {
+const SearchResultsPage = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const location = useLocation();
@@ -95,7 +94,7 @@ export const SearchResultsPage = () => {
             <div className={styles.contentContainer}>
                 <div className={styles.mainContent}>
                     <h1 className={styles.resultsTitle}>
-                        Результаты поиска по запросу: "{initialKeywords}"
+                        Результаты поиска по запросу: {initialKeywords}
                     </h1>
                     <p className={styles.resultsCount}>
                         Найдено результатов: {searchResults.length}
@@ -135,3 +134,5 @@ export const SearchResultsPage = () => {
         </div>
     );
 };
+
+export default SearchResultsPage;

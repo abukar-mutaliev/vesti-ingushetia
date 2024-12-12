@@ -1,4 +1,3 @@
-import React from 'react';
 import styles from './SocialIcons.module.scss';
 import { FaVk, FaTelegramPlane, FaYoutube } from 'react-icons/fa';
 import RuTube from '../../../../assets/ruTube-icon.svg';

@@ -1,34 +1,54 @@
-@import '../../../../shared/styles/variables';
-@import '../../../../shared/styles/mixins';
-
-
 .logo {
-  font-size: 30px;
-  font-weight: bold;
-  color: $primary-color;
-  width: 30%;
-  a {
-    text-decoration: none;
-    color: inherit;
-  }
+    font-size: 30px;
+    font-weight: bold;
+    color: $primary-color-header;
+    font-family: 'Russia', Arial, sans-serif;
+    height: 80px;
+    line-height: 80px;
 
-  span {
-    color: white;
-    background-color: $primary-color;
-    padding: 0 4px;
-    margin-left: 5px;
-    text-align: center;
-    border-radius: 2px;
-  }
+    a {
+        text-decoration: none;
+        color: $primary-color-header;
+        line-height: 80px;
+        transition:
+            0.5s ease,
+            transform 0.5s ease;
+
+        &:hover {
+            color: #dddddd;
+        }
+    }
+
+    span {
+        background-color: $primary-color-header;
+        color: $primary-background-header;
+        padding: 0 4px;
+        margin-left: 5px;
+        text-align: center;
+        border-radius: 2px;
+        font-size: 25px;
+        transition:
+            0.5s ease,
+            transform 0.5s ease;
+
+        &:hover {
+            background: #dddddd;
+        }
+    }
 }
 @media screen and (max-width: 920px) {
-  .logo {
-    font-size: 25px;
-    width: 25%;
-  }
+    .logo {
+        font-size: 20px;
+        width: 25%;
+        height: 50px;
+        line-height: 50px;
+        span {
+            font-size: 17px;
+        }
+    }
 }
 @media screen and (max-width: 720px) {
-  .logo {
-    font-size: 20px;
-  }
+    .logo {
+        font-size: 20px;
+    }
 }

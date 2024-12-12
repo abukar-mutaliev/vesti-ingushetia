@@ -25,8 +25,6 @@ module.exports = {
                 message: 'Unexpected property on console object was called',
             },
         ],
-        'unused-imports/no-unused-imports': 'error',
-        'import/no-unresolved': 'off',
         'import/prefer-default-export': 'off',
         'no-unused-vars': 'off',
         'react/require-default-props': 'off',

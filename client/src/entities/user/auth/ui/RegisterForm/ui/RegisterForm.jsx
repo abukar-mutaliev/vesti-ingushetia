@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -46,12 +46,9 @@ export const RegisterForm = () => {
     useEffect(() => {
         if (success) {
             dispatch(clearSuccess());
+            navigate('/login');
         }
-    }, [success, dispatch]);
-
-    const handleNavigateToLogin = () => {
-        navigate('/login');
-    };
+    }, [success, dispatch, navigate]);
 
     return (
         <div className={styles.container}>

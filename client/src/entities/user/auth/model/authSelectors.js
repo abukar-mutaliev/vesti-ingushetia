@@ -4,32 +4,40 @@ export const selectAuthState = (state) => state.auth;
 
 export const selectUser = createSelector(
     [selectAuthState],
-    (authState) => authState.user,
+    (authState) => authState.user
 );
+
 export const selectUsers = createSelector(
     [selectAuthState],
-    (authState) => authState.userList,
+    (authState) => authState.userList
 );
 
 export const selectUserAuth = createSelector(
     [selectAuthState],
-    (authState) => authState.isAuthenticated,
+    (authState) => authState.isAuthenticated
 );
+
+export const selectIsAdmin = createSelector(
+    [selectAuthState],
+    (authState) => authState.isAdmin
+);
+
 export const selectLoading = createSelector(
     [selectAuthState],
-    (authState) => authState.loading,
+    (authState) => authState.loading
 );
 
 export const selectAuthError = createSelector(
     [selectAuthState],
-    (authState) => authState.error,
+    (authState) => authState.authError
 );
+
 export const selectAuthSuccess = createSelector(
     [selectAuthState],
-    (authState) => authState.success,
+    (authState) => authState.success
 );
-export const selectIsAdmin = createSelector(
+
+export const selectUserReplies = createSelector(
     [selectAuthState],
-    (authState) => authState.isAdmin,
+    (authState) => authState.replies
 );
-export const selectUserReplies = (state) => state.auth.replies;

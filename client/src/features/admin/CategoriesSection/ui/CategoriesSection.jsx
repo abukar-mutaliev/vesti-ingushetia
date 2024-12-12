@@ -24,6 +24,7 @@ export const CategoriesSection = () => {
     const [isEditingCategory, setIsEditingCategory] = useState(false);
     const [categoryToEdit, setCategoryToEdit] = useState(null);
     const [categoryName, setCategoryName] = useState('');
+    const [errors, setErrors] = useState({});
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [categoryIdToDelete, setCategoryIdToDelete] = useState(null);
 
@@ -52,14 +53,38 @@ export const CategoriesSection = () => {
         }
     };
 
+    const validateField = (name, value) => {
+        let error = '';
+
+        if (name === 'categoryName') {
+            if (!value.trim()) {
+                error = 'Название категории обязательно';
+            } else if (value.length < 3) {
+                error =
+                    'Название категории должно содержать не менее 3 символов';
+            }
+        }
+
+        setErrors((prev) => ({ ...prev, [name]: error }));
+        return error === '';
+    };
+
+    const handleCategoryNameChange = (e) => {
+        const { value } = e.target;
+        setCategoryName(value);
+        validateField('categoryName', value);
+    };
+
     const handleAddCategory = () => {
-        if (categoryName.trim() === '') return;
+        if (!validateField('categoryName', categoryName)) return;
+
         dispatch(createCategory({ name: categoryName }))
             .unwrap()
             .then(() => {
                 dispatch(fetchCategories());
                 setIsAddingCategory(false);
                 setCategoryName('');
+                setErrors({});
             });
     };
 
@@ -70,7 +95,8 @@ export const CategoriesSection = () => {
     };
 
     const handleUpdateCategory = () => {
-        if (categoryName.trim() === '') return;
+        if (!validateField('categoryName', categoryName)) return;
+
         dispatch(
             updateCategory({
                 id: categoryToEdit.id,
@@ -83,7 +109,12 @@ export const CategoriesSection = () => {
                 setIsEditingCategory(false);
                 setCategoryToEdit(null);
                 setCategoryName('');
+                setErrors({});
             });
+    };
+
+    const isFormValid = () => {
+        return !errors.categoryName && categoryName.trim().length > 0;
     };
 
     return (
@@ -108,8 +139,11 @@ export const CategoriesSection = () => {
                     <input
                         type="text"
                         value={categoryName}
-                        onChange={(e) => setCategoryName(e.target.value)}
+                        onChange={handleCategoryNameChange}
                     />
+                    {errors.categoryName && (
+                        <p className={styles.error}>{errors.categoryName}</p>
+                    )}
 
                     <div className={styles.buttons}>
                         {isEditingCategory ? (
@@ -117,6 +151,7 @@ export const CategoriesSection = () => {
                                 <button
                                     className={styles.saveButton}
                                     onClick={handleUpdateCategory}
+                                    disabled={!isFormValid()}
                                 >
                                     Сохранить
                                 </button>
@@ -126,6 +161,7 @@ export const CategoriesSection = () => {
                                         setIsEditingCategory(false);
                                         setCategoryToEdit(null);
                                         setCategoryName('');
+                                        setErrors({});
                                     }}
                                 >
                                     Отмена
@@ -136,6 +172,7 @@ export const CategoriesSection = () => {
                                 <button
                                     className={styles.saveButton}
                                     onClick={handleAddCategory}
+                                    disabled={!isFormValid()}
                                 >
                                     Добавить
                                 </button>
@@ -144,6 +181,7 @@ export const CategoriesSection = () => {
                                     onClick={() => {
                                         setIsAddingCategory(false);
                                         setCategoryName('');
+                                        setErrors({});
                                     }}
                                 >
                                     Отмена
@@ -203,7 +241,7 @@ export const CategoriesSection = () => {
                 isOpen={isDeleteModalOpen}
                 onClose={closeDeleteModal}
                 onConfirm={handleConfirmDelete}
-                description="Вы уверены что хотите удалить эту категорию?"
+                description="Вы уверены, что хотите удалить эту категорию?"
             />
         </div>
     );

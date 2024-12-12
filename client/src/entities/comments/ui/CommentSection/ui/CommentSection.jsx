@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useState, useEffect } from 'react';
+import { memo, useCallback, useState, useEffect, useMemo } from 'react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import {
     selectCommentsError,
@@ -9,12 +9,16 @@ import styles from './CommentSection.module.scss';
 import { CommentItem } from '@entities/comments/ui/CommentItem/';
 import { AddCommentForm } from '@features/comments/AddCommentForm/';
 import { fetchCommentsForNews } from '@entities/comments/model/commentsSlice.js';
+import { Loader } from '@shared/ui/Loader/index.js';
+import { selectUserAuth } from '@entities/user/auth/model/authSelectors.js';
 
 export const CommentSection = memo(({ newsId, authorName, userId }) => {
     const dispatch = useDispatch();
     const loading = useSelector(selectCommentsLoading);
     const error = useSelector(selectCommentsError);
-    const comments = useSelector(selectCommentsByNewsId(newsId), shallowEqual);
+    const commentsSelector = useMemo(() => selectCommentsByNewsId(newsId), [newsId]);
+    const comments = useSelector(commentsSelector, shallowEqual);
+    const user = useSelector(selectUserAuth, shallowEqual)
 
     const [isCommentsVisible, setIsCommentsVisible] = useState(false);
     const [showAddComment, setShowAddComment] = useState(false);
@@ -28,28 +32,32 @@ export const CommentSection = memo(({ newsId, authorName, userId }) => {
     }, []);
 
     useEffect(() => {
-        dispatch(fetchCommentsForNews(newsId));
+        if (newsId) {
+            dispatch(fetchCommentsForNews(newsId));
+        }
     }, [dispatch, newsId]);
 
     if (error) {
         return (
-            <p>{`Ошибка загрузки комментариев: ${error.message || error}`}</p>
+            <div className={styles.commentSection}>
+                <p className={styles.error}>
+                    {`Ошибка загрузки комментариев: ${error.message || error}`}
+                </p>
+            </div>
         );
     }
-
-    if (loading) {
-        return <p>Загрузка комментариев...</p>;
-    }
-
     return (
         <div className={styles.commentSection}>
             <button
                 onClick={handleToggleComments}
                 className={styles.toggleButton}
+                aria-expanded={isCommentsVisible}
+                aria-controls="comments-list"
             >
                 Комментарии ({comments.length})
                 <span
                     className={`${styles.arrow} ${isCommentsVisible ? styles.arrowUp : ''}`}
+                    aria-hidden="true"
                 >
                     ▼
                 </span>
@@ -57,10 +65,12 @@ export const CommentSection = memo(({ newsId, authorName, userId }) => {
 
             {isCommentsVisible && (
                 <>
-                    {comments.length === 0 ? (
-                        <p>Комментарии отсутствуют</p>
+                    {loading ? (
+                        <Loader />
+                    ) : comments.length === 0 ? (
+                        <p className={styles.noComments}>Комментарии отсутствуют</p>
                     ) : (
-                        <ul className={styles.commentList}>
+                        <ul className={styles.commentList} id="comments-list">
                             {comments.map((comment) => (
                                 <CommentItem
                                     key={comment.id}
@@ -72,18 +82,32 @@ export const CommentSection = memo(({ newsId, authorName, userId }) => {
                     )}
                 </>
             )}
+            {user === false ? (
+                <button
+                    onClick={handleShowAddComment}
+                    className={styles.addCommentButtonDisabled}
+                    aria-expanded={showAddComment}
+                    title="Для комментирования авторизуйся"
+                    disabled
+                >
+                    Написать комментарий
+                </button>
+            ) : (
             <button
                 onClick={handleShowAddComment}
                 className={styles.addCommentButton}
+                aria-expanded={showAddComment}
+                aria-controls="add-comment-form"
             >
                 Написать комментарий
             </button>
-
-            {showAddComment && (
+            )}
+            {showAddComment &&  (
                 <AddCommentForm
                     newsId={newsId}
                     authorName={authorName}
-                    userId={userId}
+                    user={user}
+                    onCancel={handleShowAddComment}
                 />
             )}
         </div>

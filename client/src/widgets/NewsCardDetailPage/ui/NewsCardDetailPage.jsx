@@ -1,68 +1,134 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FaPlayCircle } from 'react-icons/fa';
-import styles from './NewsCardDetailPage.module.scss';
 import defaultImage from '@assets/default.jpg';
+import styles from './NewsCardDetailPage.module.scss';
 
 export const NewsCardDetailPage = React.memo(({ news }) => {
     const { title, createdAt, mediaFiles, id } = news;
-    const [mediaError, setMediaError] = useState(false);
+    const [posterError, setPosterError] = useState(false);
+    const [imageError, setImageError] = useState(false);
+
+    const videoMedia = useMemo(() => {
+        return mediaFiles?.find((media) => media.type === 'video') || null;
+    }, [mediaFiles]);
+
+    const imageMedia = useMemo(() => {
+        return mediaFiles?.find((media) => media.type === 'image') || null;
+    }, [mediaFiles]);
+
+    const videoPosterUrl = useMemo(() => {
+        return videoMedia?.poster?.url || null;
+    }, [videoMedia]);
+
+    const imageUrl = useMemo(() => {
+        return imageMedia?.url || null;
+    }, [imageMedia]);
+
+    const hasVideoWithPoster = useMemo(
+        () => Boolean(videoMedia && videoPosterUrl && !posterError),
+        [videoMedia, videoPosterUrl, posterError],
+    );
+
+    const hasImage = useMemo(
+        () => Boolean(imageUrl && !imageError),
+        [imageUrl, imageError],
+    );
 
     const mediaElement = useMemo(() => {
-        const image = mediaFiles?.find((media) => media.type === 'image');
-        const video = mediaFiles?.find((media) => media.type === 'video');
-        const imageUrl = image ? `http://localhost:5000/${image.url}` : null;
-        const videoUrl = video
-            ? `http://localhost:5000/${video.url}#t=0.5`
-            : null;
-
-        if (imageUrl && !mediaError) {
+        if (hasVideoWithPoster) {
             return (
-                <img
-                    src={imageUrl}
-                    alt={title}
-                    className={styles.newsImage}
-                    onError={() => setMediaError(true)}
-                />
+                <Link to={`/news/${id}`} className={styles.newsLink}>
+                    <div className={styles.mediaContainer}>
+                        <img
+                            src={videoPosterUrl}
+                            alt={title}
+                            className={styles.newsImage}
+                            onError={() => setPosterError(true)}
+                            loading="lazy"
+                        />
+                        <div className={styles.playButton}>
+                            <FaPlayCircle size={50}/>
+                        </div>
+                    </div>
+                    <div className={styles.newsContent}>
+                        <h3 className={styles.newsTitle}>{title}</h3>
+                        <p className={styles.newsDate}>
+                            {new Date(createdAt).toLocaleDateString('ru-RU', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                            })}
+                        </p>
+                    </div>
+                </Link>
+            );
+        } else if (hasImage) {
+            return (
+                <Link to={`/news/${id}`} className={styles.newsLink}>
+                    <div className={styles.mediaContainer}>
+                        <img
+                            src={imageUrl}
+                            alt={title}
+                            className={styles.newsImage}
+                            onError={() => setImageError(true)}
+                            loading="lazy"
+                        />
+                        {videoMedia && (
+                            <div className={styles.playButton}>
+                                <FaPlayCircle size={50}/>
+                            </div>
+                        )}
+                    </div>
+                    <div className={styles.newsContent}>
+                        <h3 className={styles.newsTitle}>{title}</h3>
+                        <p className={styles.newsDate}>
+                            {new Date(createdAt).toLocaleDateString('ru-RU', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                            })}
+                        </p>
+                    </div>
+                </Link>
+            );
+        } else {
+            return (
+                <Link to={`/news/${id}`} className={styles.newsLink}>
+                    <div className={styles.mediaContainer}>
+                        <img
+                            src={defaultImage}
+                            alt={title}
+                            className={styles.newsImage}
+                            loading="lazy"
+                        />
+                    </div>
+                    <div className={styles.newsContent}>
+                        <h3 className={styles.newsTitle}>{title}</h3>
+                        <p className={styles.newsDate}>
+                            {new Date(createdAt).toLocaleDateString('ru-RU', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                            })}
+                        </p>
+                    </div>
+                </Link>
             );
         }
-        if (videoUrl && !mediaError) {
-            return (
-                <video
-                    className={styles.newsImage}
-                    src={videoUrl}
-                    preload="metadata"
-                    muted
-                    onError={() => setMediaError(true)}
-                />
-            );
-        }
-        return (
-            <img src={defaultImage} alt={title} className={styles.newsImage} />
-        );
-    }, [mediaFiles, mediaError]);
+    }, [
+        hasVideoWithPoster,
+        videoPosterUrl,
+        id,
+        title,
+        hasImage,
+        imageUrl,
+        videoMedia,
+    ]);
 
     return (
-        <div className={styles.NewsCardDetailPage}>
-            <Link to={`/news/${id}`} className={styles.newsLink}>
-                {mediaElement}
-                {mediaFiles.some((media) => media.type === 'video') &&
-                    !mediaError && (
-                        <div className={styles.playButton}>
-                            <FaPlayCircle size={50} />
-                        </div>
-                    )}
-                <div className={styles.newsContent}>
-                    <h3 className={styles.newsTitle}>{title}</h3>
-                    <p className={styles.newsDate}>
-                        {new Date(createdAt).toLocaleDateString('ru-RU', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                        })}
-                    </p>
-                </div>
-            </Link>
+        <div className={styles.newsCardDetailPage}>
+            {mediaElement}
         </div>
     );
 });
