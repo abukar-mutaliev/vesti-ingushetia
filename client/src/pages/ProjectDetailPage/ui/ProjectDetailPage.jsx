@@ -6,13 +6,13 @@ import { Sidebar } from '@widgets/Sidebar';
 import { selectCurrentProject } from '@entities/projects/model/projectSelectors';
 import { fetchAllNews } from '@entities/news/model/newsSlice';
 import { fetchCategories } from '@entities/categories/model/categorySlice';
-import { ProjectDetail } from '@features/ProjectDetail';
 import styles from './ProjectDetailPage.module.scss';
 import {
     selectNewsList,
     selectNewsLoading,
 } from '@entities/news/model/newsSelectors.js';
 import { selectCategories } from '@entities/categories/model/categorySelectors.js';
+import { ProjectDetail } from '@features/projectDetail/index.js';
 
 const ProjectDetailPage = () => {
     const { id } = useParams();
