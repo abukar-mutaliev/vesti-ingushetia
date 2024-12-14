@@ -10,9 +10,9 @@ import { FaDeleteLeft } from 'react-icons/fa6';
 export const AddNewsSection = ({ onSave, onCancel }) => {
     const [newsTitle, setNewsTitle] = useState('');
     const [newsContent, setNewsContent] = useState('');
-    const [newsMedia, setNewsMedia] = useState([[]]); // только изображения
+    const [newsMedia, setNewsMedia] = useState([[]]);
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
-    const [videoUrl, setVideoUrl] = useState(''); // поле для ссылки на видео
+    const [videoUrl, setVideoUrl] = useState('');
     const [errors, setErrors] = useState({});
 
     const categories = useSelector(selectCategories);
