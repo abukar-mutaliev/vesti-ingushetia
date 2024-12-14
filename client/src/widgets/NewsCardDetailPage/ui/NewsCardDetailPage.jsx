@@ -6,8 +6,6 @@ import styles from './NewsCardDetailPage.module.scss';
 
 export const NewsCardDetailPage = React.memo(({ news }) => {
     const { title, createdAt, mediaFiles, id } = news;
-    const [posterError, setPosterError] = useState(false);
-    const [imageError, setImageError] = useState(false);
 
     const videoMedia = useMemo(() => {
         return mediaFiles?.find((media) => media.type === 'video') || null;
@@ -17,39 +15,25 @@ export const NewsCardDetailPage = React.memo(({ news }) => {
         return mediaFiles?.find((media) => media.type === 'image') || null;
     }, [mediaFiles]);
 
-    const videoPosterUrl = useMemo(() => {
-        return videoMedia?.poster?.url || null;
-    }, [videoMedia]);
-
     const imageUrl = useMemo(() => {
         return imageMedia?.url || null;
     }, [imageMedia]);
 
-    const hasVideoWithPoster = useMemo(
-        () => Boolean(videoMedia && videoPosterUrl && !posterError),
-        [videoMedia, videoPosterUrl, posterError],
-    );
-
-    const hasImage = useMemo(
-        () => Boolean(imageUrl && !imageError),
-        [imageUrl, imageError],
-    );
-
     const mediaElement = useMemo(() => {
-        if (hasVideoWithPoster) {
+        if (videoMedia) {
+            const videoUrl = videoMedia.url;
             return (
                 <Link to={`/news/${id}`} className={styles.newsLink}>
                     <div className={styles.mediaContainer}>
-                        <img
-                            src={videoPosterUrl}
-                            alt={title}
+                        <iframe
+                            src={videoUrl}
+                            title={title}
                             className={styles.newsImage}
-                            onError={() => setPosterError(true)}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
                             loading="lazy"
                         />
-                        <div className={styles.playButton}>
-                            <FaPlayCircle size={50}/>
-                        </div>
                     </div>
                     <div className={styles.newsContent}>
                         <h3 className={styles.newsTitle}>{title}</h3>
@@ -63,7 +47,7 @@ export const NewsCardDetailPage = React.memo(({ news }) => {
                     </div>
                 </Link>
             );
-        } else if (hasImage) {
+        } else if (imageUrl) {
             return (
                 <Link to={`/news/${id}`} className={styles.newsLink}>
                     <div className={styles.mediaContainer}>
@@ -71,14 +55,8 @@ export const NewsCardDetailPage = React.memo(({ news }) => {
                             src={imageUrl}
                             alt={title}
                             className={styles.newsImage}
-                            onError={() => setImageError(true)}
                             loading="lazy"
                         />
-                        {videoMedia && (
-                            <div className={styles.playButton}>
-                                <FaPlayCircle size={50}/>
-                            </div>
-                        )}
                     </div>
                     <div className={styles.newsContent}>
                         <h3 className={styles.newsTitle}>{title}</h3>
@@ -116,15 +94,7 @@ export const NewsCardDetailPage = React.memo(({ news }) => {
                 </Link>
             );
         }
-    }, [
-        hasVideoWithPoster,
-        videoPosterUrl,
-        id,
-        title,
-        hasImage,
-        imageUrl,
-        videoMedia,
-    ]);
+    }, [videoMedia, imageUrl, id, title, createdAt]);
 
     return (
         <div className={styles.newsCardDetailPage}>
