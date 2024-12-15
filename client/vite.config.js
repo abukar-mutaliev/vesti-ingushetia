@@ -17,12 +17,11 @@ export default defineConfig({
                 path.resolve(__dirname, './server/cf/csr.pem'),
             ),
         },
-        host: '0.0.0.0',
+        host: 'localhost',
         port: 5173,
     },
     define: {
         global: {},
-        'process.env.NODE_ENV': '"production"',
     },
     resolve: {
         alias: {

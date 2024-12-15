@@ -21,7 +21,6 @@ const {
 router.post(
     '/register',
     csrfProtection,
-    upload,
     registerUserValidator,
     validate,
     userController.registerUser,

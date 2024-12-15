@@ -1,5 +1,6 @@
 .newsListContainer {
     max-width: 100%;
+    width: 100%;
 
     @media (max-width: 768px) {
         flex-direction: column;
@@ -65,6 +66,7 @@
     padding: 0;
     margin: 20px 0;
     color: #333;
+    justify-content: center;
 
     li {
         margin: 0 5px;

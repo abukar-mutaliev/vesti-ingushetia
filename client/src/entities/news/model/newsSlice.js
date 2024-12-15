@@ -6,9 +6,10 @@ import {
 } from '@entities/news/utils/localStorage';
 
 const hasVideo = (news) => {
-    return news.videoUrl && news.videoUrl.trim() !== '';
+    return news.mediaFiles?.some(
+        (media) => media.type === 'video' && media.url && media.url.trim() !== ''
+    );
 };
-
 const initialNews = loadNewsFromLocalStorage();
 
 const initialState = {
