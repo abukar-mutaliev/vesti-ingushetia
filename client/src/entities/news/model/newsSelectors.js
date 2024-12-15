@@ -1,5 +1,6 @@
 import { createSelector } from 'reselect';
 
+
 export const selectNewsState = (state) => state.news;
 
 export const selectNewsList = createSelector(

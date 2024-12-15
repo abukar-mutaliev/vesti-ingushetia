@@ -25,15 +25,14 @@ export const NewsCardDetailPage = React.memo(({ news }) => {
             return (
                 <Link to={`/news/${id}`} className={styles.newsLink}>
                     <div className={styles.mediaContainer}>
-                        <iframe
-                            src={videoUrl}
-                            title={title}
-                            className={styles.newsImage}
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            loading="lazy"
+                        <img src={imageUrl}
+                             alt={title}
+                             className={styles.newsImage}
+                             loading="lazy"
                         />
+                        <div className={styles.playButton}>
+                            <FaPlayCircle size={50}/>
+                        </div>
                     </div>
                     <div className={styles.newsContent}>
                         <h3 className={styles.newsTitle}>{title}</h3>
@@ -57,6 +56,11 @@ export const NewsCardDetailPage = React.memo(({ news }) => {
                             className={styles.newsImage}
                             loading="lazy"
                         />
+                        {videoMedia && (
+                            <div className={styles.playButton}>
+                                <FaPlayCircle size={50}/>
+                            </div>
+                        )}
                     </div>
                     <div className={styles.newsContent}>
                         <h3 className={styles.newsTitle}>{title}</h3>
