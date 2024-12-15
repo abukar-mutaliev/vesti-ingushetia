@@ -27,7 +27,7 @@ const credentials = {
 const uploadDir =
     process.env.UPLOAD_DIR || path.resolve(__dirname, '..', '../uploads');
 
-const corsOrigin = process.env.CORS_ORIGIN || 'https://localhost:5173';
+const corsOrigin = process.env.CORS_ORIGIN || 'http://ingushetiatv.ru';
 const imagesDir = path.join(uploadDir, 'images');
 const videoAdDir = path.join(uploadDir, 'videoAd');
 const audioDir = path.join(uploadDir, 'audio');
@@ -61,21 +61,13 @@ app.use(
         crossOriginResourcePolicy: { policy: 'cross-origin' },
         contentSecurityPolicy: {
             directives: {
-                defaultSrc: ["'self'", 'https://localhost:5173'],
-                connectSrc: ["'self'", 'https://localhost:5000'],
-                imgSrc: ["'self'", 'data:', 'blob:', 'https://localhost:5000'],
-                mediaSrc: ["'self'", 'https://localhost:5000'],
-                scriptSrc: [
-                    "'self'",
-                    "'unsafe-inline'",
-                    'https://localhost:5173',
-                ],
-                styleSrc: [
-                    "'self'",
-                    "'unsafe-inline'",
-                    'https://localhost:5173',
-                ],
-                fontSrc: ["'self'", 'https://localhost:5000', 'data:'],
+                defaultSrc: ["'self'", 'http://ingushetiatv.ru'],
+                connectSrc: ["'self'", 'http://ingushetiatv.ru'],
+                imgSrc: ["'self'", 'data:', 'blob:', 'http://ingushetiatv.ru'],
+                mediaSrc: ["'self'", 'http://ingushetiatv.ru'],
+                scriptSrc: ["'self'", "'unsafe-inline'", 'http://ingushetiatv.ru'],
+                styleSrc: ["'self'", "'unsafe-inline'", 'http://ingushetiatv.ru'],
+                fontSrc: ["'self'", 'http://ingushetiatv.ru', 'data:'],
                 frameSrc: [
                     "'self'",
                     'https://www.youtube.com',
