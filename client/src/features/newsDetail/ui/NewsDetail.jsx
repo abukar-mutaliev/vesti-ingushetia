@@ -108,6 +108,7 @@ export const NewsDetail = memo(
                             width="560"
                             height="315"
                             src={embedUrl}
+                            className={styles.newsImage}
                             frameBorder="0"
                             allowFullScreen
                             title="Видео"

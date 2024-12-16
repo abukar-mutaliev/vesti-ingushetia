@@ -53,6 +53,9 @@
     height: 500px;
     display: block;
     object-fit: cover;
+    @media (max-width: 768px) {
+        height: 300px;
+    }
 }
 
 .newsDetail {
@@ -78,9 +81,12 @@
         padding-bottom: 3%;
 
         @media (max-width: 768px) {
-            font-size: 0.8rem;
+            font-size: 0.6rem;
             flex-direction: row;
-            gap: 10px;
+            gap: 8px;
+            span {
+                margin-right: 0;
+            }
         }
 
         span {
