@@ -120,7 +120,7 @@ export const MainNews = memo(() => {
                 </div>
             </Link>
 
-            {otherMediaFiles.length > 0 && (
+            {embedUrl && otherMediaFiles.length > 0 && (
                 <div className={styles.otherMediaWrapper}>
                     {otherMediaFiles.map((media) => (
                         <div key={media.id} className={styles.imageWrapper}>

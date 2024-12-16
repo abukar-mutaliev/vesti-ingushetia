@@ -80,7 +80,9 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 break;
             case 'media':
                 if (!value || !value.some((group) => group.length > 0)) {
-                    error = 'Необходимо добавить хотя бы одно изображение.';
+                    if (!videoUrl.trim()) {
+                        error = 'Необходимо добавить хотя бы одно изображение или ссылку на видео.';
+                    }
                 }
                 break;
             case 'videoUrl':
@@ -104,10 +106,10 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         const isCategoryValid = validateField('category', selectedCategoryId);
         const isVideoUrlValid = validateField('videoUrl', videoUrl);
 
-        const isMediaValid = newsMedia.some((group) => group.length > 0);
+        const isMediaValid = videoUrl.trim() || newsMedia.some((group) => group.length > 0);
         setErrors((prevErrors) => ({
             ...prevErrors,
-            media: isMediaValid ? '' : 'Необходимо добавить хотя бы одно изображение.',
+            media: isMediaValid ? '' : 'Необходимо добавить хотя бы одно изображение или ссылку на видео.',
         }));
 
         return (

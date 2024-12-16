@@ -24,6 +24,9 @@
             margin-top: 0;
             gap: 0;
         }
+        @media (max-width: 468px) {
+            display: flex;
+        }
 
         .sidebarContainer {
             @media (max-width: 1368px) {

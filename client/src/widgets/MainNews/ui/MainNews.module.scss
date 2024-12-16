@@ -3,6 +3,9 @@
     justify-content: center;
     align-items: center;
     height: 100%;
+    @media (max-width: 468px) {
+        margin-top: 15%;
+    }
 }
 .mainNews {
     background-color: $primary-background;
@@ -25,7 +28,9 @@
     @media (max-width: 768px) {
         width: 100%;
         box-sizing: border-box;
-        margin: 15% 0 0 0;
+        max-width: 100%;
+    }
+    @media (max-width: 468px) {
         max-width: 100%;
     }
     &:hover {
@@ -107,6 +112,7 @@
 
 .mainNewsLink {
     position: relative;
+    width: 100%;
 }
 
 .imageWrapper,
