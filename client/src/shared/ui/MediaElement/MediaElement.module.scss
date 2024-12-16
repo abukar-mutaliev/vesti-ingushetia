@@ -1,0 +1,20 @@
+.mediaContainer {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.mediaImage {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.playIcon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+}

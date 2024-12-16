@@ -13,6 +13,7 @@ export const AddVideoAdSection = ({ onSave, onCancel }) => {
     const [expirationDate, setExpirationDate] = useState('');
     const [errors, setErrors] = useState({});
     const dispatch = useDispatch();
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleVideoChange = (e) => {
         const file = e.target.files[0];
@@ -43,28 +44,32 @@ export const AddVideoAdSection = ({ onSave, onCancel }) => {
     const handleSave = () => {
         if (!validateFields()) return;
 
+        setIsLoading(true);
+
         const formData = new FormData();
         formData.append('title', newTitle);
         formData.append('video', newVideo);
         formData.append('expirationDate', expirationDate);
 
         dispatch(createVideoAd(formData))
-            .unwrap()
-            .then(() => {
-                dispatch(fetchAllVideoAds());
-                onSave();
-            })
-            .catch((error) => {
-                if (error?.errors) {
-                    const serverErrors = error.errors.reduce((acc, err) => {
-                        if (err.path) acc[err.path] = err.msg;
-                        return acc;
-                    }, {});
-                    setErrors(serverErrors);
-                } else {
-                    console.error('Ошибка при создании видеорекламы:', error);
-                }
-            });
+        .unwrap()
+        .then(() => {
+            dispatch(fetchAllVideoAds());
+            setIsLoading(false);
+            onSave();
+        })
+        .catch((error) => {
+            setIsLoading(false);
+            if (error?.errors) {
+                const serverErrors = error.errors.reduce((acc, err) => {
+                    if (err.path) acc[err.path] = err.msg;
+                    return acc;
+                }, {});
+                setErrors(serverErrors);
+            } else {
+                console.error('Ошибка при создании видеорекламы:', error);
+            }
+        });
     };
 
     useEffect(() => {

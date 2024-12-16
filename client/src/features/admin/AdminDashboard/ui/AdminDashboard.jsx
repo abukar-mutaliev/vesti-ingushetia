@@ -29,7 +29,6 @@ const LOCAL_STORAGE_KEY_ACTIVE_SECTION = 'adminDashboard_activeSection';
 const LOCAL_STORAGE_KEY_ADD_PROJECT = 'adminDashboard_addProjectSectionFormData';
 
 export const AdminDashboard = () => {
-    const dispatch = useDispatch();
     const [activeSection, setActiveSection] = useState(() => {
         const savedSection = localStorage.getItem(LOCAL_STORAGE_KEY_ACTIVE_SECTION);
         return savedSection ? savedSection : 'news';

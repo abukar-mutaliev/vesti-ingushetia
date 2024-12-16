@@ -88,7 +88,6 @@ exports.getNewsById = async (req, res) => {
         await news.increment('views');
 
         const modifiedNews = formatMediaUrls([news])[0];
-        console.log('Response data:', modifiedNews);
 
         res.json(modifiedNews);
     } catch (err) {

@@ -6,13 +6,12 @@ import {
     selectNewsWithVideos,
 } from '@entities/news/model/newsSelectors.js';
 import { fetchAllNews } from '@entities/news/model/newsSlice.js';
-import { FaPlayCircle } from 'react-icons/fa';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import styles from './VideoSlider.module.scss';
 import { Loader } from '@shared/ui/Loader/index.js';
 import { Link } from 'react-router-dom';
-import defaultImage from '@assets/default.jpg';
+import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
 
 const sliderSettings = {
     className: 'center',
@@ -55,7 +54,7 @@ export const VideoSlider = () => {
         if (!newsList.length) {
             dispatch(fetchAllNews());
         }
-    }, [dispatch, newsList.length]);
+    }, [dispatch, newsList.length, newsList]);
 
     const handleMouseDown = useCallback((e) => {
         startX.current = e.clientX;
@@ -78,15 +77,7 @@ export const VideoSlider = () => {
                 (media) => media.type === 'image',
             );
 
-            const posterUrl = video?.poster?.url || image?.url || '';
-
-            const mediaElement = posterUrl ? (
-                <img src={posterUrl} alt={news.title} className={styles.image} />
-            ) : (
-                <div className={styles.placeholder}>
-                    <img src={defaultImage} alt={news.title} className={styles.image}/>
-                </div>
-            );
+            const videoUrl = video?.url || null;
 
             return (
                 <div
@@ -94,7 +85,6 @@ export const VideoSlider = () => {
                     className={styles.videoCard}
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
-
                 >
                     <Link
                         to={`/news/${news.id}`}
@@ -106,10 +96,15 @@ export const VideoSlider = () => {
                         className={styles.link}
                     >
                         <div className={styles.imageWrapper}>
-                            {mediaElement}
-                            <div className={styles.playButton}>
-                                <FaPlayCircle size={50} />
-                            </div>
+                            <MediaElement
+                                imageUrl={image?.url || null}
+                                videoUrl={videoUrl}
+                                alt={news.title}
+                                className={styles.mediaElement}
+                                playIconSize={50}
+                                onError={() => {}}
+                            />
+
                         </div>
                         <div className={styles.videoInfo}>
                             <h3>{news.title}</h3>

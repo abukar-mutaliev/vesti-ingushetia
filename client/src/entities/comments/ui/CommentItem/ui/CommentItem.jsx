@@ -1,7 +1,7 @@
 import { useState, useCallback, memo } from 'react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import styles from './Comment.module.scss';
-import defaultAvatar from '@assets/default-avatar.jpg'; // Убедитесь, что путь корректен
+import defaultAvatar from '@assets/default-avatar.jpg';
 import { BiLike, BiSolidLike } from 'react-icons/bi';
 import {
     likeComment,
