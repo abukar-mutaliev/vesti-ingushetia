@@ -100,8 +100,13 @@
         height: auto;
 
         .newsLink {
+            
             .mediaContainer {
                 height: 50%;
+
+                .newsImage {
+                    height: 300px;
+                }
             }
 
             .newsContent {
