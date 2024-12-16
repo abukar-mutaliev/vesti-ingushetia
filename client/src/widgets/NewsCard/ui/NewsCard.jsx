@@ -5,6 +5,8 @@ import { FaPlayCircle } from 'react-icons/fa';
 import defaultImage from '@assets/default.jpg';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
 import DOMPurify from 'dompurify';
+import { truncateHtmlToSentences } from '@shared/lib/TruncateHtml/truncateHtml.js';
+import { getVideoThumbnailUrl  } from '@shared/lib/getVideoThumbnailUrl/getVideoThumbnailUrl.js';
 
 export const NewsCard = React.memo(
     ({ news, showDate, showContent, keywords = '' }) => {
@@ -28,7 +30,7 @@ export const NewsCard = React.memo(
         }, [news.mediaFiles]);
 
         const videoPosterUrl = useMemo(() => {
-            return videoMedia?.poster?.url || null;
+            return videoMedia?.poster?.url || getVideoThumbnailUrl(videoMedia?.url) || null;
         }, [videoMedia]);
 
         const imageUrl = useMemo(() => {
@@ -118,8 +120,8 @@ export const NewsCard = React.memo(
             if (showContent) {
                 contentToProcess = news.content;
             } else {
-                contentToProcess =
-                    news.content.split('. ').slice(0, 1).join('. ') + '.';
+                // Ограничиваем до 3 предложений
+                contentToProcess = truncateHtmlToSentences(news.content, 1);
             }
 
             let sanitizedContent = DOMPurify.sanitize(contentToProcess);
@@ -153,9 +155,9 @@ export const NewsCard = React.memo(
                         {showDate && (
                             <span className={styles.date}>{formattedDate}</span>
                         )}
-                        <button className={styles.readMoreButton}>
+                        <Link className={styles.readMoreButton} to={`/news/${news.id}`}>
                             Читать полностью
-                        </button>
+                        </Link>
                     </Link>
                 </div>
             </div>

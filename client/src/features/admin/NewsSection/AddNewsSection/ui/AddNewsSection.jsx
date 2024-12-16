@@ -8,7 +8,7 @@ import { RichTextEditor } from '@shared/ui/RichTextEditor';
 import { FaDeleteLeft } from 'react-icons/fa6';
 import defaultImage from '@assets/default.jpg';
 
-const LOCAL_STORAGE_KEY = 'adminDashboard_addNewsSectionFormData'; // Уникальный ключ
+const LOCAL_STORAGE_KEY = 'adminDashboard_addNewsSectionFormData';
 
 export const AddNewsSection = ({ onSave, onCancel }) => {
     const dispatch = useDispatch();

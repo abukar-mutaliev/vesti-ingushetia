@@ -14,7 +14,6 @@ const LOCAL_STORAGE_KEY_ADD_PROJECT = 'adminDashboard_addProjectSectionFormData'
 
 export const AddProjectSection = ({ onSave, onCancel }) => {
     const dispatch = useDispatch();
-    const categories = useSelector(selectCategories);
 
     const [projectTitle, setProjectTitle] = useState(() => {
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY_ADD_PROJECT);
@@ -63,7 +62,6 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
                 }
                 break;
             case 'media':
-                console.log('Validating media:', value);
                 if (!value || !value.some((group) => group.length > 0)) {
                     error = 'Добавьте хотя бы один файл.';
                 }

@@ -1,11 +1,13 @@
-import React, { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { FaPlayCircle } from 'react-icons/fa';
 import defaultImage from '@assets/default.jpg';
 import styles from './NewsCardDetailPage.module.scss';
+import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
+import { getVideoThumbnailUrl } from '@shared/lib/getVideoThumbnailUrl/getVideoThumbnailUrl.js';
 
-export const NewsCardDetailPage = React.memo(({ news }) => {
+export const NewsCardDetailPage = memo(({ news }) => {
     const { title, createdAt, mediaFiles, id } = news;
+
 
     const videoMedia = useMemo(() => {
         return mediaFiles?.find((media) => media.type === 'video') || null;
@@ -15,26 +17,32 @@ export const NewsCardDetailPage = React.memo(({ news }) => {
         return mediaFiles?.find((media) => media.type === 'image') || null;
     }, [mediaFiles]);
 
+
+    const videoPosterUrl = useMemo(() => {
+        return videoMedia?.poster?.url || getVideoThumbnailUrl(videoMedia?.url) || null;
+    }, [videoMedia]);
+
     const imageUrl = useMemo(() => {
         return imageMedia?.url || defaultImage;
     }, [imageMedia]);
 
-    const mediaElement = useMemo(() => {
-        return (
+    const hasVideoWithPoster = useMemo(() => {
+        return Boolean(videoMedia && videoPosterUrl);
+    }, [videoMedia, videoPosterUrl]);
+
+
+
+
+    return (
+        <div className={styles.newsCardDetailPage}>
             <Link to={`/news/${id}`} className={styles.newsLink}>
-                <div className={styles.mediaContainer}>
-                    <img
-                        src={imageUrl}
-                        alt={title}
-                        className={styles.newsImage}
-                        loading="lazy"
-                    />
-                    {videoMedia && (
-                        <div className={styles.playButton}>
-                            <FaPlayCircle size={50} />
-                        </div>
-                    )}
-                </div>
+                <MediaElement
+                    imageUrl={hasVideoWithPoster ? videoPosterUrl : imageUrl}
+                    videoUrl={hasVideoWithPoster ? videoMedia.url : null}
+                    alt={title}
+                    className={styles.mediaElement}
+                    playIconSize={50}
+                />
                 <div className={styles.newsContent}>
                     <h3 className={styles.newsTitle}>{title}</h3>
                     <p className={styles.newsDate}>
@@ -46,12 +54,6 @@ export const NewsCardDetailPage = React.memo(({ news }) => {
                     </p>
                 </div>
             </Link>
-        );
-    }, [videoMedia, imageUrl, id, title, createdAt]);
-
-    return (
-        <div className={styles.newsCardDetailPage}>
-            {mediaElement}
         </div>
     );
 });

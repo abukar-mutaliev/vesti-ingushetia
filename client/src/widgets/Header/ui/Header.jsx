@@ -88,9 +88,9 @@ export const Header = () => {
                 <div className={styles.mobileIcons}>
                     <div
                         className={
-                        `${styles.searchIconMobile}
-                         ${location.pathname.includes('/search/results') ? styles.active : ''}`
-                    }
+                            `${styles.searchIconMobile}
+                             ${location.pathname.includes('/search/results') ? styles.active : ''}`
+                        }
                         onClick={handleSearchIconClick}
                     >
                         <MdSearch size={30} />
@@ -235,11 +235,13 @@ export const Header = () => {
 
             <div
                 className={`${styles.searchOverlay} ${showSearch ? styles.show : styles.hide}`}
+                onClick={handleCloseSearch}
             >
                 <form
                     onSubmit={handleSearchSubmit}
                     className={styles.searchForm}
                     ref={searchInputRef}
+                    onClick={(e) => e.stopPropagation()}
                 >
                     <input
                         type="text"

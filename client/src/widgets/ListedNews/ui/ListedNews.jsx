@@ -1,55 +1,53 @@
 import React, { useMemo } from 'react';
-import styles from './ListedNews.module.scss';
 import { Link } from 'react-router-dom';
-import { FaPlayCircle } from 'react-icons/fa';
+import styles from './ListedNews.module.scss';
 import defaultImage from '@assets/default.jpg';
+import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
 
 export const ListedNews = React.memo(({ newsList }) => {
 
     const sortedByViewsNews = useMemo(() => {
-        return [...newsList].sort((a, b) => b.views - a.views).slice(0, 6);
+        return [...newsList]
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 6);
     }, [newsList]);
+
+    const topThreeNews = useMemo(() => {
+        return sortedByViewsNews.slice(0, 3).map((newsItem) => {
+            const imageMedia = newsItem.mediaFiles?.find(media => media.type === 'image') || null;
+            const videoMedia = newsItem.mediaFiles?.find(media => media.type === 'video') || null;
+
+            const imageUrl = imageMedia?.url || null;
+            const videoUrl = videoMedia?.url || null;
+
+            return {
+                id: newsItem.id,
+                title: newsItem.title,
+                imageUrl,
+                videoUrl,
+                alt: newsItem.title,
+            };
+        });
+    }, [sortedByViewsNews]);
+
+
+    const nextThreeNews = useMemo(() => {
+        return sortedByViewsNews.slice(3, 6).map((newsItem) => ({
+            id: newsItem.id,
+            title: newsItem.title,
+        }));
+    }, [sortedByViewsNews]);
 
     return (
         <div className={styles.listedNews}>
             <h2>ПОПУЛЯРНОЕ</h2>
             <hr />
             <div className={styles.smallImageNewsSection}>
-                {sortedByViewsNews.slice(0, 3).map((newsItem) => {
-                    const imageUrl =
-                        newsItem.mediaFiles?.find(
-                            (media) => media.type === 'image',
-                        )?.url || null;
-                    const videoUrl =
-                        newsItem.mediaFiles?.find(
-                            (media) => media.type === 'video',
-                        )?.url || null;
-                    const hasVideo = Boolean(videoUrl);
-
-                    const mediaElement = imageUrl ? (
-                        <img
-                            src={`${imageUrl}`}
-                            alt={newsItem.title}
-                            className={styles.smallImageNewsImage}
-                        />
-                    ) : hasVideo ? (
-                        <div className={styles.imageContainer}>
-                            <img
-                                src={defaultImage}
-                                alt={newsItem.title}
-                                className={styles.smallImageNewsImage}
-                            />
-                            <div className={styles.playButton}>
-                                <FaPlayCircle size={30} />
-                            </div>
-                        </div>
-                    ) : (
-                        <img
-                            src={defaultImage}
-                            alt={newsItem.title}
-                            className={styles.smallImageNewsImage}
-                        />
-                    );
+                {topThreeNews.map((newsItem) => {
+                    const handleImageError = (e) => {
+                        e.target.onerror = null;
+                        e.target.src = defaultImage;
+                    };
 
                     return (
                         <Link
@@ -58,7 +56,14 @@ export const ListedNews = React.memo(({ newsList }) => {
                             className={styles.smallImageNewsLink}
                         >
                             <div className={styles.smallImageNewsItem}>
-                                {mediaElement}
+                                <MediaElement
+                                    imageUrl={newsItem.imageUrl}
+                                    videoUrl={newsItem.videoUrl}
+                                    alt={newsItem.alt}
+                                    className={styles.mediaElement}
+                                    playIconSize={30}
+                                    onError={handleImageError}
+                                />
                                 <p className={styles.smallImageNewsTitle}>
                                     {newsItem.title}
                                 </p>
@@ -68,7 +73,7 @@ export const ListedNews = React.memo(({ newsList }) => {
                 })}
             </div>
             <ul className={styles.listedNewsSection}>
-                {sortedByViewsNews.slice(3, 6).map((newsItem) => (
+                {nextThreeNews.map((newsItem) => (
                     <Link
                         key={newsItem.id}
                         to={`/news/${newsItem.id}`}

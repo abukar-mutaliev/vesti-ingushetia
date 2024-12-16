@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FaPlayCircle } from 'react-icons/fa';
 import defaultImage from '@assets/default.jpg';
 import styles from './NewsCard.module.scss';
+import { getVideoThumbnailUrl } from '@shared/lib/getVideoThumbnailUrl/getVideoThumbnailUrl.js';
 
 export const NewsCardSidebar = React.memo(({ item }) => {
     const [posterError, setPosterError] = useState(false);
@@ -17,7 +18,7 @@ export const NewsCardSidebar = React.memo(({ item }) => {
     }, [item.mediaFiles]);
 
     const videoPosterUrl = useMemo(() => {
-        return videoMedia?.poster?.url || null;
+        return videoMedia?.poster?.url || getVideoThumbnailUrl(videoMedia?.url) || null;
     }, [videoMedia]);
 
     const imageUrl = useMemo(() => {

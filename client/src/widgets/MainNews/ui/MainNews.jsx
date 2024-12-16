@@ -7,6 +7,7 @@ import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/hig
 import DOMPurify from 'dompurify';
 import defaultImage from '@assets/default.jpg';
 import styles from './MainNews.module.scss';
+import { truncateHtmlToSentences } from '@shared/lib/TruncateHtml/truncateHtml';
 
 export const MainNews = memo(() => {
     const latestNews = useSelector(selectLatestNews, shallowEqual);
@@ -62,7 +63,9 @@ export const MainNews = memo(() => {
         let content = DOMPurify.sanitize(latestNews.content);
         content = highlightKeywordsInHtml(content, '');
         content = DOMPurify.sanitize(content);
-        return content;
+
+        const truncatedContent = truncateHtmlToSentences(content, 2);
+        return truncatedContent;
     }, [latestNews.content]);
 
     const otherMediaFiles = useMemo(() => {
