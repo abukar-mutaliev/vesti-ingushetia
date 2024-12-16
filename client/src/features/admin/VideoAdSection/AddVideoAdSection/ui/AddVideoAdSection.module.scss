@@ -31,7 +31,9 @@
         font-weight: 500;
         color: #555;
     }
-
+    .calendar {
+        cursor: pointer;
+    }
     input,
     textarea {
         padding: 12px;
@@ -117,6 +119,7 @@
             outline: none;
         }
     }
+
 }
 
 .error {

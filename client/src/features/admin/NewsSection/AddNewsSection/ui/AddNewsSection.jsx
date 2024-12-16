@@ -6,21 +6,55 @@ import { fetchCategories } from '@entities/categories/model/categorySlice.js';
 import { createNews, fetchAllNews } from '@entities/news/model/newsSlice.js';
 import { RichTextEditor } from '@shared/ui/RichTextEditor';
 import { FaDeleteLeft } from 'react-icons/fa6';
+import defaultImage from '@assets/default.jpg';
+
+const LOCAL_STORAGE_KEY = 'adminDashboard_addNewsSectionFormData'; // Уникальный ключ
 
 export const AddNewsSection = ({ onSave, onCancel }) => {
-    const [newsTitle, setNewsTitle] = useState('');
-    const [newsContent, setNewsContent] = useState('');
+    const dispatch = useDispatch();
+    const categories = useSelector(selectCategories);
+
+    const [newsTitle, setNewsTitle] = useState(() => {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        return saved ? JSON.parse(saved).newsTitle || '' : '';
+    });
+
+    const [newsContent, setNewsContent] = useState(() => {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        return saved ? JSON.parse(saved).newsContent || '' : '';
+    });
+
+    const [selectedCategoryId, setSelectedCategoryId] = useState(() => {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        return saved ? JSON.parse(saved).selectedCategoryId || '' : '';
+    });
+
+    const [videoUrl, setVideoUrl] = useState(() => {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        return saved ? JSON.parse(saved).videoUrl || '' : '';
+    });
+
     const [newsMedia, setNewsMedia] = useState([[]]);
-    const [selectedCategoryId, setSelectedCategoryId] = useState('');
-    const [videoUrl, setVideoUrl] = useState('');
     const [errors, setErrors] = useState({});
 
-    const categories = useSelector(selectCategories);
-    const dispatch = useDispatch();
 
     useEffect(() => {
         dispatch(fetchCategories());
     }, [dispatch]);
+
+    useEffect(() => {
+        const formData = {
+            newsTitle,
+            newsContent,
+            selectedCategoryId,
+            videoUrl,
+        };
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(formData));
+    }, [newsTitle, newsContent, selectedCategoryId, videoUrl]);
+
+    useEffect(() => {
+        validateField('media', newsMedia);
+    }, [newsMedia]);
 
     const validateField = (fieldName, value) => {
         let error = '';
@@ -68,13 +102,16 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         const isTitleValid = validateField('title', newsTitle);
         const isContentValid = validateField('content', newsContent);
         const isCategoryValid = validateField('category', selectedCategoryId);
-
-        const isMediaValid = true;
-
         const isVideoUrlValid = validateField('videoUrl', videoUrl);
 
+        const isMediaValid = newsMedia.some((group) => group.length > 0);
+        setErrors((prevErrors) => ({
+            ...prevErrors,
+            media: isMediaValid ? '' : 'Необходимо добавить хотя бы одно изображение.',
+        }));
+
         return (
-            isTitleValid && isContentValid && isCategoryValid && isMediaValid && isVideoUrlValid
+            isTitleValid && isContentValid && isCategoryValid && isVideoUrlValid && isMediaValid
         );
     };
 
@@ -91,19 +128,24 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         }
 
         newsMedia.flat().forEach((file) => {
-                if (file.type.startsWith('image')) {
-                    formData.append('images', file);
-                }
+            if (file.type.startsWith('image')) {
+                formData.append('images', file);
+            }
         });
 
         dispatch(createNews(formData))
         .unwrap()
         .then(() => {
             dispatch(fetchAllNews());
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
             onSave();
         })
         .catch((error) => {
             console.error('Ошибка при создании новости:', error);
+            setErrors((prevErrors) => ({
+                ...prevErrors,
+                submit: 'Произошла ошибка при сохранении новости. Пожалуйста, попробуйте ещё раз.',
+            }));
         });
     };
 
@@ -134,7 +176,6 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             updatedMedia[index] = files;
             return updatedMedia;
         });
-        validateField('media', newsMedia);
     };
 
     const addNewsMediaField = () => {
@@ -144,13 +185,16 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
     const removeMedia = (index, fileIndex) => {
         setNewsMedia((prevMedia) => {
             const updatedMedia = prevMedia.map((group, idx) =>
-                idx === index ? group.filter((_, i) => i !== fileIndex) : group,
+                idx === index ? group.filter((_, i) => i !== fileIndex) : group
             );
             return updatedMedia;
         });
-        validateField('media', newsMedia);
     };
 
+    const handleCancel = () => {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        onCancel();
+    };
 
     return (
         <div className={styles.addNewsSection}>
@@ -176,9 +220,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 <label>Категория</label>
                 <select
                     value={selectedCategoryId}
-                    onChange={(e) =>
-                        handleInputChange('category', e.target.value)
-                    }
+                    onChange={(e) => handleInputChange('category', e.target.value)}
                 >
                     <option value="">Выберите категорию</option>
                     {categories.map((category) => (
@@ -242,15 +284,16 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                     className={styles.addButton}
                     onClick={addNewsMediaField}
                 >
-                    + Добавить еще файлы
+                    + Добавить ещё файлы
                 </button>
                 {errors.media && <p className={styles.error}>{errors.media}</p>}
+                {errors.submit && <p className={styles.error}>{errors.submit}</p>}
 
                 <div className={styles.buttons}>
                     <button className={styles.saveButton} onClick={handleSave}>
                         Сохранить
                     </button>
-                    <button className={styles.cancelButton} onClick={onCancel}>
+                    <button className={styles.cancelButton} onClick={handleCancel}>
                         Отмена
                     </button>
                 </div>

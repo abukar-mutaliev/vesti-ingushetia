@@ -155,6 +155,9 @@
         line-height: 1.4;
         width: 100%;
     }
+    @media (max-width: 468px) {
+        padding: 15px;
+    }
 
     img,
     video,

@@ -27,7 +27,7 @@ const credentials = {
 const uploadDir =
     process.env.UPLOAD_DIR || path.resolve(__dirname, '..', '../uploads');
 
-const corsOrigin = process.env.CORS_ORIGIN || 'http://ingushetiatv.ru';
+const corsOrigin = process.env.CORS_ORIGIN ||  'https://5.35.92.185';
 const imagesDir = path.join(uploadDir, 'images');
 const videoAdDir = path.join(uploadDir, 'videoAd');
 const audioDir = path.join(uploadDir, 'audio');

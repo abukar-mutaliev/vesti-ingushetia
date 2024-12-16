@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector as useReduxSelector } from 'react-redux';
 import { Sidebar } from '@features/admin/Sidebar';
 import { NewsSection } from '@features/admin/NewsSection';
 import { UsersSection } from '@features/admin/UsersSection';
@@ -20,12 +21,19 @@ import { AddVideoAdSection } from '@features/admin/VideoAdSection/AddVideoAdSect
 import { ProjectsSection } from '@features/admin/ProjectsSection';
 import { AddProjectSection } from '@features/admin/ProjectsSection/AddProjectSection';
 import { EditProjectSection } from '@features/admin/ProjectsSection/EditProjectSection';
-import { useSelector } from 'react-redux';
 import { selectIsAdmin } from '@entities/user/auth/model/authSelectors.js';
 import { useNavigate } from 'react-router-dom';
 
+const LOCAL_STORAGE_KEY_ADD_NEWS = 'adminDashboard_addNewsSectionFormData';
+const LOCAL_STORAGE_KEY_ACTIVE_SECTION = 'adminDashboard_activeSection';
+const LOCAL_STORAGE_KEY_ADD_PROJECT = 'adminDashboard_addProjectSectionFormData';
+
 export const AdminDashboard = () => {
-    const [activeSection, setActiveSection] = useState('news');
+    const dispatch = useDispatch();
+    const [activeSection, setActiveSection] = useState(() => {
+        const savedSection = localStorage.getItem(LOCAL_STORAGE_KEY_ACTIVE_SECTION);
+        return savedSection ? savedSection : 'news';
+    });
     const [newsToEdit, setNewsToEdit] = useState(null);
     const [isAddingNews, setIsAddingNews] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -37,14 +45,36 @@ export const AdminDashboard = () => {
     const [videoAdToEdit, setVideoAdToEdit] = useState(null);
     const [projectToEdit, setProjectToEdit] = useState(null);
     const [isAddingProject, setIsAddingProject] = useState(false);
-    const isAdmin = useSelector(selectIsAdmin);
+    const isAdmin = useReduxSelector(selectIsAdmin);
     const navigate = useNavigate();
 
+    useEffect(() => {
+        if (!isAdmin) {
+            navigate('/login');
+        }
+    }, [isAdmin, navigate]);
 
-    if(!isAdmin) {
-        navigate('/login');
+    useEffect(() => {
+        localStorage.setItem(LOCAL_STORAGE_KEY_ACTIVE_SECTION, activeSection);
+    }, [activeSection]);
 
-    }
+    useEffect(() => {
+        const savedFormData = localStorage.getItem(LOCAL_STORAGE_KEY_ADD_NEWS);
+        if (activeSection === 'news' && savedFormData) {
+            setIsAddingNews(true);
+        } else {
+            setIsAddingNews(false);
+        }
+    }, [activeSection]);
+
+    useEffect(() => {
+        const savedFormData = localStorage.getItem(LOCAL_STORAGE_KEY_ADD_PROJECT);
+        if (activeSection === 'projects' && savedFormData) {
+            setIsAddingProject(true);
+        } else {
+            setIsAddingProject(false);
+        }
+    }, [activeSection]);
 
     const handleSectionChange = (section) => {
         setNewsToEdit(null);
@@ -61,7 +91,6 @@ export const AdminDashboard = () => {
         setIsAddingProject(false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
-
 
     const renderSection = () => {
         if (isAddingNews) {

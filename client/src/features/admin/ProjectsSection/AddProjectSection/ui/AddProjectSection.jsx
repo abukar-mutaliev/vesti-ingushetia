@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import styles from './AddProjectSection.module.scss';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectCategories } from '@entities/categories/model/categorySelectors.js';
 import { fetchCategories } from '@entities/categories/model/categorySlice.js';
 import {
     createProject,
@@ -9,16 +10,137 @@ import {
 import { RichTextEditor } from '@shared/ui/RichTextEditor';
 import { FaDeleteLeft } from 'react-icons/fa6';
 
+const LOCAL_STORAGE_KEY_ADD_PROJECT = 'adminDashboard_addProjectSectionFormData';
+
 export const AddProjectSection = ({ onSave, onCancel }) => {
-    const [projectTitle, setProjectTitle] = useState('');
-    const [projectContent, setProjectContent] = useState('');
+    const dispatch = useDispatch();
+    const categories = useSelector(selectCategories);
+
+    const [projectTitle, setProjectTitle] = useState(() => {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY_ADD_PROJECT);
+        return saved ? JSON.parse(saved).projectTitle || '' : '';
+    });
+
+    const [projectContent, setProjectContent] = useState(() => {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY_ADD_PROJECT);
+        return saved ? JSON.parse(saved).projectContent || '' : '';
+    });
+
     const [projectMedia, setProjectMedia] = useState([[]]);
     const [errors, setErrors] = useState({});
-    const dispatch = useDispatch();
 
     useEffect(() => {
         dispatch(fetchCategories());
     }, [dispatch]);
+
+    useEffect(() => {
+        const formData = {
+            projectTitle,
+            projectContent,
+        };
+        localStorage.setItem(LOCAL_STORAGE_KEY_ADD_PROJECT, JSON.stringify(formData));
+    }, [projectTitle, projectContent]);
+
+    useEffect(() => {
+        validateField('media', projectMedia);
+    }, [projectMedia]);
+
+    const validateField = (fieldName, value) => {
+        let error = '';
+        switch (fieldName) {
+            case 'title':
+                if (!value.trim()) {
+                    error = 'Поле заголовка обязательно для заполнения.';
+                } else if (value.trim().length < 5) {
+                    error = 'Заголовок должен быть не менее 5 символов.';
+                }
+                break;
+            case 'content':
+                if (!value.trim()) {
+                    error = 'Поле содержания обязательно для заполнения.';
+                } else if (value.trim().length < 20) {
+                    error = 'Содержание должно быть не менее 20 символов.';
+                }
+                break;
+            case 'media':
+                console.log('Validating media:', value);
+                if (!value || !value.some((group) => group.length > 0)) {
+                    error = 'Добавьте хотя бы один файл.';
+                }
+                break;
+            default:
+                break;
+        }
+
+        setErrors((prevErrors) => ({ ...prevErrors, [fieldName]: error }));
+        return error === '';
+    };
+
+    const validateForm = () => {
+        const isTitleValid = validateField('title', projectTitle);
+        const isContentValid = validateField('content', projectContent);
+
+        const isMediaValid = projectMedia.some((group) => group.length > 0);
+        setErrors((prevErrors) => ({
+            ...prevErrors,
+            media: isMediaValid ? '' : 'Добавьте хотя бы один файл.',
+        }));
+
+        return (
+            isTitleValid && isContentValid && isMediaValid
+        );
+    };
+
+    const handleSave = () => {
+        if (!validateForm()) return;
+
+        const formData = new FormData();
+        formData.append('title', projectTitle);
+        formData.append('content', projectContent);
+
+        projectMedia.flat().forEach((file) => {
+            if (file.type.startsWith('image')) {
+                formData.append('images', file);
+            } else if (file.type.startsWith('video')) {
+                formData.append('videos', file);
+            }
+        });
+
+        dispatch(createProject(formData))
+        .unwrap()
+        .then(() => {
+            dispatch(fetchAllProjects());
+            localStorage.removeItem(LOCAL_STORAGE_KEY_ADD_PROJECT);
+            onSave();
+        })
+        .catch((error) => {
+            if (error.errors) {
+                const serverErrors = {};
+                error.errors.forEach((err) => {
+                    if (err.path) {
+                        serverErrors[err.path] = err.msg;
+                    }
+                });
+                setErrors(serverErrors);
+            } else {
+                console.error('Ошибка при создании проекта:', error);
+            }
+        });
+    };
+
+    const handleInputChange = (field, value) => {
+        switch (field) {
+            case 'title':
+                setProjectTitle(value);
+                break;
+            case 'content':
+                setProjectContent(value);
+                break;
+            default:
+                break;
+        }
+        validateField(field, value);
+    };
 
     const handleMediaChange = (e, index) => {
         const files = Array.from(e.target.files);
@@ -43,66 +165,20 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
         );
     };
 
-    const validateFields = () => {
-        const newErrors = {};
-        if (!projectTitle.trim()) {
-            newErrors.title = 'Поле заголовка обязательно для заполнения.';
-        } else if (projectTitle.trim().length < 5) {
-            newErrors.title = 'Заголовок должен быть не менее 5 символов.';
-        }
-
-        if (!projectContent.trim()) {
-            newErrors.content = 'Поле содержания обязательно для заполнения.';
-        } else if (projectContent.trim().length < 20) {
-            newErrors.content = 'Содержание должно быть не менее 20 символов.';
-        }
-
-        const hasMedia = projectMedia.some(
-            (mediaGroup) => mediaGroup.length > 0,
-        );
-        if (!hasMedia) {
-            newErrors.media = 'Добавьте хотя бы один файл.';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+    const handleCancel = () => {
+        localStorage.removeItem(LOCAL_STORAGE_KEY_ADD_PROJECT);
+        onCancel();
     };
 
-    const handleSave = () => {
-        if (!validateFields()) return;
-
-        const formData = new FormData();
-        formData.append('title', projectTitle);
-        formData.append('content', projectContent);
-
-        projectMedia.flat().forEach((file) => {
-            if (file.type.startsWith('image')) {
-                formData.append('images', file);
-            } else if (file.type.startsWith('video')) {
-                formData.append('videos', file);
-            }
-        });
-
-        dispatch(createProject(formData))
-            .unwrap()
-            .then(() => {
-                dispatch(fetchAllProjects());
-                onSave();
-            })
-            .catch((error) => {
-                if (error.errors) {
-                    const serverErrors = {};
-                    error.errors.forEach((err) => {
-                        if (err.path) {
-                            serverErrors[err.path] = err.msg;
-                        }
-                    });
-                    setErrors(serverErrors);
-                } else {
-                    console.error('Ошибка при создании проекта:', error);
+    useEffect(() => {
+        return () => {
+            projectMedia.flat().forEach((file) => {
+                if (file.preview) {
+                    URL.revokeObjectURL(file.preview);
                 }
             });
-    };
+        };
+    }, [projectMedia]);
 
     return (
         <div className={styles.addProjectSection}>
@@ -112,14 +188,14 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
                 <input
                     type="text"
                     value={projectTitle}
-                    onChange={(e) => setProjectTitle(e.target.value)}
+                    onChange={(e) => handleInputChange('title', e.target.value)}
                 />
                 {errors.title && <p className={styles.error}>{errors.title}</p>}
 
                 <label>Содержание</label>
                 <RichTextEditor
                     value={projectContent}
-                    onChange={setProjectContent}
+                    onChange={(value) => handleInputChange('content', value)}
                 />
                 {errors.content && (
                     <p className={styles.error}>{errors.content}</p>
@@ -131,6 +207,7 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
                         <input
                             type="file"
                             multiple
+                            accept="image/*,video/*"
                             onChange={(e) => handleMediaChange(e, index)}
                             className={styles.fileInput}
                         />
@@ -154,6 +231,9 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
                                             src={URL.createObjectURL(file)}
                                             alt="Preview"
                                             className={styles.imagePreview}
+                                            onLoad={() => {
+                                                file.preview = URL.createObjectURL(file);
+                                            }}
                                         />
                                     ) : (
                                         <video
@@ -172,7 +252,7 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
                     className={styles.addButton}
                     onClick={addNewMediaField}
                 >
-                    + Добавить еще файлы
+                    + Добавить ещё файлы
                 </button>
                 {errors.media && <p className={styles.error}>{errors.media}</p>}
 
@@ -180,7 +260,7 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
                     <button className={styles.saveButton} onClick={handleSave}>
                         Сохранить
                     </button>
-                    <button className={styles.cancelButton} onClick={onCancel}>
+                    <button className={styles.cancelButton} onClick={handleCancel}>
                         Отмена
                     </button>
                 </div>

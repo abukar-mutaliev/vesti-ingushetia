@@ -9,7 +9,6 @@ import { FaDeleteLeft } from 'react-icons/fa6';
 
 export const AddVideoAdSection = ({ onSave, onCancel }) => {
     const [newTitle, setNewTitle] = useState('');
-    const [newDescription, setNewDescription] = useState('');
     const [newVideo, setNewVideo] = useState(null);
     const [expirationDate, setExpirationDate] = useState('');
     const [errors, setErrors] = useState({});
@@ -30,13 +29,6 @@ export const AddVideoAdSection = ({ onSave, onCancel }) => {
 
     const validateFields = () => {
         const newErrors = {};
-
-        if (!newTitle.trim()) {
-            newErrors.title = 'Поле заголовка обязательно для заполнения.';
-        }
-        if (!newDescription.trim()) {
-            newErrors.description = 'Поле описания обязательно для заполнения.';
-        }
         if (!newVideo) {
             newErrors.video = 'Добавьте видеофайл.';
         }
@@ -53,7 +45,6 @@ export const AddVideoAdSection = ({ onSave, onCancel }) => {
 
         const formData = new FormData();
         formData.append('title', newTitle);
-        formData.append('description', newDescription);
         formData.append('video', newVideo);
         formData.append('expirationDate', expirationDate);
 
@@ -98,23 +89,12 @@ export const AddVideoAdSection = ({ onSave, onCancel }) => {
                     }}
                 />
                 {errors.title && <p className={styles.error}>{errors.title}</p>}
-
-                <label>Описание</label>
-                <textarea
-                    value={newDescription}
-                    onChange={(e) => {
-                        setNewDescription(e.target.value);
-                        setErrors((prev) => ({ ...prev, description: '' }));
-                    }}
-                />
-                {errors.description && (
-                    <p className={styles.error}>{errors.description}</p>
-                )}
                 <label htmlFor="date">
                     Срок размещения:{' '}
                     <input
                         id="date"
                         type="date"
+                        className={styles.calendar}
                         value={expirationDate}
                         onChange={(e) => {
                             setExpirationDate(e.target.value);
