@@ -1,5 +1,4 @@
-import { memo, useEffect, useMemo } from 'react';
-import styles from './NewsDetail.module.scss';
+import React, { memo, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FaEye } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,6 +11,7 @@ import DOMPurify from 'dompurify';
 import { Loader } from '@shared/ui/Loader/index.js';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
 import defaultImage from '@assets/default.jpg';
+import styles from './NewsDetail.module.scss';
 
 export const NewsDetail = memo(
     ({ news, loading, newsId, userId, authorName }) => {
@@ -29,17 +29,17 @@ export const NewsDetail = memo(
             return <Loader />;
         }
 
-        const otherMediaFiles = useMemo(() => {
-            const media = news.mediaFiles || [];
-            return media.filter((m) => m.type !== 'video');
+        const videoMedia = useMemo(() => {
+            return news.mediaFiles?.find((media) => media.type === 'video') || null;
         }, [news.mediaFiles]);
 
-        const processedContent = useMemo(() => {
-            let content = DOMPurify.sanitize(news.content);
-            content = highlightKeywordsInHtml(content, '');
-            content = DOMPurify.sanitize(content);
-            return content;
-        }, [news.content]);
+        const imageMedia = useMemo(() => {
+            return news.mediaFiles?.find((media) => media.type === 'image') || null;
+        }, [news.mediaFiles]);
+
+        const imageUrl = useMemo(() => {
+            return imageMedia?.url || defaultImage;
+        }, [imageMedia]);
 
         const getVideoEmbedUrl = (videoUrl) => {
             if (!videoUrl) return null;
@@ -68,12 +68,20 @@ export const NewsDetail = memo(
             return null;
         };
 
-        const videoMedia = useMemo(() => {
-            const media = news.mediaFiles || [];
-            return media.find((m) => m.type === 'video');
-        }, [news.mediaFiles]);
+        const embedUrl = useMemo(() => {
+            return getVideoEmbedUrl(videoMedia?.url);
+        }, [videoMedia]);
 
-        const embedUrl = getVideoEmbedUrl(videoMedia?.url);
+        const processedContent = useMemo(() => {
+            let content = DOMPurify.sanitize(news.content);
+            content = highlightKeywordsInHtml(content, '');
+            content = DOMPurify.sanitize(content);
+            return content;
+        }, [news.content]);
+
+        const otherMediaFiles = useMemo(() => {
+            return news.mediaFiles?.filter((m) => m.type === 'image') || [];
+        }, [news.mediaFiles]);
 
         return (
             <div className={styles.newsDetail}>
@@ -102,31 +110,31 @@ export const NewsDetail = memo(
                     </div>
                 </div>
 
-                {embedUrl ? (
-                    <div className={styles.videoWrapper}>
-                        <iframe
-                            width="560"
-                            height="315"
-                            src={embedUrl}
-                            className={styles.newsImage}
-                            frameBorder="0"
-                            allowFullScreen
-                            title="Видео"
-                        ></iframe>
-                    </div>
-                ) : (
-                    otherMediaFiles.length > 0 && otherMediaFiles[0]?.url ? (
+                <div className={styles.mediaSection}>
+                    {embedUrl ? (
+                        <div className={styles.videoWrapper}>
+                            <iframe
+                                width="560"
+                                height="315"
+                                src={embedUrl}
+                                className={styles.newsImage}
+                                frameBorder="0"
+                                allowFullScreen
+                                title="Видео"
+                            ></iframe>
+                        </div>
+                    ) : (
                         <div className={styles.imageWrapper}>
                             <img
-                                src={otherMediaFiles[0].url}
+                                src={imageUrl}
                                 alt={news.title}
                                 className={styles.newsImage}
                                 loading="lazy"
                                 onError={(e) => (e.target.src = defaultImage)}
                             />
                         </div>
-                    ) : null
-                )}
+                    )}
+                </div>
 
                 <div className={styles.newsContentWrapper}>
                     <SocialIcons />
@@ -138,25 +146,21 @@ export const NewsDetail = memo(
                             }}
                         />
 
-                        <div className={styles.otherMediaWrapper}>
-                            {otherMediaFiles.slice(embedUrl ? 0 : 1).map((media) => {
-                                return (
-                                    <div
-                                        key={media.id}
-                                        className={styles.imageWrapper}
-                                    >
+                        {otherMediaFiles.length > 0 && (
+                            <div className={styles.otherMediaWrapper}>
+                                {otherMediaFiles.map((media) => (
+                                    <div key={media.id} className={styles.imageWrapper}>
                                         <img
                                             src={media.url}
                                             alt={news.title}
                                             className={styles.newsImage}
-                                            onError={(e) =>
-                                                (e.target.src = defaultImage)
-                                            }
+                                            loading="lazy"
+                                            onError={(e) => (e.target.src = defaultImage)}
                                         />
                                     </div>
-                                );
-                            })}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -168,5 +172,5 @@ export const NewsDetail = memo(
                 />
             </div>
         );
-    },
+    }
 );
