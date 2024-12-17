@@ -6,7 +6,8 @@
 
 .mediaImage {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 
@@ -16,5 +17,15 @@
   left: 50%;
   transform: translate(-50%, -50%);
   color: rgba(255, 255, 255, 0.8);
-  pointer-events: none;
+  transition: transform 0.3s ease, color 0.3s ease;
+  opacity: 0.8;
+
+  &:hover {
+    color: $primary-color-hover;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+
+  svg {
+    cursor: pointer;
+  }
 }
