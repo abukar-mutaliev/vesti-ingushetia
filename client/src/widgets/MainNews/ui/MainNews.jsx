@@ -37,7 +37,7 @@ export const MainNews = memo(() => {
         content = highlightKeywordsInHtml(content, '');
         content = DOMPurify.sanitize(content);
 
-        const truncatedContent = truncateHtmlToSentences(content, 2);
+        const truncatedContent = truncateHtmlToSentences(content, 1);
         return truncatedContent;
     }, [latestNews.content]);
 
