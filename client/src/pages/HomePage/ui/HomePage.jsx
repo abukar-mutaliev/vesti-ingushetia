@@ -61,12 +61,12 @@ const HomePage = () => {
     const [currentPage, setCurrentPage] = useState(0);
     const itemsPerPage = 6;
 
-    const pageCount = Math.ceil(newsList.length / itemsPerPage);
+    const pageCount = Math.ceil(projects.length / itemsPerPage);
 
-    const currentNews = useMemo(() => {
+    const currentProjects = useMemo(() => {
         const start = currentPage * itemsPerPage;
-        return newsList.slice(start, start + itemsPerPage);
-    }, [currentPage, newsList, itemsPerPage]);
+        return projects.slice(start, start + itemsPerPage);
+    }, [currentPage, projects, itemsPerPage]);
 
     const newsContainerRef = useRef(null);
 
@@ -108,7 +108,7 @@ const HomePage = () => {
             <div className={styles.newsCardContainer}>
                 <h2>Наши проекты</h2>
                 <div className={styles.projectsGrid}>
-                    {projects.map((project) => (
+                    {currentProjects.map((project) => (
                         <ProjectCard key={project.id} project={project} />
                     ))}
                 </div>
