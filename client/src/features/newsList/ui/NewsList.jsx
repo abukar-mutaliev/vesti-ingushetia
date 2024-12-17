@@ -33,6 +33,8 @@ export const NewsList = React.memo(
             shallowEqual,
         );
 
+        const filteredNewsList  = currentNewsList.slice(1)
+
         const handlePageClick = useCallback(
             ({ selected }) => {
                 dispatch(setPage(selected));
@@ -68,8 +70,8 @@ export const NewsList = React.memo(
             <div className={styles.newsListContainer}>
                 <div className={styles.newsList} ref={newsListRef}>
                     <h3>{formatDate(selectedDate)}</h3>
-                    {currentNewsList.length > 0 ? (
-                        currentNewsList.map((news) => (
+                    {filteredNewsList.length > 0 ? (
+                        filteredNewsList.map((news) => (
                             <NewsCard key={news.id} news={news} />
                         ))
                     ) : (

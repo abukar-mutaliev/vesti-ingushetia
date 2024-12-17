@@ -15,10 +15,11 @@ import {
 } from '@entities/news/model/newsSelectors';
 import { selectCategories } from '@entities/categories/model/categorySelectors';
 import { VideoSlider } from '@widgets/VideoSlider/index.js';
-import { NewsCardDetailPage } from '@widgets/NewsCardDetailPage/index.js';
 import { selectCommentsByNewsId } from '@entities/comments/model/commentSelectors.js';
 import { fetchCommentsForNews } from '@entities/comments/model/commentsSlice.js';
 import { Loader } from '@shared/ui/Loader/index.js';
+import { ProjectsSection } from '@features/admin/ProjectsSection/index.js';
+import { ProjectsSlider } from '@features/projects/ProjectsSlider/index.js';
 
 const NewsDetailPage = memo(() => {
     const dispatch = useDispatch();
@@ -84,15 +85,7 @@ const NewsDetailPage = memo(() => {
                 </div>
             </div>
             <div className={styles.videoSliderContainer}>
-                <VideoSlider />
-            </div>
-            <div className={styles.newsCardContainer}>
-                <h3>Так же читайте</h3>
-                <div className={styles.newsGrid}>
-                    {shuffledNewsList.map((newsItem) => (
-                        <NewsCardDetailPage key={newsItem.id} news={newsItem} />
-                    ))}
-                </div>
+                <ProjectsSlider />
             </div>
         </div>
     );

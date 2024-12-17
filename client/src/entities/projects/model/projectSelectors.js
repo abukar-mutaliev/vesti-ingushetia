@@ -12,7 +12,21 @@ export const selectCurrentProject = createSelector(
     (projectState) => projectState.currentProject,
 );
 
-export const selectProjectLoading = createSelector(
+
+export const selectProjectsWithImages = createSelector(
+    [selectProjectList],
+    (projects) =>
+        projects.filter((project) =>
+            project.mediaFiles.some((media) => media.type === 'image')
+        )
+);
+
+export const selectProjectsLoading = createSelector(
     [selectProjectState],
     (projectState) => projectState.loading,
+);
+
+export const selectProjectsError = createSelector(
+    [selectProjectState],
+    (projectState) => projectState.error,
 );
