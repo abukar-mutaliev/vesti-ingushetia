@@ -14,6 +14,9 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { FaTimes } from 'react-icons/fa';
 import { SlArrowRight } from 'react-icons/sl';
 import ReactPaginate from 'react-paginate';
+import { ProjectCard } from '@entities/projects/ui/ProjectCard/index.js';
+import { selectProjectList } from '@entities/projects/model/projectSelectors.js';
+import { fetchAllProjects } from '@entities/projects/model/projectSlice.js';
 
 const HomePage = () => {
     const dispatch = useDispatch();
@@ -21,12 +24,19 @@ const HomePage = () => {
 
     const newsList = useSelector(selectNewsList, shallowEqual);
     const categories = useSelector(selectCategories);
+    const projects = useSelector(selectProjectList, shallowEqual);
 
     const loadNews = useCallback(() => {
         if (!newsList.length) {
             dispatch(fetchAllNews());
         }
     }, [dispatch, newsList.length]);
+
+    const loadProjects = useCallback(() => {
+        if (!projects.length) {
+            dispatch(fetchAllProjects());
+        }
+    }, [dispatch, projects.length]);
 
     const loadCategories = useCallback(() => {
         if (!categories.length) {
@@ -37,7 +47,8 @@ const HomePage = () => {
     useEffect(() => {
         loadNews();
         loadCategories();
-    }, [loadNews, loadCategories]);
+        loadProjects()
+    }, [loadNews, loadCategories, loadProjects]);
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -50,12 +61,12 @@ const HomePage = () => {
     const [currentPage, setCurrentPage] = useState(0);
     const itemsPerPage = 6;
 
-    const pageCount = Math.ceil(newsList.length / itemsPerPage);
+    const pageCount = Math.ceil(projects.length / itemsPerPage);
 
-    const currentNews = useMemo(() => {
+    const currentProjects = useMemo(() => {
         const start = currentPage * itemsPerPage;
-        return newsList.slice(start, start + itemsPerPage);
-    }, [currentPage, newsList, itemsPerPage]);
+        return projects.slice(start, start + itemsPerPage);
+    }, [currentPage, projects, itemsPerPage]);
 
     const newsContainerRef = useRef(null);
 
@@ -94,11 +105,11 @@ const HomePage = () => {
             <div className={styles.videoSliderContainer}>
                 <VideoSlider />
             </div>
-            <div className={styles.newsCardContainer} ref={newsContainerRef}>
-                <h2>Также читайте</h2>
-                <div className={styles.newsGrid}>
-                    {currentNews.map((newsItem) => (
-                        <NewsCardDetailPage key={newsItem.id} news={newsItem} />
+            <div className={styles.newsCardContainer}>
+                <h2>Наши проекты</h2>
+                <div className={styles.projectsGrid}>
+                    {currentProjects.map((project) => (
+                        <ProjectCard key={project.id} project={project} />
                     ))}
                 </div>
                 {pageCount > 1 && (
