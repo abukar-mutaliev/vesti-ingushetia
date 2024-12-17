@@ -35,6 +35,8 @@ export const Sidebar = React.memo(({ newsList, categories }) => {
 
     return (
         <div className={styles.sidebar}>
+            <p>Рекламная служба ГТРК "Ингушетия" - 8928-793-47-86
+            </p>
             <VideoAdPlayer />
             {categories.map((category) => {
                 const categoryNews = memoizedGroupedNews[category.id] || [];

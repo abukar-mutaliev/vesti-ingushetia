@@ -1,21 +1,18 @@
-// src/shared/ui/MediaElement/MediaElement.jsx
-
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { FaPlayCircle } from 'react-icons/fa';
 import defaultImage from '@assets/default.jpg';
 import { getVideoThumbnailUrl } from '@shared/lib/getVideoThumbnailUrl/getVideoThumbnailUrl.js';
 import PropTypes from 'prop-types';
 import styles from './MediaElement.module.scss';
 
-
 export const MediaElement = ({
-                                 imageUrl,
-                                 videoUrl,
+                                 imageUrl = null,
+                                 videoUrl = null,
                                  alt,
-                                 className,
+                                 className = '',
                                  playIconSize = 30,
                                  showPlayIcon = true,
-                                 onError,
+                                 onError = () => {},
                              }) => {
     const hasVideo = useMemo(() => Boolean(videoUrl), [videoUrl]);
 
@@ -56,13 +53,4 @@ MediaElement.propTypes = {
     playIconSize: PropTypes.number,
     showPlayIcon: PropTypes.bool,
     onError: PropTypes.func,
-};
-
-MediaElement.defaultProps = {
-    imageUrl: null,
-    videoUrl: null,
-    className: '',
-    playIconSize: 30,
-    showPlayIcon: true,
-    onError: () => {},
 };

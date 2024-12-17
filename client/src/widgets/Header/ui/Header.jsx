@@ -144,24 +144,13 @@ export const Header = () => {
                         </li>
                         <li>
                             <NavLink
-                                to="/tv"
-                                className={({ isActive }) =>
-                                    isActive ? styles.active : ''
-                                }
-                                onClick={handleNavLinkClick}
-                            >
-                                ТВ
-                            </NavLink>
-                        </li>
-                        <li>
-                            <NavLink
                                 to="/program"
                                 className={({ isActive }) =>
                                     isActive ? styles.active : ''
                                 }
                                 onClick={handleNavLinkClick}
                             >
-                                Телепередачи
+                                Программа телепередач
                             </NavLink>
                         </li>
                         <li>
