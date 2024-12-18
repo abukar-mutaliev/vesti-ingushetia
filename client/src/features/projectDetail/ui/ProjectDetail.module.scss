@@ -1,41 +1,100 @@
 .projectDetail {
-    width: 100%;
-    max-width: 60rem;
-    padding: 20px;
+    flex: 1;
+    padding: 30px;
     background-color: transparent;
+    margin: 0 auto 5%;
 
     @media (max-width: 768px) {
         padding: 0;
         width: 100%;
-        max-width: 80%;
+        margin: 0;
+    }
+    @media (max-width: 568px) {
+        padding: 0;
+        width: 100%;
+        max-width: 100%;
         margin-top: 20%;
     }
 }
-
-.imageWrapper,
-.otherMediaWrapper,
 .videoWrapper {
     width: 100%;
+    height: auto;
+}
+.mediaSection {
+    width: 100%;
+    max-width: 100%;
+}
+.projectVideoContainer {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px;
+    display: flex;
+    align-content: center;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: row;
+}
+.projectVideo {
+    width: 100%;
+    height: 500px;
+    border-radius: 8px;
+    @media (max-width: 768px) {
+        width: 100%;
+        height: 200px;
+        border-radius: 8px;
+    }
+}
+.imageWrapper,
+.videoWrapper {
+    width: 100%;
+    height: 500px;
     max-width: 80%;
     overflow: hidden;
     border-radius: 8px;
     margin-bottom: 20px;
+    display: grid;
+    gap: 15px;
 
     @media (max-width: 768px) {
         max-width: 100%;
     }
+    @media (max-width: 568px) {
+        max-width: 100%;
+        height: 300px;
+    }
+    @media (max-width: 468px) {
+        max-width: 100%;
+        height: 200px;
+    }
 }
 
+.otherMediaWrapper {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    overflow: hidden;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: grid;
+    gap: 15px;
+
+    @media (max-width: 768px) {
+        max-width: 80%;
+    }
+}
 .projectImage {
     width: 100%;
-    max-width: 600px;
-    max-height: 300px;
-    height: auto;
+    height: 100%;
     object-fit: cover;
     display: block;
     border-radius: 8px;
 }
-
+.videoSliderContainer {
+    width: 100%;
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+}
 .title {
     font-family: 'RussiaMedium', Arial, sans-serif;
     font-size: 2rem;
@@ -45,6 +104,8 @@
 
     @media (max-width: 768px) {
         font-size: 1.5rem;
+        width: 100%;
+        text-align: center;
     }
 }
 
@@ -57,8 +118,11 @@
     padding-bottom: 3%;
 
     @media (max-width: 768px) {
+        width: 100%;
+        max-width: 100%;
         font-size: 0.8rem;
-        flex-direction: column;
+        flex-direction: row;
+        justify-content: center;
         gap: 10px;
     }
 
@@ -93,14 +157,17 @@
 }
 
 .socialIcons {
+    margin-top: 5%;
+    position: -webkit-sticky;
     position: sticky;
     top: 100px;
-    align-self: flex-start;
+    width: 50px;
+    flex-shrink: 0;
+    margin-right: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 5px;
-    width: 50px;
 
     @media (max-width: 768px) {
         position: static;
@@ -110,11 +177,24 @@
         flex-direction: row;
     }
 
+    @media (max-width: 428px) {
+        display: flex;
+        position: static;
+        flex-direction: row;
+        justify-content: space-between;
+        width: 40%;
+        margin: auto;
+    }
+
     .icon {
         width: 50px;
         height: 50px;
+        text-align: center;
+        line-height: 50px;
         border-radius: 8px;
-        transition: transform 0.3s ease;
+        transition:
+                0.5s ease,
+                transform 0.5s ease;
         font-size: 24px;
         color: #555;
         display: flex;
@@ -138,7 +218,12 @@
     font-size: 1.2rem;
     line-height: 1.6;
     color: #333;
-
+    @media (max-width: 768px) {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
     p {
         margin-bottom: 1rem;
     }
@@ -153,14 +238,9 @@
         font-size: 1rem;
         line-height: 1.4;
         width: 100%;
+        display: flex;
+        justify-content: center;
     }
-}
-
-.videoWrapper {
-    width: 100%;
-    height: auto;
-    border-radius: 8px;
-    overflow: hidden;
 }
 
 .notFound {

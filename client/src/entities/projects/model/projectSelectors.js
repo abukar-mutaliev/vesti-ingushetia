@@ -9,7 +9,7 @@ export const selectProjectList = createSelector(
 
 export const selectCurrentProject = createSelector(
     [selectProjectState],
-    (projectState) => projectState.currentProject,
+    (projectState) => projectState.currentProject
 );
 
 
@@ -21,10 +21,8 @@ export const selectProjectsWithImages = createSelector(
         )
 );
 
-export const selectProjectsLoading = createSelector(
-    [selectProjectState],
-    (projectState) => projectState.loading,
-);
+export const selectProjectsLoading = (state) => state.projects.loadingProjects;
+export const selectCurrentProjectLoading = (state) => state.projects.loadingCurrentProject;
 
 export const selectProjectsError = createSelector(
     [selectProjectState],

@@ -1,79 +1,384 @@
 .projectDetailPage {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    padding: 20px;
-    background-color: $primary-background;
-    margin-top: 8%;
-    align-items: normal;
+    display: grid;
 
-    @media (max-width: 868px) {
-        width: 100%;
+    @media (max-width: 768px) {
+        padding: 0 10px;
     }
-    .mainContent {
-        @media (max-width: 768px) {
-            flex-direction: column;
-            width: 70%;
+
+    .projectDetailPageContainer {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 100%;
+        background: $primary-background;
+        gap: 15px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        margin: 8% auto;
+
+        @media (max-width: 1268px) {
+            display: grid;
+        }
+
+        @media (max-width: 912px) {
+            width: 100%;
             margin-top: 0;
             gap: 0;
         }
-    }
-    .notFound {
-        margin-top: 10%;
-    }
-    .projectDetailPageContainer {
-        display: flex;
-        width: 100%;
-        max-width: 1200px;
-        gap: 2rem;
+        @media (max-width: 468px) {
+            display: flex;
+            justify-content: center;
+        }
 
-        @media (max-width: 768px) {
-            flex-direction: column;
-            gap: 1rem;
+        .sidebarContainer {
+            @media (max-width: 1368px) {
+                display: flex;
+                justify-content: center;
+            }
+            @media (max-width: 768px) {
+                display: none;
+            }
         }
     }
 
-    .sidebarContainer {
-        flex: 1;
-        max-width: 300px;
+    .projectCardContainer {
+        margin-top: 10%;
+        margin-left: 50px;
+
+        @media (max-width: 968px) {
+            margin: auto;
+            display: grid;
+            max-width: 80%;
+            padding-top: 10%;
+        }
 
         @media (max-width: 768px) {
-            display: none;
+            margin-left: 0;
+            padding: 0 10px;
+        }
+        @media (max-width: 468px) {
+            display: contents;
+        }
+        h3 {
+            padding: 0 0 40px 0;
+            text-align: center;
+
+            @media (max-width: 768px) {
+                margin-bottom: 10px;
+            }
         }
     }
 
     .videoSliderContainer {
-        width: 100%;
-        margin-top: 2rem;
-        display: flex;
-        justify-content: center;
-    }
+        margin: auto;
+        max-width: 100%;
+        max-height: 340px;
+        overflow: hidden;
+        border-radius: 8px;
+        margin-bottom: 20px;
 
-    .projectCardContainer {
-        width: 100%;
-        margin-top: 2rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-
-        h3 {
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-            color: $primary-color;
+        @media (max-width: 1368px) {
+            max-width: 90%;
+        }
+        @media (max-width: 968px) {
+            max-width: 80%;
         }
 
-        .projectGrid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            width: 100%;
-            max-width: 52rem;
+        @media (max-width: 768px) {
+            max-width: 100%;
+            padding: 0 10px;
+        }
+    }
+
+    .projectGrid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        justify-items: center;
+
+        @media (max-width: 1324px) {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        @media (max-width: 480px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .projectDetail {
+        width: 100%;
+        max-width: 100%;
+        padding: 30px;
+        background-color: transparent;
+        margin: 0 auto 5%;
+
+        @media (max-width: 912px) {
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            padding: 10px;
+        }
+
+        .title {
+            font-family: 'RussiaMedium', Arial, sans-serif;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: bolder;
+            color: #222;
 
             @media (max-width: 768px) {
-                grid-template-columns: 1fr;
+                font-size: 1.5rem;
+            }
+        }
+
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #555;
+            width: 100%;
+            max-width: 100%;
+            padding-bottom: 3%;
+
+            @media (max-width: 768px) {
+                font-size: 0.8rem;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            span {
+                margin-right: 1rem;
+            }
+
+            a {
+                color: #0095da;
+                transition: all 0.5s ease;
+
+                &:hover {
+                    color: $primary-color-hover;
+                }
+            }
+
+            .views {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+        }
+
+        .mediaSection {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .videoWrapper {
+            width: 100%;
+            max-width: 560px;
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 8px;
+            margin-bottom: 20px;
+
+            iframe,
+            video {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+            }
+
+            .projectVideo {
+                border: none;
+            }
+        }
+
+        .imageWrapper {
+            width: 100%;
+            max-width: 80%;
+            overflow: hidden;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            height: 500px;
+            object-fit: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            img {
+                width: 100%;
+                height: 500px;
+                object-fit: cover;
+                border-radius: 8px;
+            }
+
+            @media (max-width: 768px) {
+                max-width: 100%;
+                height: 300px;
+
+                img {
+                    height: 300px;
+                }
+            }
+        }
+
+        .projectImage {
+            width: 100%;
+            height: 500px;
+            display: block;
+            object-fit: cover;
+            border-radius: 8px;
+
+            @media (max-width: 768px) {
+                height: 300px;
+            }
+        }
+
+        .content {
+            flex: 1;
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: #333;
+
+            .paragraph {
+                margin-bottom: 1rem;
+                line-height: 1.6;
+                font-size: 1.2rem;
+
+                @media (max-width: 768px) {
+                    font-size: 1rem;
+                    line-height: 1.4;
+                    width: 100%;
+                }
+
+                @media (max-width: 468px) {
+                    padding: 15px;
+                }
+
+                img,
+                video,
+                iframe {
+                    max-width: 100%;
+                    height: auto;
+                    display: block;
+                    margin: 20px auto;
+                    border-radius: 8px;
+                }
+
+                strong,
+                b {
+                    font-weight: bolder;
+                }
+            }
+
+            .otherMediaWrapper {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 1rem;
+
+                .imageWrapper,
+                .videoWrapper {
+                    flex: 1 1 calc(50% - 10px);
+                    max-width: calc(50% - 10px);
+                }
+
+                @media (max-width: 768px) {
+                    .imageWrapper,
+                    .videoWrapper {
+                        flex: 1 1 100%;
+                        max-width: 100%;
+                    }
+                }
+            }
+
+            p {
+                margin-bottom: 1rem;
             }
         }
     }
+
+    .videoSliderContainer {
+        margin: auto;
+        max-width: 100%;
+        max-height: 340px;
+        overflow: hidden;
+        border-radius: 8px;
+        margin-bottom: 20px;
+
+        @media (max-width: 1368px) {
+            max-width: 90%;
+        }
+        @media (max-width: 968px) {
+            max-width: 80%;
+        }
+
+        @media (max-width: 768px) {
+            max-width: 100%;
+            padding: 0 10px;
+        }
+    }
+
+    .projectCardContainer {
+        margin-top: 10%;
+        margin-left: 50px;
+
+        @media (max-width: 968px) {
+            margin: auto;
+            display: grid;
+            max-width: 80%;
+            padding-top: 10%;
+        }
+
+        @media (max-width: 768px) {
+            margin-left: 0;
+            padding: 0 10px;
+        }
+        @media (max-width: 468px) {
+            display: contents;
+        }
+
+        h3 {
+            padding: 0 0 40px 0;
+            text-align: center;
+
+            @media (max-width: 768px) {
+                margin-bottom: 10px;
+            }
+        }
+    }
+
+    .projectGrid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        justify-items: center;
+
+        @media (max-width: 1324px) {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        @media (max-width: 480px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
     p {
         max-width: 90%;
     }

@@ -13,7 +13,7 @@ export const SideMenu = () => {
                         <Link
                             to="/tv"
                         >
-                            ТВ Передачи
+                            ТВ
                         </Link>
                     </li>
                 </ul>

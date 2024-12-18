@@ -5,16 +5,24 @@
     width: 50px;
     flex-shrink: 0;
     margin-right: 20px;
-
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 5px;
+
     @media (max-width: 768px) {
         display: ruby;
-
         position: static;
     }
+
+    @media (max-width: 468px) {
+        display: flex;
+        position: static;
+        flex-direction: row;
+        justify-content: space-between;
+        width: 50%;
+    }
+
     .icon {
         width: 50px;
         height: 50px;

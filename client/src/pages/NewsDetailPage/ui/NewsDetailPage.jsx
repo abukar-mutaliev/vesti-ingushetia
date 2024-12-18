@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect } from 'react';
 import styles from './NewsDetailPage.module.scss';
 import { Sidebar } from '@widgets/Sidebar';
 import { NewsDetail } from '@features/newsDetail';
@@ -14,11 +14,9 @@ import {
     selectNewsLoading,
 } from '@entities/news/model/newsSelectors';
 import { selectCategories } from '@entities/categories/model/categorySelectors';
-import { VideoSlider } from '@widgets/VideoSlider/index.js';
 import { selectCommentsByNewsId } from '@entities/comments/model/commentSelectors.js';
 import { fetchCommentsForNews } from '@entities/comments/model/commentsSlice.js';
 import { Loader } from '@shared/ui/Loader/index.js';
-import { ProjectsSection } from '@features/admin/ProjectsSection/index.js';
 import { ProjectsSlider } from '@features/projects/ProjectsSlider/index.js';
 
 const NewsDetailPage = memo(() => {
@@ -47,17 +45,6 @@ const NewsDetailPage = memo(() => {
         }
     }, [dispatch, newsId]);
 
-    const shuffledNewsList = useMemo(() => {
-        const newsListCopy = [...newsList];
-        for (let i = newsListCopy.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [newsListCopy[i], newsListCopy[j]] = [
-                newsListCopy[j],
-                newsListCopy[i],
-            ];
-        }
-        return newsListCopy.slice(0, 9);
-    }, [newsList]);
 
     useEffect(() => {
         window.scrollTo(0, 0);

@@ -7,6 +7,7 @@ import styles from './ProjectsSection.module.scss';
 import { ProjectCard } from '@entities/projects/ui/ProjectCard';
 import { fetchAllProjects } from '@entities/projects/model/projectSlice';
 import { selectProjectList } from '@entities/projects/model/projectSelectors';
+import { Link } from 'react-router-dom';
 
 export const ProjectsSection = ({ title = 'Наши проекты', itemsPerPage = 6 }) => {
     const dispatch = useDispatch();
@@ -42,7 +43,12 @@ export const ProjectsSection = ({ title = 'Наши проекты', itemsPerPag
             <h2>{title}</h2>
             <div className={styles.projectsGrid}>
                 {currentProjects.map((project) => (
-                    <ProjectCard key={project.id} project={project} />
+                    <Link
+                        to={`/projects/${project.id}`}
+                        key={project.id}
+                        >
+                        <ProjectCard key={project.id} project={project} />
+                    </Link>
                 ))}
             </div>
             {pageCount > 1 && (

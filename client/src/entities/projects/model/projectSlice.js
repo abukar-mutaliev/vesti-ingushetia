@@ -1,12 +1,13 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as projectApi from '@entities/projects/api/projectApi';
 
-const CACHE_DURATION  = import.meta.env.CACHE_DURATION ;
+const CACHE_DURATION = Number(import.meta.env.VITE_CACHE_DURATION) || 60000;
 
 const initialState = {
     projectList: [],
     currentProject: null,
-    loading: false,
+    loadingProjects: false,
+    loadingCurrentProject: false,
     error: null,
     lastFetched: null,
 };
@@ -85,31 +86,29 @@ const projectSlice = createSlice({
     extraReducers: (builder) => {
         builder
         .addCase(fetchAllProjects.pending, (state) => {
-            state.loading = true;
+            state.loadingProjects = true;
             state.error = null;
         })
         .addCase(fetchAllProjects.fulfilled, (state, action) => {
-            state.loading = false;
+            state.loadingProjects = false;
             state.projectList = action.payload || [];
             state.lastFetched = Date.now();
         })
         .addCase(fetchAllProjects.rejected, (state, action) => {
-            state.loading = false;
-            state.error =
-                action.error.message || 'Ошибка получения проектов';
+            state.loadingProjects = false;
+            state.error = action.error.message || 'Ошибка получения проектов';
         })
         .addCase(fetchProjectById.pending, (state) => {
-            state.loading = true;
+            state.loadingCurrentProject = true;
             state.error = null;
         })
         .addCase(fetchProjectById.fulfilled, (state, action) => {
             state.currentProject = action.payload;
-            state.loading = false;
+            state.loadingCurrentProject = false;
         })
         .addCase(fetchProjectById.rejected, (state, action) => {
-            state.loading = false;
-            state.error =
-                action.error.message || 'Ошибка получения проекта';
+            state.loadingCurrentProject = false;
+            state.error = action.error.message || 'Ошибка получения проекта';
         })
         .addCase(createProject.pending, (state) => {
             state.loading = true;
