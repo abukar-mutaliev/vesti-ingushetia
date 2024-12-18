@@ -1,5 +1,3 @@
-// src/components/MainNews/MainNews.jsx
-
 import React, { memo, useMemo } from 'react';
 import { useSelector, shallowEqual } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -10,7 +8,7 @@ import DOMPurify from 'dompurify';
 import defaultImage from '@assets/default.jpg';
 import styles from './MainNews.module.scss';
 import { truncateHtmlToSentences } from '@shared/lib/TruncateHtml/truncateHtml';
-import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx'; // Импорт MediaElement
+import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
 
 export const MainNews = memo(() => {
     const latestNews = useSelector(selectLatestNews, shallowEqual);
@@ -51,7 +49,7 @@ export const MainNews = memo(() => {
         <div className={styles.mainNewsContainer}>
             <Link className={styles.mainNewsLink} to={`/news/${latestNews.id}`}>
                 <div className={styles.mainNews}>
-                    <div className={styles.mediaContainer}>
+                    <div>
                         <MediaElement
                             imageUrl={imageUrl}
                             videoUrl={videoMedia?.url || null}
@@ -78,7 +76,7 @@ export const MainNews = memo(() => {
             </Link>
 
             {videoMedia && otherMediaFiles.length > 0 && (
-                <div className={styles.otherMediaWrapper}>
+                <div>
                     {otherMediaFiles.map((media) => (
                         <div key={media.id} className={styles.imageWrapper}>
                             <MediaElement

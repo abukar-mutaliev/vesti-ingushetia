@@ -7,14 +7,29 @@ const baseUrl = process.env.BASE_URL;
 function formatMediaUrls(projectItems) {
     return projectItems.map((item) => ({
         ...item.toJSON(),
-        mediaFiles: item.mediaFiles.map((media) => ({
-            ...media.toJSON(),
-            url: media.url.startsWith(baseUrl)
-                ? media.url
-                : `${baseUrl}/${media.url}`,
-        })),
+        mediaFiles: item.mediaFiles.map((media) => {
+            let formattedUrl = media.url;
+
+            if (media.type === 'image') {
+                if (!media.url.startsWith(baseUrl)) {
+                    formattedUrl = `${baseUrl}/${media.url}`;
+                }
+            } else if (media.type === 'video') {
+                if (!/^https?:\/\//i.test(media.url)) {
+                    if (!media.url.startsWith(baseUrl)) {
+                        formattedUrl = `${baseUrl}/${media.url}`;
+                    }
+                }
+            }
+
+            return {
+                ...media.toJSON(),
+                url: formattedUrl,
+            };
+        }),
     }));
 }
+
 
 exports.getAllProjects = async (req, res) => {
     try {
@@ -42,16 +57,7 @@ exports.getProjectById = async (req, res) => {
         if (!project)
             return res.status(404).json({ message: 'Проект не найден' });
 
-        const modifiedProject = {
-            ...project.toJSON(),
-            mediaFiles: project.mediaFiles.map((media) => ({
-                ...media.toJSON(),
-                url: media.url.startsWith(baseUrl)
-                    ? media.url
-                    : `${baseUrl}/${media.url}`,
-            })),
-        };
-
+        const modifiedProject = formatMediaUrls([project])[0];
         res.json(modifiedProject);
     } catch (err) {
         res.status(500).json({
@@ -61,7 +67,7 @@ exports.getProjectById = async (req, res) => {
 };
 
 exports.createProject = async (req, res) => {
-    const { title, content } = req.body;
+    const { title, content, videoUrls } = req.body;
     const mediaFiles = req.files;
 
     let transaction;
@@ -72,8 +78,9 @@ exports.createProject = async (req, res) => {
             { transaction },
         );
 
+        const mediaInstances = [];
+
         if (mediaFiles) {
-            const mediaInstances = [];
             if (mediaFiles.images) {
                 for (let file of mediaFiles.images) {
                     const media = await Media.create(
@@ -99,7 +106,22 @@ exports.createProject = async (req, res) => {
                     mediaInstances.push(media);
                 }
             }
+        }
 
+       if (videoUrls && Array.isArray(videoUrls)) {
+            for (let url of videoUrls) {
+                const media = await Media.create(
+                    {
+                        url: url,
+                        type: 'video',
+                    },
+                    { transaction },
+                );
+                mediaInstances.push(media);
+            }
+        }
+
+        if (mediaInstances.length > 0) {
             await project.addMediaFiles(mediaInstances, { transaction });
         }
 
@@ -115,7 +137,7 @@ exports.createProject = async (req, res) => {
 
 exports.updateProject = async (req, res) => {
     const { id } = req.params;
-    const { title, content, existingMedia } = req.body;
+    const { title, content, existingMedia, videoUrls } = req.body;
     const mediaFiles = req.files;
 
     try {
@@ -140,7 +162,7 @@ exports.updateProject = async (req, res) => {
                 const mediaPath = path.join(
                     __dirname,
                     '..',
-                    media.url.replace(`${baseUrl}/`, ''),
+                    media.url.startsWith(baseUrl) ? media.url.replace(`${baseUrl}/`, '') : media.url
                 );
                 fs.unlink(mediaPath, (err) => {
                     if (err) console.error('Ошибка удаления медиафайла:', err);
@@ -153,24 +175,40 @@ exports.updateProject = async (req, res) => {
             });
 
             const mediaInstances = [];
-            if (mediaFiles.images) {
-                for (let file of mediaFiles.images) {
-                    const media = await Media.create(
-                        {
-                            url: posix.join('uploads', 'images', file.filename),
-                            type: 'image',
-                        },
-                        { transaction },
-                    );
-                    mediaInstances.push(media);
+
+            if (mediaFiles) {
+                if (mediaFiles.images) {
+                    for (let file of mediaFiles.images) {
+                        const media = await Media.create(
+                            {
+                                url: posix.join('uploads', 'images', file.filename),
+                                type: 'image',
+                            },
+                            { transaction },
+                        );
+                        mediaInstances.push(media);
+                    }
+                }
+
+                if (mediaFiles.videos) {
+                    for (let file of mediaFiles.videos) {
+                        const media = await Media.create(
+                            {
+                                url: posix.join('uploads', 'videos', file.filename),
+                                type: 'video',
+                            },
+                            { transaction },
+                        );
+                        mediaInstances.push(media);
+                    }
                 }
             }
 
-            if (mediaFiles.videos) {
-                for (let file of mediaFiles.videos) {
+            if (videoUrls && Array.isArray(videoUrls)) {
+                for (let url of videoUrls) {
                     const media = await Media.create(
                         {
-                            url: posix.join('uploads', 'videos', file.filename),
+                            url: url,
                             type: 'video',
                         },
                         { transaction },
@@ -179,7 +217,10 @@ exports.updateProject = async (req, res) => {
                 }
             }
 
-            await project.addMediaFiles(mediaInstances, { transaction });
+            if (mediaInstances.length > 0) {
+                await project.addMediaFiles(mediaInstances, { transaction });
+            }
+
             await transaction.commit();
 
             const updatedProject = await Project.findByPk(id, {
@@ -222,14 +263,16 @@ exports.deleteProject = async (req, res) => {
             return res.status(404).json({ error: 'Проект не найден' });
 
         for (let media of project.mediaFiles) {
-            const mediaPath = path.join(
-                __dirname,
-                '..',
-                media.url.replace(`${baseUrl}/`, ''),
-            );
-            fs.unlink(mediaPath, (err) => {
-                if (err) console.error('Ошибка удаления медиафайла:', err);
-            });
+            if (!media.url.startsWith('https')) {
+                const mediaPath = path.join(
+                    __dirname,
+                    '..',
+                    media.url.replace(`${baseUrl}/`, ''),
+                );
+                fs.unlink(mediaPath, (err) => {
+                    if (err) console.error('Ошибка удаления медиафайла:', err);
+                });
+            }
         }
 
         await Media.destroy({

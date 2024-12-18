@@ -6,7 +6,7 @@ import defaultImage from '@assets/default.jpg';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
 import DOMPurify from 'dompurify';
 import { truncateHtmlToSentences } from '@shared/lib/TruncateHtml/truncateHtml.js';
-import { getVideoThumbnailUrl  } from '@shared/lib/getVideoThumbnailUrl/getVideoThumbnailUrl.js';
+import { getVideoThumbnailUrl } from '@shared/lib/getVideoThumbnailUrl/getVideoThumbnailUrl.js';
 
 export const NewsCard = React.memo(
     ({ news, showDate, showContent, keywords = '' }) => {
@@ -120,7 +120,6 @@ export const NewsCard = React.memo(
             if (showContent) {
                 contentToProcess = news.content;
             } else {
-                // Ограничиваем до 3 предложений
                 contentToProcess = truncateHtmlToSentences(news.content, 1);
             }
 
@@ -140,6 +139,7 @@ export const NewsCard = React.memo(
             <div className={styles.newsCard}>
                 {mediaElement}
                 <div className={styles.textContent}>
+                    {/* Один общий Link для всей текстовой части */}
                     <Link
                         to={`/news/${news.id}`}
                         className={styles.link}
@@ -155,9 +155,7 @@ export const NewsCard = React.memo(
                         {showDate && (
                             <span className={styles.date}>{formattedDate}</span>
                         )}
-                        <Link className={styles.readMoreButton} to={`/news/${news.id}`}>
-                            Читать полностью
-                        </Link>
+                        <span className={styles.readMoreButton}>Читать полностью</span>
                     </Link>
                 </div>
             </div>

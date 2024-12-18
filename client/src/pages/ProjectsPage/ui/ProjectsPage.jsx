@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useSelector, useDispatch, shallowEqual } from 'react-redux';
 import { fetchAllProjects } from '@entities/projects/model/projectSlice';
 import styles from './ProjectsPage.module.scss';
@@ -13,6 +13,7 @@ import { selectCategories } from '@entities/categories/model/categorySelectors.j
 import { fetchAllNews } from '@entities/news/model/newsSlice.js';
 import { fetchCategories } from '@entities/categories/model/categorySlice.js';
 import { Loader } from '@shared/ui/Loader/index.js';
+import { Link } from 'react-router-dom';
 
 const ProjectsPage = () => {
     const dispatch = useDispatch();
@@ -44,7 +45,12 @@ const ProjectsPage = () => {
                 <h2 className={styles.projectsTitle}>Наши проекты</h2>
                 <div className={styles.projectsGrid}>
                     {projects.map((project) => (
-                        <ProjectCard key={project.id} project={project} />
+                        <Link
+                            key={project.id}
+                            to={`/projects/${project.id}`}
+                        >
+                            <ProjectCard key={project.id} project={project} />
+                        </Link>
                     ))}
                 </div>
             </div>

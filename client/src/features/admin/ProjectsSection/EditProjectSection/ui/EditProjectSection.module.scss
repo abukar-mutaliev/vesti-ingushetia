@@ -55,7 +55,40 @@
             }
         }
     }
+    .addButton {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        font-size: 16px;
+        margin-bottom: 20px;
+        &:hover {
+            background-color: #0056b3;
+        }
+    }
 
+    .label {
+        padding: 25px 0;
+    }
+    .removeButton {
+        margin-left: 95%;
+        cursor: pointer;
+        transition:
+                color 0.3s ease,
+                transform 0.3s ease;
+        &:hover {
+            color: #777777;
+        }
+    }
+    .previewVideosContainer {
+
+    }
+    .videoUrlGroup {
+        display: grid;
+    }
     .media {
         margin-top: 5%;
         width: 400px;
@@ -93,7 +126,7 @@
         display: flex;
         justify-content: flex-start;
         gap: 15px;
-
+        margin-top: 15px;
         .saveButton {
             background-color: #4caf50;
             color: white;

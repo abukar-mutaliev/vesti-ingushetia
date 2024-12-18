@@ -82,7 +82,7 @@ export const VideoAdPlayer = memo(() => {
     if (error) {
         return (
             <div className={styles.videoAdPlayer}>
-                <p className={styles.error}>Ошибка: {error}</p>
+                <p>Ошибка: {error.message || 'Неизвестная ошибка'}</p>
             </div>
         );
     }
