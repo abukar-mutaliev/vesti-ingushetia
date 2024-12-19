@@ -1,17 +1,5 @@
 const { body, param } = require('express-validator');
 
-const isSupportedVideoUrl = (value) => {
-    if (!value) return true;
-
-    const rutubeRegex = /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
-    const youtubeRegex = /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
-
-    if (rutubeRegex.test(value) || youtubeRegex.test(value)) {
-        return true;
-    }
-    throw new Error('Видео ссылка должна быть URL от Rutube или YouTube');
-};
-
 exports.createProjectValidator = [
     body('title')
     .notEmpty()
@@ -25,6 +13,7 @@ exports.createProjectValidator = [
     .withMessage('Содержание должно быть не менее 20 символов'),
     body('videoUrls')
     .optional()
+    .toArray()
     .isArray()
     .withMessage('videoUrls должен быть массивом ссылок')
     .bail()
@@ -52,6 +41,7 @@ exports.updateProjectValidator = [
     .withMessage('Содержание должно быть не менее 20 символов'),
     body('videoUrls')
     .optional()
+    .toArray()
     .isArray()
     .withMessage('videoUrls должен быть массивом ссылок')
     .bail()

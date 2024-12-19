@@ -1,25 +1,38 @@
 import { useState, useEffect } from 'react';
 import styles from './EditProjectSection.module.scss';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { fetchCategories } from '@entities/categories/model/categorySlice.js';
 import {
     updateProject,
-    fetchAllProjects,
+    fetchProjectById,
 } from '@entities/projects/model/projectSlice.js';
 import { FaDeleteLeft, FaPlus } from 'react-icons/fa6';
 import { ConfirmDeleteModal } from '@shared/ui/ConfirmDeleteModal/index.js';
 import { RichTextEditor } from '@shared/ui/RichTextEditor';
+import {
+    selectCurrentProject,
+    selectProjectList
+} from '@entities/projects/model/projectSelectors.js';
 
-export const EditProjectSection = ({ project, onCancel }) => {
+export const EditProjectSection = ({ projectId, onCancel }) => {
+    const dispatch = useDispatch();
+    const projects = useSelector(selectProjectList);
+    const project = useSelector(selectCurrentProject) || projects.find(p => p.id === projectId);
+
     const [editTitle, setEditTitle] = useState('');
     const [editContent, setEditContent] = useState('');
     const [editMedia, setEditMedia] = useState([]);
     const [newMedia, setNewMedia] = useState([]);
     const [videoUrls, setVideoUrls] = useState(['']);
     const [errors, setErrors] = useState({});
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
     const [mediaToDelete, setMediaToDelete] = useState(null);
-    const dispatch = useDispatch();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    useEffect(() => {
+        dispatch(fetchCategories());
+        dispatch(fetchProjectById(projectId));
+    }, [dispatch, projectId]);
 
     useEffect(() => {
         if (project) {
@@ -28,25 +41,30 @@ export const EditProjectSection = ({ project, onCancel }) => {
             setEditMedia(project.mediaFiles || []);
             setVideoUrls(project.videoUrls && project.videoUrls.length > 0 ? project.videoUrls : ['']);
         }
-        dispatch(fetchCategories());
-    }, [project, dispatch]);
+    }, [project]);
+
+    const handleInputChange = (field, value) => {
+        switch (field) {
+            case 'title':
+                setEditTitle(value);
+                break;
+            case 'content':
+                setEditContent(value);
+                break;
+            default:
+                break;
+        }
+        if (hasAttemptedSubmit) {
+            validateField(field, value);
+        }
+    };
 
     const handleMediaChange = (e) => {
         const files = Array.from(e.target.files);
         setNewMedia((prevMedia) => [...prevMedia, ...files]);
-    };
-
-    const handleDeleteMedia = (index) => {
-        setMediaToDelete(index);
-        setIsModalOpen(true);
-    };
-
-    const confirmDeleteMedia = () => {
-        setEditMedia((prevMedia) =>
-            prevMedia.filter((_, i) => i !== mediaToDelete),
-        );
-        setIsModalOpen(false);
-        setMediaToDelete(null);
+        if (hasAttemptedSubmit) {
+            validateField('media', [...newMedia, ...files]);
+        }
     };
 
     const addVideoUrlField = () => {
@@ -107,28 +125,48 @@ export const EditProjectSection = ({ project, onCancel }) => {
         return isValid;
     };
 
-    const validateFields = () => {
+    const validateField = (fieldName, value) => {
+        let error = '';
+        switch (fieldName) {
+            case 'title':
+                if (!value.trim()) {
+                    error = 'Поле заголовка обязательно для заполнения.';
+                } else if (value.trim().length < 5) {
+                    error = 'Заголовок должен быть не менее 5 символов.';
+                }
+                break;
+            case 'content':
+                if (!value.trim()) {
+                    error = 'Поле содержания обязательно для заполнения.';
+                } else if (value.trim().length < 20) {
+                    error = 'Содержание должно быть не менее 20 символов.';
+                }
+                break;
+            case 'media':
+                const hasExistingImages = editMedia.some(media => media.type.startsWith('image'));
+                const hasNewImages = newMedia.some(file => file.type.startsWith('image'));
+                const hasVideoUrls = videoUrls.some(url => url.trim() !== '');
+                if (!hasExistingImages && !hasNewImages && !hasVideoUrls) {
+                    error = 'Проект должен содержать хотя бы одно изображение или видео-ссылку.';
+                }
+                break;
+            default:
+                break;
+        }
+        setErrors((prevErrors) => ({ ...prevErrors, [fieldName]: error }));
+        return error === '';
+    };
+
+    const validateFieldsFinal = () => {
+        setHasAttemptedSubmit(true);
         const newErrors = {};
 
-        if (!editTitle.trim()) {
-            newErrors.title = 'Поле заголовка обязательно для заполнения.';
-        } else if (editTitle.trim().length < 5) {
-            newErrors.title = 'Заголовок должен быть не менее 5 символов.';
-        }
+        const isTitleValid = validateField('title', editTitle);
+        const isContentValid = validateField('content', editContent);
+        const isMediaValid = validateField('media', newMedia);
 
-        if (!editContent.trim()) {
-            newErrors.content = 'Поле содержания обязательно для заполнения.';
-        } else if (editContent.trim().length < 20) {
-            newErrors.content = 'Содержание должно быть не менее 20 символов.';
-        }
-
-        const totalMediaCount = editMedia.length + newMedia.length;
         const hasVideoUrls = videoUrls.some(url => url.trim() !== '');
-        if (totalMediaCount === 0 && !hasVideoUrls) {
-            newErrors.media = 'Проект должен содержать хотя бы один медиафайл или видео-ссылку.';
-        }
-
-        if (videoUrls.length > 0 && hasVideoUrls) {
+        if (hasVideoUrls) {
             const videoUrlsValid = validateVideoUrls();
             if (!videoUrlsValid) {
                 newErrors.videoUrls = 'Некорректные видео-ссылки.';
@@ -136,11 +174,16 @@ export const EditProjectSection = ({ project, onCancel }) => {
         }
 
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        return (
+            isTitleValid &&
+            isContentValid &&
+            isMediaValid &&
+            (!hasVideoUrls || (hasVideoUrls && validateVideoUrls()))
+        );
     };
 
     const handleSave = () => {
-        if (!validateFields()) return;
+        if (!validateFieldsFinal()) return;
 
         const formData = new FormData();
         formData.append('title', editTitle);
@@ -166,7 +209,6 @@ export const EditProjectSection = ({ project, onCancel }) => {
         dispatch(updateProject({ id: project.id, projectData: formData }))
         .unwrap()
         .then(() => {
-            dispatch(fetchAllProjects());
             onCancel();
         })
         .catch((error) => {
@@ -179,6 +221,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
                 });
                 setErrors(serverErrors);
             } else {
+                setErrors(prev => ({ ...prev, submit: 'Произошла ошибка при обновлении проекта.' }));
                 console.error('Ошибка при обновлении проекта:', error);
             }
         });
@@ -187,17 +230,26 @@ export const EditProjectSection = ({ project, onCancel }) => {
     const embedVideo = (url) => {
         let embedUrl = '';
         if (url.includes('rutube.ru')) {
-            const videoId = url.split('/video/')[1].split('/')[0];
-            embedUrl = `https://rutube.ru/play/embed/${videoId}/`;
-        } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
-            const urlObj = new URL(url);
-            let videoId = '';
-            if (urlObj.hostname.includes('youtube.com')) {
-                videoId = urlObj.searchParams.get('v');
-            } else if (urlObj.hostname.includes('youtu.be')) {
-                videoId = urlObj.pathname.slice(1);
+            const videoIdMatch = url.match(/rutube\.ru\/video\/([A-Za-z0-9_-]+)/);
+            const videoId = videoIdMatch ? videoIdMatch[1] : null;
+            if (videoId) {
+                embedUrl = `https://rutube.ru/play/embed/${videoId}/`;
             }
-            embedUrl = `https://www.youtube.com/embed/${videoId}`;
+        } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            try {
+                const urlObj = new URL(url);
+                let videoId = '';
+                if (urlObj.hostname.includes('youtube.com')) {
+                    videoId = urlObj.searchParams.get('v');
+                } else if (urlObj.hostname.includes('youtu.be')) {
+                    videoId = urlObj.pathname.slice(1);
+                }
+                if (videoId) {
+                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                }
+            } catch (e) {
+                console.error('Некорректный URL:', url);
+            }
         }
 
         return embedUrl ? (
@@ -214,15 +266,35 @@ export const EditProjectSection = ({ project, onCancel }) => {
         ) : null;
     };
 
+    const handleDeleteMedia = (index) => {
+        setMediaToDelete(index);
+        setIsModalOpen(true);
+    };
+
+    const confirmDeleteMedia = () => {
+        if (mediaToDelete !== null) {
+            setEditMedia((prevMedia) =>
+                prevMedia.filter((_, i) => i !== mediaToDelete),
+            );
+            setMediaToDelete(null);
+            setIsModalOpen(false);
+
+            if (hasAttemptedSubmit) {
+                validateField('media', newMedia);
+            }
+        }
+    };
+
     return (
         <div className={styles.editProjectSection}>
             <h2>Редактировать проект</h2>
             <div className={styles.editForm}>
+                {/* Заголовок */}
                 <label>Заголовок</label>
                 <input
                     type="text"
                     value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
+                    onChange={(e) => handleInputChange('title', e.target.value)}
                 />
                 {errors.title && <p className={styles.error}>{errors.title}</p>}
 
@@ -230,7 +302,9 @@ export const EditProjectSection = ({ project, onCancel }) => {
                 <div className={styles.richTextEditor}>
                     <RichTextEditor
                         value={editContent}
-                        onChange={setEditContent}
+                        onChange={(value) =>
+                            handleInputChange('content', value)
+                        }
                     />
                     {errors.content && (
                         <p className={styles.error}>{errors.content}</p>
@@ -244,7 +318,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
                         className={styles.addButton}
                         onClick={addVideoUrlField}
                     >
-                        <FaPlus/> Добавить ещё видео-ссылку
+                        <FaPlus /> Добавить ещё видео-ссылку
                     </button>
                     {videoUrls.map((url, index) => (
                         <div key={index} className={styles.videoUrlGroup}>
@@ -263,7 +337,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
                                     className={styles.removeButton}
                                     onClick={() => removeVideoUrlField(index)}
                                 >
-                                    <FaDeleteLeft/>
+                                    <FaDeleteLeft />
                                 </button>
                             )}
                             {errors.videoUrls && errors.videoUrls[index] && (
@@ -278,7 +352,6 @@ export const EditProjectSection = ({ project, onCancel }) => {
                         url.trim() && !errors.videoUrls?.[index] && embedVideo(url)
                     ))}
                 </div>
-
 
                 <label className={styles.label}>Добавить новые медиафайлы</label>
                 <input
@@ -307,7 +380,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
                                     className={styles.deleteButton}
                                     onClick={() => handleDeleteMedia(index)}
                                 >
-                                    <FaDeleteLeft size={20}/>
+                                    <FaDeleteLeft size={20} />
                                 </button>
                             </div>
                         ))}
@@ -354,11 +427,18 @@ export const EditProjectSection = ({ project, onCancel }) => {
                 )}
 
                 {errors.media && <p className={styles.error}>{errors.media}</p>}
-
+                {errors.videoUrls && <p className={styles.error}>{errors.videoUrls}</p>}
                 {errors.submit && <p className={styles.error}>{errors.submit}</p>}
 
                 <div className={styles.buttons}>
-                    <button className={styles.saveButton} onClick={handleSave}>
+                    <button
+                        className={styles.saveButton}
+                        onClick={handleSave}
+                        disabled={
+                            hasAttemptedSubmit &&
+                            Object.values(errors).some((error) => error)
+                        }
+                    >
                         Сохранить
                     </button>
                     <button className={styles.cancelButton} onClick={onCancel}>
@@ -369,7 +449,10 @@ export const EditProjectSection = ({ project, onCancel }) => {
 
             <ConfirmDeleteModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setMediaToDelete(null);
+                }}
                 onConfirm={confirmDeleteMedia}
             />
         </div>

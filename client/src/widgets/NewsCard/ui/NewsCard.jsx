@@ -139,13 +139,14 @@ export const NewsCard = React.memo(
             <div className={styles.newsCard}>
                 {mediaElement}
                 <div className={styles.textContent}>
-                    {/* Один общий Link для всей текстовой части */}
                     <Link
                         to={`/news/${news.id}`}
                         className={styles.link}
                         state={{ id: news.id }}
                     >
-                        <h2 className={styles.title}>{news.title}</h2>
+                        <h2 className={styles.title}>
+                            {truncateHtmlToSentences(news.title, 1)}
+                        </h2>
                         <div
                             className={styles.content}
                             dangerouslySetInnerHTML={{

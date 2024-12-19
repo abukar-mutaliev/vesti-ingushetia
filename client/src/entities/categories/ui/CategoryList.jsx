@@ -1,4 +1,3 @@
-import React, { useMemo } from 'react';
 import { shallowEqual, useSelector } from 'react-redux';
 import {
     selectCategories,
@@ -8,8 +7,9 @@ import {
 import { Link, useLocation } from 'react-router-dom';
 import styles from './CategoryList.module.scss';
 import { Loader } from '@shared/ui/Loader/index.js';
+import { memo } from 'react';
 
-export const CategoryList = React.memo(() => {
+export const CategoryList = memo(() => {
     const categories = useSelector(selectCategories, shallowEqual);
     const loading = useSelector(selectCategoriesLoading);
     const error = useSelector(selectCategoriesError);
@@ -25,23 +25,22 @@ export const CategoryList = React.memo(() => {
             </div>
         );
     }
-
     if (error) {
         return <div>Error: {error}</div>;
     }
     return (
         <ul className={styles.categoryList}>
             {categories.map((category) => (
+                <Link key={category.id} to={`/categories/${category.id}`}>
                 <li
-                    key={category.id}
                     className={
                         isActiveCategory(category.id) ? styles.active : ''
                     }
                 >
-                    <Link to={`/categories/${category.id}`}>
+
                         {category.name}
-                    </Link>
                 </li>
+                </Link>
             ))}
         </ul>
     );
