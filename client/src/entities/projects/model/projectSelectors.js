@@ -17,12 +17,11 @@ export const selectProjectsWithImages = createSelector(
     [selectProjectList],
     (projects) =>
         projects.filter((project) =>
-            project.mediaFiles.some((media) => media.type === 'image')
+            project.mediaFiles?.some((media) => media.type === 'image')
         )
 );
 
 export const selectProjectsLoading = (state) => state.projects.loadingProjects;
-export const selectCurrentProjectLoading = (state) => state.projects.loadingCurrentProject;
 
 export const selectProjectsError = createSelector(
     [selectProjectState],
