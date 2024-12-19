@@ -1,6 +1,5 @@
 import { createSelector } from 'reselect';
 
-
 export const selectNewsState = (state) => state.news;
 
 export const selectNewsList = createSelector(
@@ -96,4 +95,9 @@ export const selectNewsByIdLoading = createSelector(
 export const selectError = createSelector(
     [selectNewsState],
     (newsState) => newsState.error
+);
+
+export const selectArticlesNews = createSelector(
+    [selectNewsList],
+    (newsList) => newsList.filter(news => news.category?.name === 'Статьи')
 );

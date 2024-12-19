@@ -1,5 +1,3 @@
-import truncate from 'html-truncate';
-
 export const truncateHtmlToSentences = (html, sentenceLimit) => {
     const countSentences = (text) => {
         const regex = /[^\.!\?]+[\.!\?]+/g;

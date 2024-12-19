@@ -26,13 +26,13 @@ export const VideoAdPlayer = memo(() => {
     const videoRef = useRef(null);
     const observerRef = useRef(null);
 
+
     useEffect(() => {
         dispatch(fetchAllActiveVideoAds());
     }, [dispatch]);
 
     useEffect(() => {
         if (videoAds.length > 0 && videoRef.current && isVideoVisible) {
-            videoRef.current.load();
             videoRef.current.play().catch((err) => {
                 console.error('Ошибка воспроизведения видео:', err);
             });
@@ -65,9 +65,18 @@ export const VideoAdPlayer = memo(() => {
     }, []);
 
     const handleVideoEnded = () => {
-        setCurrentAdIndex((prevIndex) =>
-            videoAds.length > 0 ? (prevIndex + 1) % videoAds.length : 0
-        );
+        console.log('Видео закончилось');
+        if (videoAds.length === 1) {
+            // Если одно видео, повторяем его
+            if (videoRef.current) {
+                videoRef.current.currentTime = 0;
+                videoRef.current.play().catch((err) => {
+                    console.error('Ошибка воспроизведения видео:', err);
+                });
+            }
+        } else {
+            setCurrentAdIndex((prevIndex) => (prevIndex + 1) % videoAds.length);
+        }
     };
 
     const toggleMute = () => {
@@ -108,11 +117,13 @@ export const VideoAdPlayer = memo(() => {
             onMouseLeave={() => setShowMuteButton(false)}
         >
             <video
+                key={currentAdIndex}
                 ref={videoRef}
                 controls={false}
                 onEnded={handleVideoEnded}
                 autoPlay
                 muted={isMuted}
+                loop={videoAds.length === 1}
                 className={styles.video}
             >
                 <source src={currentAd.url} type="video/mp4" />

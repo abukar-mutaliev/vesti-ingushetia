@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { FaEye } from 'react-icons/fa';
 import { VideoPlayer } from '@shared/ui/VideoPlayer';
 import { SocialIcons } from '@shared/ui/SocialIcons';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
@@ -14,16 +13,17 @@ export const ProjectDetail = ({ project }) => {
         categoryId,
         categoryName,
         createdAt,
-        views,
         mediaFiles,
         content,
     } = project;
 
     const firstImage = mediaFiles?.find((media) => media.type === 'image');
     const firstVideo = mediaFiles?.find((media) => media.type === 'video');
+
     const otherMediaFiles = mediaFiles?.filter(
-        (media) => media !== firstImage && media !== firstVideo,
+        (media) => media.id !== firstImage?.id
     );
+
 
     const processedContent = useMemo(() => {
         let sanitizedContent = DOMPurify.sanitize(content, {
@@ -79,7 +79,6 @@ export const ProjectDetail = ({ project }) => {
             return videoId ? `https://rutube.ru/play/embed/${videoId}` : null;
         }
 
-
         return null;
     };
 
@@ -114,43 +113,20 @@ export const ProjectDetail = ({ project }) => {
                         year: 'numeric',
                     })}
                 </span>
-                <div className={styles.views}>
-                    <FaEye size={10} /> {views || 0}
-                </div>
             </div>
 
             <div className={styles.mediaSection}>
-                {isExternalVideo ? (
-                    <div className={styles.projectVideoContainer}>
-                        <iframe
-                            width="100%"
-                            height="100%"
-                            src={embedUrl}
-                            className={styles.projectVideo}
-                            frameBorder="0"
-                            allowFullScreen
-                            title="Видео"
-                        ></iframe>
-                    </div>
-                ) : firstVideo ? (
-                    <div className={styles.videoWrapper}>
-                        <VideoPlayer
-                            videoUrl={firstVideo.url}
-                            posterUrl={firstImage?.url || ''}
+
+                {firstImage && (
+                    <div className={styles.imageWrapper}>
+                        <img
+                            src={firstImage.url}
+                            alt={title}
+                            className={styles.projectImage}
+                            loading="lazy"
+                            onError={(e) => (e.target.src = defaultImage)}
                         />
                     </div>
-                ) : (
-                    firstImage && (
-                        <div className={styles.imageWrapper}>
-                            <img
-                                src={firstImage.url}
-                                alt={title}
-                                className={styles.projectImage}
-                                loading="lazy"
-                                onError={(e) => (e.target.src = defaultImage)}
-                            />
-                        </div>
-                    )
                 )}
             </div>
 

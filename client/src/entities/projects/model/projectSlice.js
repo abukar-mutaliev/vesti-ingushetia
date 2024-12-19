@@ -1,13 +1,18 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as projectApi from '@entities/projects/api/projectApi';
+import {
+    saveProjectsToLocalStorage,
+    loadProjectsFromLocalStorage,
+} from '@entities/projects/utils/localStorage';
 
 const CACHE_DURATION = Number(import.meta.env.VITE_CACHE_DURATION) || 60000;
 
 const initialState = {
-    projectList: [],
+    projectList: loadProjectsFromLocalStorage(),
     currentProject: null,
     loadingProjects: false,
     loadingCurrentProject: false,
+    loading: false,
     error: null,
     lastFetched: null,
 };
@@ -26,7 +31,7 @@ export const fetchAllProjects = createAsyncThunk(
             const response = await projectApi.fetchAllProjectsApi();
             return response.data;
         } catch (err) {
-            return rejectWithValue(err.response.data);
+            return rejectWithValue(err.response?.data || 'Network Error');
         }
     }
 );
@@ -38,7 +43,7 @@ export const fetchProjectById = createAsyncThunk(
             const response = await projectApi.fetchProjectByIdApi(id);
             return response.data;
         } catch (err) {
-            return rejectWithValue(err.response.data);
+            return rejectWithValue(err.response?.data || 'Network Error');
         }
     }
 );
@@ -50,7 +55,7 @@ export const createProject = createAsyncThunk(
             const response = await projectApi.createProject(projectData);
             return response.data;
         } catch (error) {
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response?.data || 'Network Error');
         }
     }
 );
@@ -62,7 +67,7 @@ export const updateProject = createAsyncThunk(
             const response = await projectApi.updateProject(id, projectData);
             return response.data;
         } catch (error) {
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response?.data || 'Network Error');
         }
     }
 );
@@ -74,7 +79,7 @@ export const deleteProject = createAsyncThunk(
             await projectApi.deleteProject(id);
             return id;
         } catch (err) {
-            return rejectWithValue(err.response.data);
+            return rejectWithValue(err.response?.data || 'Network Error');
         }
     }
 );
@@ -93,22 +98,35 @@ const projectSlice = createSlice({
             state.loadingProjects = false;
             state.projectList = action.payload || [];
             state.lastFetched = Date.now();
+            saveProjectsToLocalStorage(state.projectList);
         })
         .addCase(fetchAllProjects.rejected, (state, action) => {
             state.loadingProjects = false;
-            state.error = action.error.message || 'Ошибка получения проектов';
+            state.error = action.payload || 'Ошибка получения проектов';
         })
         .addCase(fetchProjectById.pending, (state) => {
             state.loadingCurrentProject = true;
             state.error = null;
         })
         .addCase(fetchProjectById.fulfilled, (state, action) => {
-            state.currentProject = action.payload;
+            const fetchedProject = {
+                ...action.payload,
+                videoUrls: Array.isArray(action.payload.videoUrls) ? action.payload.videoUrls : []
+            };
+            state.currentProject = fetchedProject;
+            const index = state.projectList.findIndex(
+                (project) => project.id === fetchedProject.id
+            );
+            if (index !== -1) {
+                state.projectList[index] = fetchedProject;
+                saveProjectsToLocalStorage(state.projectList);
+            }
             state.loadingCurrentProject = false;
         })
+
         .addCase(fetchProjectById.rejected, (state, action) => {
             state.loadingCurrentProject = false;
-            state.error = action.error.message || 'Ошибка получения проекта';
+            state.error = action.payload || 'Ошибка получения проекта';
         })
         .addCase(createProject.pending, (state) => {
             state.loading = true;
@@ -117,28 +135,33 @@ const projectSlice = createSlice({
         .addCase(createProject.fulfilled, (state, action) => {
             state.projectList.push(action.payload);
             state.loading = false;
+            saveProjectsToLocalStorage(state.projectList);
         })
         .addCase(createProject.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message || 'Ошибка создания проекта';
+            state.error = action.payload || 'Ошибка создания проекта';
         })
         .addCase(updateProject.pending, (state) => {
             state.loading = true;
             state.error = null;
         })
         .addCase(updateProject.fulfilled, (state, action) => {
+            const updatedProject = action.payload;
             const index = state.projectList.findIndex(
-                (project) => project.id === action.payload.id
+                (project) => project.id === updatedProject.id
             );
             if (index !== -1) {
-                state.projectList[index] = action.payload;
+                state.projectList[index] = {
+                    ...updatedProject,
+                    videoUrls: Array.isArray(updatedProject.videoUrls) ? updatedProject.videoUrls : []
+                };
+                saveProjectsToLocalStorage(state.projectList);
             }
             state.loading = false;
         })
         .addCase(updateProject.rejected, (state, action) => {
             state.loading = false;
-            state.error =
-                action.error.message || 'Ошибка изменения проекта';
+            state.error = action.payload || 'Ошибка изменения проекта';
         })
         .addCase(deleteProject.pending, (state) => {
             state.loading = true;
@@ -149,10 +172,11 @@ const projectSlice = createSlice({
                 (project) => project.id !== action.payload
             );
             state.loading = false;
+            saveProjectsToLocalStorage(state.projectList);
         })
         .addCase(deleteProject.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.error.message || 'Ошибка удаления проекта';
+            state.error = action.payload || 'Ошибка удаления проекта';
         });
     },
 });

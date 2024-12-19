@@ -235,12 +235,10 @@ exports.updateProject = async (req, res) => {
                         ? media.url
                         : `${baseUrl}/${media.url}`,
                 })),
+                videoUrls: videoUrls,
             };
 
-            res.status(200).json({
-                message: 'Проект успешно обновлен',
-                project: modifiedProject,
-            });
+            res.status(200).json(modifiedProject);
         } catch (err) {
             if (transaction) await transaction.rollback();
             res.status(500).json({
@@ -251,6 +249,7 @@ exports.updateProject = async (req, res) => {
         res.status(500).json({ error: `Ошибка: ${err.message}` });
     }
 };
+
 
 exports.deleteProject = async (req, res) => {
     try {

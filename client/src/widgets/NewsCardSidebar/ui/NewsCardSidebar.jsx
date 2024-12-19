@@ -4,6 +4,7 @@ import { FaPlayCircle } from 'react-icons/fa';
 import defaultImage from '@assets/default.jpg';
 import styles from './NewsCard.module.scss';
 import { getVideoThumbnailUrl } from '@shared/lib/getVideoThumbnailUrl/getVideoThumbnailUrl.js';
+import { truncateHtmlToSentences } from '@shared/lib/TruncateHtml/truncateHtml.js';
 
 export const NewsCardSidebar = React.memo(({ item }) => {
     const [posterError, setPosterError] = useState(false);
@@ -98,7 +99,7 @@ export const NewsCardSidebar = React.memo(({ item }) => {
         <li className={styles.newsItem}>
             {mediaElement}
             <div className={styles.newsOverlay}>
-                <p className={styles.newsTitle}>{item.title}</p>
+                <p className={styles.newsTitle}>{truncateHtmlToSentences(item.title, 1)}</p>
             </div>
         </li>
     );
