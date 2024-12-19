@@ -83,6 +83,24 @@ export const NewsDetail = memo(
             return news.mediaFiles?.filter((m) => m.type === 'image') || [];
         }, [news.mediaFiles]);
 
+        const displayDate = useMemo(() => {
+            if (news.publishDate) {
+                const date = new Date(news.publishDate);
+                if (!isNaN(date)) {
+                    return date;
+                }
+            }
+            return new Date(news.createdAt);
+        }, [news.publishDate, news.createdAt]);
+
+        const formattedDate = useMemo(() => {
+            return displayDate.toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+            });
+        }, [displayDate]);
+
         return (
             <div className={styles.newsDetail}>
                 <h1 className={styles.title}>{news.title}</h1>
@@ -98,13 +116,7 @@ export const NewsDetail = memo(
                         )}
                     </span>
                     <Link to={`/`}>Вести Ингушетии</Link>
-                    <span>
-                        {new Date(news.createdAt).toLocaleDateString('ru-RU', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                        })}
-                    </span>
+                    <span>{formattedDate}</span>
                     <div className={styles.views}>
                         <FaEye size={10} /> {news.views}
                     </div>

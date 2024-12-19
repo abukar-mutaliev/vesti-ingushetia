@@ -31,16 +31,16 @@ export const CategoryList = memo(() => {
     return (
         <ul className={styles.categoryList}>
             {categories.map((category) => (
-                <Link key={category.id} to={`/categories/${category.id}`}>
                 <li
+                    key={category.id}
                     className={
                         isActiveCategory(category.id) ? styles.active : ''
                     }
                 >
-
+                    <Link to={`/categories/${category.id}`}>
                         {category.name}
+                    </Link>
                 </li>
-                </Link>
             ))}
         </ul>
     );

@@ -2,7 +2,11 @@ import React from 'react';
 import styles from './ProjectCard.module.scss';
 
 export const ProjectCard = React.memo(({ project }) => {
-    const imageUrl = project.mediaFiles?.[0]?.url || null;
+    const imageFiles = project.mediaFiles?.filter(
+        (media) => media.type === 'image'
+    ) || [];
+
+    const imageUrl = imageFiles.length > 0 ? imageFiles[0].url : null;
 
     return (
         <div className={styles.projectCard}>

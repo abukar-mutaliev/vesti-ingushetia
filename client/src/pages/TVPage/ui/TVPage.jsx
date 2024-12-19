@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import {
     fetchAllNews,
@@ -13,9 +13,13 @@ import styles from './TVPage.module.scss';
 import { NewsList } from '@features/newsList';
 import { Sidebar } from '@widgets/Sidebar';
 import { selectCategories } from '@entities/categories/model/categorySelectors';
+import { SlArrowRight } from 'react-icons/sl';
+import { FaTimes } from 'react-icons/fa';
+import { SideMenu } from '@widgets/SideMenu/index.js';
 
 const TVPage = () => {
     const dispatch = useDispatch();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const selectedDate = useSelector((state) => state.news.selectedDate);
     const newsList = useSelector(selectNewsWithVideos, shallowEqual);
@@ -40,9 +44,23 @@ const TVPage = () => {
         dispatch(setPage(0));
     };
 
-    const newsDates = newsList.map((news) =>
-        new Date(news.createdAt).toDateString(),
-    );
+    const newsDates = useMemo(() => {
+        const dates = newsList.map((news) =>
+            news.publishDate
+                ? new Date(news.publishDate).toDateString()
+                : new Date(news.createdAt).toDateString()
+        );
+        return Array.from(new Set(dates));
+    }, [newsList]);
+
+
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
+
+    const closeMenu = () => {
+        setIsMenuOpen(false);
+    };
 
     if (loading) {
         return <div>Загрузка...</div>;
@@ -50,9 +68,25 @@ const TVPage = () => {
 
     return (
         <div className={styles.tvPage}>
-            <h1 className={styles.title}>ТВ</h1>
+            {isMenuOpen && (
+                <div className={styles.backdrop} onClick={closeMenu}></div>
+            )}
             <div className={styles.newsContent}>
-                <NewsList selectedDate={selectedDate} onlyWithVideos={true} />
+                <div className={styles.mobileMenuIcon}>
+                    <SlArrowRight size={20} onClick={toggleMenu}/>
+                </div>
+                <div
+                    className={`${styles.sideMenu} ${isMenuOpen ? styles.open : ''}`}
+                >
+                    <button className={styles.closeButton} onClick={closeMenu}>
+                        <FaTimes size={20}/>
+                    </button>
+                    <SideMenu onCategoryClick={closeMenu}/>
+                </div>
+                <div>
+                    <h1 className={styles.title}>ТВ</h1>
+                    <NewsList selectedDate={selectedDate} onlyWithVideos={true}/>
+                </div>
                 <div className={styles.sidebarContainer}>
                     <p>Архивные телепередачи</p>
                     <CustomCalendar
@@ -67,7 +101,7 @@ const TVPage = () => {
                             Показать все новости
                         </button>
                     )}
-                    <Sidebar categories={categories} newsList={newsList} />
+                    <Sidebar categories={categories} newsList={newsList}/>
                 </div>
             </div>
         </div>

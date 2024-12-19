@@ -41,6 +41,11 @@ module.exports = (sequelize) => {
                     key: 'id',
                 },
             },
+            publishDate: {
+                type: DataTypes.DATE,
+                allowNull: true,
+                defaultValue: DataTypes.NOW,
+            },
         },
         {
             tableName: 'news',

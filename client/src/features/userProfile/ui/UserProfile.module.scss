@@ -18,6 +18,7 @@
     font-family: "RussiaMedium", Arial;
     font-weight: 500;
     font-size: 20px;
+    color: #333333;
 
     @media screen and (max-width: 768px) {
         margin-top: 20%;
@@ -29,7 +30,6 @@
             font-size: 14px;
         }
     }
-    color: #333333;
     a {
         color: #646cff;
     }
