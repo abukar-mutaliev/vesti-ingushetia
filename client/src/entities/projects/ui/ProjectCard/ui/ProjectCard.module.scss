@@ -23,7 +23,7 @@
     .projectCardImage {
         width: 100%;
         max-height: 199px;
-        height: 160px;
+        height: 200px;
         display: block;
         border-radius: 8px;
         transition: opacity 0.3s ease;
@@ -63,9 +63,8 @@
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             }
         }
-
         .projectCardImage {
-            max-height: 150px;
+            max-height: 170px;
         }
 
         .projectCardContent {
@@ -87,11 +86,6 @@
         .projectCard {
             border-radius: 5px;
         }
-
-        .projectCardImage {
-            max-height: 120px;
-        }
-
         .projectCardContent {
             padding: 6px;
         }
