@@ -133,7 +133,7 @@ exports.getNewsByDate = async (req, res) => {
 };
 
 exports.createNews = async (req, res) => {
-    const { title, content, categoryId, videoUrl  } = req.body;
+    const { title, content, categoryId, videoUrl, publishDate } = req.body;
     const mediaFiles = req.files;
     const authorId = req.user.id;
 
@@ -141,10 +141,23 @@ exports.createNews = async (req, res) => {
     try {
         transaction = await sequelize.transaction();
 
-        const news = await News.create(
-            { title, content, authorId, categoryId },
-            { transaction },
-        );
+        const newsData = {
+            title,
+            content,
+            authorId,
+            categoryId,
+        };
+
+        if (publishDate) {
+            const date = new Date(publishDate);
+            if (!isNaN(date)) {
+                newsData.publishDate = date;
+            } else {
+                throw new Error('Неверный формат даты');
+            }
+        }
+
+        const news = await News.create(newsData, { transaction });
 
         const mediaInstances = [];
 
@@ -166,10 +179,10 @@ exports.createNews = async (req, res) => {
             }
         }
 
-        if (videoUrl ) {
+        if (videoUrl) {
             const media = await Media.create(
                 {
-                    url: videoUrl ,
+                    url: videoUrl,
                     type: 'video',
                 },
                 { transaction },
@@ -191,9 +204,10 @@ exports.createNews = async (req, res) => {
         });
     }
 };
+
 exports.updateNews = async (req, res) => {
     const { id } = req.params;
-    const { title, content, categoryId, videoUrl, existingMedia } = req.body;
+    const { title, content, categoryId, videoUrl, existingMedia, publishDate } = req.body; // Добавлено publishDate
     const mediaFiles = req.files;
     const authorId = req.user.id;
 
@@ -207,10 +221,23 @@ exports.updateNews = async (req, res) => {
         try {
             transaction = await sequelize.transaction();
 
-            await news.update(
-                { title, content, categoryId, authorId },
-                { transaction },
-            );
+            const updateData = {
+                title,
+                content,
+                categoryId,
+                authorId,
+            };
+
+            if (publishDate) {
+                const date = new Date(publishDate);
+                if (!isNaN(date)) {
+                    updateData.publishDate = date;
+                } else {
+                    throw new Error('Неверный формат даты');
+                }
+            }
+
+            await news.update(updateData, { transaction });
 
             const existingMediaIds = JSON.parse(existingMedia || '[]');
 
@@ -306,6 +333,7 @@ exports.updateNews = async (req, res) => {
         res.status(500).json({ error: `Ошибка: ${err.message}` });
     }
 };
+
 
 exports.deleteNews = async (req, res) => {
     try {

@@ -28,18 +28,19 @@ export const ArticlesNewsList = () => {
     }
 
     if (articlesNews.length === 0) {
-        return <div>Нет новостей в категории "Статьи".</div>;
+        return <div></div>;
     }
 
     return (
         <ul className={styles.newsList}>
             {articlesNews.map((news) => (
-                <Link key={news.id} to={`/news/${news.id}`} className={styles.newsLink}>
-                    <li className={styles.newsItem}>
+                <li key={news.id} className={styles.newsItem}>
+                    <Link  to={`/news/${news.id}`} className={styles.newsLink}>
                         {truncateHtmlToSentences(news.title, 1)}
+                    </Link>
                     </li>
-                </Link>
-            ))}
+
+                ))}
         </ul>
     );
 };

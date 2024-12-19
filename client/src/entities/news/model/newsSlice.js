@@ -116,12 +116,12 @@ const newsSlice = createSlice({
             if (selectedDateString) {
                 const selectedDate = new Date(selectedDateString).toDateString();
                 state.filteredNews = state.newsList.filter((news) => {
-                    const newsDate = new Date(news.createdAt).toDateString();
-                    return newsDate === selectedDate;
+                    const effectiveDate = news.publishDate ? new Date(news.publishDate) : new Date(news.createdAt);
+                    return effectiveDate.toDateString() === selectedDate;
                 });
                 state.filteredNewsWithVideos = state.newsList.filter((news) => {
-                    const newsDate = new Date(news.createdAt).toDateString();
-                    return newsDate === selectedDate && hasVideo(news);
+                    const effectiveDate = news.publishDate ? new Date(news.publishDate) : new Date(news.createdAt);
+                    return effectiveDate.toDateString() === selectedDate && hasVideo(news);
                 });
             } else {
                 state.filteredNews = state.newsList;

@@ -1,6 +1,6 @@
 .homePage {
     max-width: 90rem;
-    margin: 8% auto;
+    margin: 5% auto;
     color: black;
     display: flex;
     gap: 20px;
@@ -59,7 +59,7 @@
     display: block;
     transition: transform 0.3s ease-in-out;
     border: none;
-    height: 100vh;
+    height: auto;
     width: 360px;
     background-color: #2376d1;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -70,7 +70,7 @@
         left: 0;
         width: 250px;
         height: 100%;
-        background: #f8f8f8;
+
         transform: translateX(-100%);
         z-index: 500;
         overflow-y: auto;
@@ -81,7 +81,6 @@
         left: 0;
         width: 250px;
         height: 100%;
-        background: #f8f8f8;
         transform: translateX(-100%);
         z-index: 1000;
         overflow-y: auto;
@@ -139,6 +138,7 @@
     gap: 20px;
     box-sizing: border-box;
     padding-bottom: 5%;
+    margin-top: 4%;
     @media (max-width: 1244px) {
         flex: 1;
     }
@@ -150,6 +150,9 @@
         align-items: center;
         box-sizing: border-box;
     }
+}
+.sidebarContainer {
+    margin-top: 4%;
 }
 .projectsSliderContainer {
     padding-bottom: 10%;

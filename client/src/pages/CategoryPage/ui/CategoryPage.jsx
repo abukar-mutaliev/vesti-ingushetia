@@ -15,10 +15,14 @@ import {
 } from '@entities/news/model/newsSelectors.js';
 import { fetchAllNews } from '@entities/news/model/newsSlice.js';
 import ReactPaginate from 'react-paginate';
+import { SideMenu } from '@widgets/SideMenu/index.js';
+import { FaTimes } from 'react-icons/fa';
+import { SlArrowRight } from 'react-icons/sl';
 
 const CategoryPage = () => {
     const { categoryId } = useParams();
     const dispatch = useDispatch();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const newsByCategory = useSelector(
         (state) => selectNewsByCategory(state, categoryId),
@@ -58,11 +62,34 @@ const CategoryPage = () => {
         setCurrentPage(0);
     }, [categoryId]);
 
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
+
+    const closeMenu = () => {
+        setIsMenuOpen(false);
+    };
+
     const isLoading = loading || !categories.length || !newsList.length;
 
     return (
         <div className={styles.categoryPage}>
+            {isMenuOpen && (
+                <div className={styles.backdrop} onClick={closeMenu}></div>
+            )}
+
+            <div
+                className={`${styles.sideMenu} ${isMenuOpen ? styles.open : ''}`}
+            >
+                <button className={styles.closeButton} onClick={closeMenu}>
+                    <FaTimes size={20} />
+                </button>
+                <SideMenu onCategoryClick={closeMenu} />
+            </div>
             <div className={styles.content}>
+                <div className={styles.mobileMenuIcon}>
+                    <SlArrowRight size={20} onClick={toggleMenu}/>
+                </div>
                 <h1>
                     {currentCategory
                         ? currentCategory.name
@@ -71,7 +98,7 @@ const CategoryPage = () => {
                 <div className={styles.newsList}>
                     {currentNews.length > 0 ? (
                         currentNews.map((news) => (
-                            <NewsCard key={news.id} news={news} />
+                            <NewsCard key={news.id} news={news}/>
                         ))
                     ) : (
                         <div>Новостей в этой категории пока нет.</div>

@@ -15,6 +15,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
     const [newMedia, setNewMedia] = useState([[]]);
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
     const [videoUrl, setVideoUrl] = useState('');
+    const [publishDate, setPublishDate] = useState('');
     const [errors, setErrors] = useState({});
     const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
     const [mediaToDelete, setMediaToDelete] = useState(null);
@@ -31,9 +32,22 @@ export const EditNewsSection = ({ news, onCancel }) => {
             setEditMedia(news.mediaFiles || []);
             const videoMedia = (news.mediaFiles || []).find((m) => m.type === 'video');
             setVideoUrl(videoMedia?.url || '');
+            setPublishDate(news.publishDate ? formatDateForInput(news.publishDate) : '');
         }
         dispatch(fetchCategories());
     }, [news, dispatch]);
+
+    const formatDateForInput = (dateString) => {
+        const date = new Date(dateString);
+        if (isNaN(date)) return '';
+        const pad = (num) => String(num).padStart(2, '0');
+        const year = date.getFullYear();
+        const month = pad(date.getMonth() + 1);
+        const day = pad(date.getDate());
+        const hours = pad(date.getHours());
+        const minutes = pad(date.getMinutes());
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
 
     const isSupportedVideoUrl = (url) => {
         if (!url) return true;
@@ -67,7 +81,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 }
                 break;
             case 'media':
-                const hasExistingImages = editMedia.length > 0;
+                const hasExistingImages = editMedia.some((media) => media.type === 'image');
                 const hasNewImages = value.some(group => group.length > 0);
 
                 if (!hasExistingImages && !hasNewImages) {
@@ -77,6 +91,14 @@ export const EditNewsSection = ({ news, onCancel }) => {
             case 'videoUrl':
                 if (value && !isSupportedVideoUrl(value)) {
                     error = 'Видео ссылка должна быть URL от Rutube или YouTube';
+                }
+                break;
+            case 'publishDate':
+                if (value) {
+                    const date = new Date(value);
+                    if (isNaN(date)) {
+                        error = 'Неверный формат даты.';
+                    }
                 }
                 break;
             default:
@@ -92,13 +114,15 @@ export const EditNewsSection = ({ news, onCancel }) => {
         const isCategoryValid = validateField('category', selectedCategoryId);
         const isMediaValid = validateField('media', newMedia);
         const isVideoUrlValid = validateField('videoUrl', videoUrl);
+        const isPublishDateValid = validateField('publishDate', publishDate);
 
         return (
             isTitleValid &&
             isContentValid &&
             isCategoryValid &&
             isMediaValid &&
-            isVideoUrlValid
+            isVideoUrlValid &&
+            isPublishDateValid
         );
     };
 
@@ -116,6 +140,10 @@ export const EditNewsSection = ({ news, onCancel }) => {
 
         if (videoUrl.trim() !== '') {
             formData.append('videoUrl', videoUrl.trim());
+        }
+
+        if (publishDate) {
+            formData.append('publishDate', publishDate);
         }
 
         formData.append(
@@ -154,6 +182,9 @@ export const EditNewsSection = ({ news, onCancel }) => {
             case 'videoUrl':
                 setVideoUrl(value);
                 break;
+            case 'publishDate':
+                setPublishDate(value);
+                break;
             default:
                 break;
         }
@@ -171,7 +202,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
         });
 
         if (hasAttemptedSubmit) {
-            validateField('media', [...newMedia.slice(0, index), files, ...newMedia.slice(index+1)]);
+            validateField('media', [...newMedia.slice(0, index), files, ...newMedia.slice(index + 1)]);
         }
     };
 
@@ -250,6 +281,14 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 />
                 {errors.videoUrl && <p className={styles.error}>{errors.videoUrl}</p>}
 
+                <label>Дата публикации (опционально)</label>
+                <input
+                    type="datetime-local"
+                    value={publishDate}
+                    onChange={(e) => handleInputChange('publishDate', e.target.value)}
+                />
+                {errors.publishDate && <p className={styles.error}>{errors.publishDate}</p>}
+
                 <label>Изображения (обязательны)</label>
                 {editMedia.length > 0 ? (
                     editMedia.map((media, index) => (
@@ -260,7 +299,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                                     src={`${media.url}`}
                                     alt="media"
                                 />
-                            ) : null }
+                            ) : null}
                             <button
                                 className={styles.deleteButton}
                                 onClick={() => handleDeleteMedia(index)}

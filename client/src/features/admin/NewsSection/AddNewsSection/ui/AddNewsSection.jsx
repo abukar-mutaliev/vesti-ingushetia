@@ -6,7 +6,6 @@ import { fetchCategories } from '@entities/categories/model/categorySlice.js';
 import { createNews, fetchAllNews } from '@entities/news/model/newsSlice.js';
 import { RichTextEditor } from '@shared/ui/RichTextEditor';
 import { FaDeleteLeft } from 'react-icons/fa6';
-import defaultImage from '@assets/default.jpg';
 
 const LOCAL_STORAGE_KEY = 'adminDashboard_addNewsSectionFormData';
 
@@ -34,9 +33,13 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         return saved ? JSON.parse(saved).videoUrl || '' : '';
     });
 
+    const [publishDate, setPublishDate] = useState(() => {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        return saved ? JSON.parse(saved).publishDate || '' : '';
+    });
+
     const [newsMedia, setNewsMedia] = useState([[]]);
     const [errors, setErrors] = useState({});
-
 
     useEffect(() => {
         dispatch(fetchCategories());
@@ -48,9 +51,10 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             newsContent,
             selectedCategoryId,
             videoUrl,
+            publishDate,
         };
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(formData));
-    }, [newsTitle, newsContent, selectedCategoryId, videoUrl]);
+    }, [newsTitle, newsContent, selectedCategoryId, videoUrl, publishDate]);
 
     useEffect(() => {
         validateField('media', newsMedia);
@@ -78,6 +82,13 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                     error = 'Выберите категорию.';
                 }
                 break;
+            case 'videoUrl':
+                const rutubeRegex = /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
+                const youtubeRegex = /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
+                if (value && !(rutubeRegex.test(value) || youtubeRegex.test(value))) {
+                    error = 'Видео ссылка должна быть URL от Rutube или YouTube';
+                }
+                break;
             case 'media':
                 if (!value || !value.some((group) => group.length > 0)) {
                     if (!videoUrl.trim()) {
@@ -85,11 +96,12 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                     }
                 }
                 break;
-            case 'videoUrl':
-                const rutubeRegex = /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
-                const youtubeRegex = /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
-                if (value && !(rutubeRegex.test(value) || youtubeRegex.test(value))) {
-                    error = 'Видео ссылка должна быть URL от Rutube или YouTube';
+            case 'publishDate':
+                if (value) {
+                    const date = new Date(value);
+                    if (isNaN(date)) {
+                        error = 'Неверный формат даты.';
+                    }
                 }
                 break;
             default:
@@ -105,6 +117,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         const isContentValid = validateField('content', newsContent);
         const isCategoryValid = validateField('category', selectedCategoryId);
         const isVideoUrlValid = validateField('videoUrl', videoUrl);
+        const isPublishDateValid = validateField('publishDate', publishDate);
 
         const isMediaValid = videoUrl.trim() || newsMedia.some((group) => group.length > 0);
         setErrors((prevErrors) => ({
@@ -113,7 +126,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         }));
 
         return (
-            isTitleValid && isContentValid && isCategoryValid && isVideoUrlValid && isMediaValid
+            isTitleValid && isContentValid && isCategoryValid && isVideoUrlValid && isPublishDateValid && isMediaValid
         );
     };
 
@@ -127,6 +140,10 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
 
         if (videoUrl.trim() !== '') {
             formData.append('videoUrl', videoUrl.trim());
+        }
+
+        if (publishDate) {
+            formData.append('publishDate', publishDate);
         }
 
         newsMedia.flat().forEach((file) => {
@@ -164,6 +181,9 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 break;
             case 'videoUrl':
                 setVideoUrl(value);
+                break;
+            case 'publishDate':
+                setPublishDate(value);
                 break;
             default:
                 break;
@@ -243,6 +263,14 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                     onChange={(e) => handleInputChange('videoUrl', e.target.value)}
                 />
                 {errors.videoUrl && <p className={styles.error}>{errors.videoUrl}</p>}
+
+                <label>Дата публикации (опционально)</label>
+                <input
+                    type="datetime-local"
+                    value={publishDate}
+                    onChange={(e) => handleInputChange('publishDate', e.target.value)}
+                />
+                {errors.publishDate && <p className={styles.error}>{errors.publishDate}</p>}
 
                 <label>Изображения</label>
                 {newsMedia.map((mediaGroup, index) => (

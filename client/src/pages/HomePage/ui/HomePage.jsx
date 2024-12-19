@@ -61,7 +61,9 @@ const HomePage = () => {
                     <MainNews />
                     <NewsList newsList={newsList} />
                 </div>
-                <Sidebar categories={categories} newsList={newsList} />
+                <div className={styles.sidebarContainer}>
+                    <Sidebar categories={categories} newsList={newsList} />
+                </div>
             </div>
             <div className={styles.projectsSliderContainer}>
                 <ProjectsSlider />

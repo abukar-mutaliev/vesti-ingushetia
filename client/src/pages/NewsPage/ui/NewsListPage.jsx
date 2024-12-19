@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import styles from './NewsPage.module.scss';
 import { NewsList } from '@features/newsList';
 import { CustomCalendar } from '@widgets/Calendar/';
@@ -34,9 +34,14 @@ const NewsListPage = () => {
         window.scrollTo(0, 0);
     };
 
-    const newsDates = newsList.map((news) =>
-        new Date(news.createdAt).toDateString(),
-    );
+    const newsDates = useMemo(() => {
+        const dates = newsList.map((news) =>
+            news.publishDate
+                ? new Date(news.publishDate).toDateString()
+                : new Date(news.createdAt).toDateString()
+        );
+        return Array.from(new Set(dates));
+    }, [newsList]);
 
     return (
         <div className={styles.newsPage}>
