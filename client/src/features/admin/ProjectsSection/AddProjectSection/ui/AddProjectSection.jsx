@@ -96,8 +96,6 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
                 } else {
                     videoUrlErrors[index] = '';
                 }
-            } else {
-                videoUrlErrors[index] = 'Ссылка не может быть пустой';
             }
         });
 
