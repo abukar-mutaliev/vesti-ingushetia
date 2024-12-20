@@ -146,7 +146,7 @@ exports.loginUser = async (req, res) => {
         });
 
         res.cookie('csrf-token', req.csrfToken(), {
-            httpOnly: true,
+            httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
         });
@@ -216,7 +216,7 @@ exports.refreshToken = async (req, res) => {
                 maxAge: 7 * 24 * 60 * 60 * 1000,
             });
             res.cookie('csrf-token', req.csrfToken(), {
-                httpOnly: true,
+                httpOnly: false,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
             });
