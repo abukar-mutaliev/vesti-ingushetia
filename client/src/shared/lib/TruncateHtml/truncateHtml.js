@@ -43,7 +43,7 @@ export const truncateHtmlToSentences = (html, sentenceLimit) => {
             return htmlContent;
         }
 
-        return `${truncatedHtml.trim()}...`;
+        return `${truncatedHtml.trim()}`;
     };
 
     return truncateToSentences(html, sentenceLimit);
