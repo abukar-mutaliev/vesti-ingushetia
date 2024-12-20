@@ -35,12 +35,11 @@ export const ArticlesNewsList = () => {
         <ul className={styles.newsList}>
             {articlesNews.map((news) => (
                 <li key={news.id} className={styles.newsItem}>
-                    <Link  to={`/news/${news.id}`} className={styles.newsLink}>
+                    <Link to={`/news/${news.id}`} className={styles.newsLink}>
                         {truncateHtmlToSentences(news.title, 1)}
                     </Link>
-                    </li>
-
-                ))}
+                </li>
+            ))}
         </ul>
     );
 };

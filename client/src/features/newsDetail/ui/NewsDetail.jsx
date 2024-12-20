@@ -115,7 +115,7 @@ export const NewsDetail = memo(
                             'Неизвестный'
                         )}
                     </span>
-                    <Link to={`/`}>Вести Ингушетии</Link>
+                    <Link to={`/`}>Вести Ингушетия</Link>
                     <span>{formattedDate}</span>
                     <div className={styles.views}>
                         <FaEye size={10} /> {news.views}
