@@ -67,7 +67,6 @@ router.put(
 
 router.post(
     '/refresh',
-    csrfProtection,
     refreshTokenValidator,
     validate,
     userController.refreshToken,
