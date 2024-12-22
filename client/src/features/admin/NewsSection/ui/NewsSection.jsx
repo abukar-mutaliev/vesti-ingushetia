@@ -5,6 +5,7 @@ import { selectNewsList } from '@entities/news/model/newsSelectors.js';
 import {
     deleteNews,
     fetchAllNews,
+    loadNewsFromLocalStorageAction,
 } from '@entities/news/model/newsSlice.js';
 import styles from './NewsSection.module.scss';
 import { ConfirmDeleteModal } from '@shared/ui/ConfirmDeleteModal/index.js';
@@ -17,7 +18,7 @@ export const NewsSection = ({ onEditNews, onAddNews }) => {
     const [newsIdToDelete, setNewsIdToDelete] = useState(null);
 
     useEffect(() => {
-        dispatch(fetchAllNews());
+        dispatch(loadNewsFromLocalStorageAction());
     }, [dispatch]);
 
     const openDeleteModal = (id) => {

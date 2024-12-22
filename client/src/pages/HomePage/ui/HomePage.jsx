@@ -8,18 +8,18 @@ import { fetchCategories } from '@entities/categories/model/categorySlice';
 import { selectCategories } from '@entities/categories/model/categorySelectors.js';
 import { selectNewsList } from '@entities/news/model/newsSelectors.js';
 
-import { useDispatch, useSelector } from 'react-redux';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { FaTimes } from 'react-icons/fa';
 import { SlArrowRight } from 'react-icons/sl';
+import { ProjectsSection } from '@features/projects/ProjectsSection/';
 import { ProjectsSlider } from '@features/projects/ProjectsSlider/';
-import { fetchAllNews } from '@entities/news/model/newsSlice.js';
 
 const HomePage = () => {
     const dispatch = useDispatch();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    const newsList = useSelector(selectNewsList);
-    const categories = useSelector(selectCategories);
+    const newsList = useSelector(selectNewsList, shallowEqual);
+    const categories = useSelector(selectCategories, shallowEqual);
 
     const loadCategories = useCallback(() => {
         if (!categories.length) {
@@ -29,8 +29,7 @@ const HomePage = () => {
 
     useEffect(() => {
         loadCategories();
-        dispatch(fetchAllNews());
-    }, [loadCategories, dispatch]);
+    }, [loadCategories]);
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);

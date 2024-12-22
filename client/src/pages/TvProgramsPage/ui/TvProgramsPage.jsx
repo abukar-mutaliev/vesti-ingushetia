@@ -22,17 +22,17 @@ const TvProgramsPage = () => {
                 <div className={styles.backdrop} onClick={closeMenu}></div>
             )}
             <div className={styles.mobileMenuIcon}>
-                <SlArrowRight size={20} onClick={toggleMenu} />
+                <SlArrowRight size={20} onClick={toggleMenu}/>
             </div>
             <div
                 className={`${styles.sideMenu} ${isMenuOpen ? styles.open : ''}`}
             >
                 <button className={styles.closeButton} onClick={closeMenu}>
-                    <FaTimes size={20} />
+                    <FaTimes size={20}/>
                 </button>
-                <SideMenu onCategoryClick={closeMenu} />
+                <SideMenu onCategoryClick={closeMenu}/>
             </div>
-            <TvProgramList />
+            <TvProgramList/>
         </div>
     );
 };

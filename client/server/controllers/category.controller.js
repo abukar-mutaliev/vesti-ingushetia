@@ -1,4 +1,11 @@
-const { Category, Author, News, User, Comment, Media } = require('../models');
+const {
+    Category,
+    Author,
+    News,
+    User,
+    Comment,
+    Media,
+} = require('../models');
 
 exports.addCategory = async (req, res) => {
     const { name } = req.body;

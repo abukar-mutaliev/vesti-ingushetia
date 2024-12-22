@@ -87,8 +87,10 @@ export const Header = () => {
                 </div>
                 <div className={styles.mobileIcons}>
                     <div
-                        className={`${styles.searchIconMobile}
-                             ${location.pathname.includes('/search/results') ? styles.active : ''}`}
+                        className={
+                            `${styles.searchIconMobile}
+                             ${location.pathname.includes('/search/results') ? styles.active : ''}`
+                        }
                         onClick={handleSearchIconClick}
                     >
                         <MdSearch size={30} />

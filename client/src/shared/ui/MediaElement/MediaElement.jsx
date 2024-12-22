@@ -6,14 +6,14 @@ import PropTypes from 'prop-types';
 import styles from './MediaElement.module.scss';
 
 export const MediaElement = ({
-    imageUrl = null,
-    videoUrl = null,
-    alt,
-    className = '',
-    playIconSize = 30,
-    showPlayIcon = true,
-    onError = () => {},
-}) => {
+                                 imageUrl = null,
+                                 videoUrl = null,
+                                 alt,
+                                 className = '',
+                                 playIconSize = 30,
+                                 showPlayIcon = true,
+                                 onError = () => {},
+                             }) => {
     const hasVideo = useMemo(() => Boolean(videoUrl), [videoUrl]);
 
     const videoPosterUrl = useMemo(() => {

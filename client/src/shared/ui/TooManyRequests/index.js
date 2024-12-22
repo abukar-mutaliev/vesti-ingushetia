@@ -1,1 +1,1 @@
-export { TooManyRequests } from './ui/TooManyRequests';
+export {TooManyRequests} from './ui/TooManyRequests'

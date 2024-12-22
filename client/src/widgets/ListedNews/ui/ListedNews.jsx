@@ -5,18 +5,17 @@ import defaultImage from '@assets/default.jpg';
 import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
 
 export const ListedNews = React.memo(({ newsList }) => {
+
     const sortedByViewsNews = useMemo(() => {
-        return [...newsList].sort((a, b) => b.views - a.views).slice(0, 6);
+        return [...newsList]
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 6);
     }, [newsList]);
 
     const topThreeNews = useMemo(() => {
         return sortedByViewsNews.slice(0, 3).map((newsItem) => {
-            const imageMedia =
-                newsItem.mediaFiles?.find((media) => media.type === 'image') ||
-                null;
-            const videoMedia =
-                newsItem.mediaFiles?.find((media) => media.type === 'video') ||
-                null;
+            const imageMedia = newsItem.mediaFiles?.find(media => media.type === 'image') || null;
+            const videoMedia = newsItem.mediaFiles?.find(media => media.type === 'video') || null;
 
             const imageUrl = imageMedia?.url || null;
             const videoUrl = videoMedia?.url || null;
@@ -30,6 +29,7 @@ export const ListedNews = React.memo(({ newsList }) => {
             };
         });
     }, [sortedByViewsNews]);
+
 
     const nextThreeNews = useMemo(() => {
         return sortedByViewsNews.slice(3, 6).map((newsItem) => ({

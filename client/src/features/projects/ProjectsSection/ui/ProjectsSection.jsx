@@ -1,10 +1,4 @@
-import {
-    useEffect,
-    useState,
-    useMemo,
-    useCallback,
-    useRef,
-} from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import ReactPaginate from 'react-paginate';
 import PropTypes from 'prop-types';
@@ -15,10 +9,7 @@ import { fetchAllProjects } from '@entities/projects/model/projectSlice';
 import { selectProjectList } from '@entities/projects/model/projectSelectors';
 import { Link } from 'react-router-dom';
 
-export const ProjectsSection = ({
-    title = 'Наши проекты',
-    itemsPerPage = 6,
-}) => {
+export const ProjectsSection = ({ title = 'Наши проекты', itemsPerPage = 6 }) => {
     const dispatch = useDispatch();
     const projects = useSelector(selectProjectList, shallowEqual);
 
@@ -52,7 +43,10 @@ export const ProjectsSection = ({
             <h2>{title}</h2>
             <div className={styles.projectsGrid}>
                 {currentProjects.map((project) => (
-                    <Link to={`/projects/${project.id}`} key={project.id}>
+                    <Link
+                        to={`/projects/${project.id}`}
+                        key={project.id}
+                        >
                         <ProjectCard key={project.id} project={project} />
                     </Link>
                 ))}

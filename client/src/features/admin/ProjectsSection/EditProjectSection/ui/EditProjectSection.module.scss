@@ -77,13 +77,14 @@
         margin-left: 95%;
         cursor: pointer;
         transition:
-            color 0.3s ease,
-            transform 0.3s ease;
+                color 0.3s ease,
+                transform 0.3s ease;
         &:hover {
             color: #777777;
         }
     }
     .previewVideosContainer {
+
     }
     .videoUrlGroup {
         display: grid;

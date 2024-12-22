@@ -36,9 +36,9 @@ const storage = multer.diskStorage({
         cb(
             null,
             file.fieldname +
-                '-' +
-                uniqueSuffix +
-                path.extname(file.originalname),
+            '-' +
+            uniqueSuffix +
+            path.extname(file.originalname),
         );
     },
 });
@@ -69,8 +69,8 @@ const handleMulterErrors = (err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         console.error('Ошибка Multer:', err);
         return res
-            .status(400)
-            .json({ error: `Ошибка загрузки файлов: ${err.message}` });
+        .status(400)
+        .json({ error: `Ошибка загрузки файлов: ${err.message}` });
     } else if (err) {
         console.error('Ошибка загрузки файлов:', err);
         return res.status(400).json({ error: err.message });

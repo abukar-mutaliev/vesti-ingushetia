@@ -89,15 +89,15 @@
         font-size: 20px;
         color: $primary-color;
         transition:
-            0.3s ease,
-            transform,
-            0.3s ease;
-        &:hover {
-            color: $primary-color-hover;
-            transition:
                 0.3s ease,
                 transform,
                 0.3s ease;
+        &:hover {
+            color: $primary-color-hover;
+            transition:
+                    0.3s ease,
+                    transform,
+                    0.3s ease;
         }
     }
 }
