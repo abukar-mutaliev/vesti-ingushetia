@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import{ useEffect, useRef } from 'react';
 import styles from './LiveStreamPage.module.scss';
 import Hls from 'hls.js';
 

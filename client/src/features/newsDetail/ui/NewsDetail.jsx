@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo } from 'react';
+import React, { memo, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FaEye } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
@@ -16,7 +16,7 @@ import styles from './NewsDetail.module.scss';
 export const NewsDetail = memo(
     ({ news, loading, newsId, userId, authorName }) => {
         const dispatch = useDispatch();
-        const comments = useSelector((state) => selectCommentsByNewsId(state, newsId));
+        const comments = useSelector(selectCommentsByNewsId(newsId));
 
         useEffect(() => {
             if (!news) {
@@ -25,17 +25,17 @@ export const NewsDetail = memo(
             dispatch(fetchCommentsForNews(newsId));
         }, [dispatch, newsId, news]);
 
+        if (loading || !news) {
+            return <Loader />;
+        }
+
         const videoMedia = useMemo(() => {
-            return (
-                news?.mediaFiles?.find((media) => media.type === 'video') || null
-            );
-        }, [news?.mediaFiles]);
+            return news.mediaFiles?.find((media) => media.type === 'video') || null;
+        }, [news.mediaFiles]);
 
         const imageMedia = useMemo(() => {
-            return (
-                news?.mediaFiles?.find((media) => media.type === 'image') || null
-            );
-        }, [news?.mediaFiles]);
+            return news.mediaFiles?.find((media) => media.type === 'image') || null;
+        }, [news.mediaFiles]);
 
         const imageUrl = useMemo(() => {
             return imageMedia?.url || defaultImage;
@@ -73,25 +73,25 @@ export const NewsDetail = memo(
         }, [videoMedia]);
 
         const processedContent = useMemo(() => {
-            let content = DOMPurify.sanitize(news?.content || '');
+            let content = DOMPurify.sanitize(news.content);
             content = highlightKeywordsInHtml(content, '');
             content = DOMPurify.sanitize(content);
             return content;
-        }, [news?.content]);
+        }, [news.content]);
 
         const otherMediaFiles = useMemo(() => {
-            return news?.mediaFiles?.filter((m) => m.type === 'image') || [];
-        }, [news?.mediaFiles]);
+            return news.mediaFiles?.filter((m) => m.type === 'image') || [];
+        }, [news.mediaFiles]);
 
         const displayDate = useMemo(() => {
-            if (news?.publishDate) {
+            if (news.publishDate) {
                 const date = new Date(news.publishDate);
                 if (!isNaN(date)) {
                     return date;
                 }
             }
-            return news?.createdAt ? new Date(news.createdAt) : new Date();
-        }, [news?.publishDate, news?.createdAt]);
+            return new Date(news.createdAt);
+        }, [news.publishDate, news.createdAt]);
 
         const formattedDate = useMemo(() => {
             return displayDate.toLocaleDateString('ru-RU', {
@@ -100,10 +100,6 @@ export const NewsDetail = memo(
                 year: 'numeric',
             });
         }, [displayDate]);
-
-        if (loading || !news) {
-            return <Loader />;
-        }
 
         return (
             <div className={styles.newsDetail}>
@@ -165,18 +161,13 @@ export const NewsDetail = memo(
                         {otherMediaFiles.length > 0 && (
                             <div className={styles.otherMediaWrapper}>
                                 {otherMediaFiles.map((media) => (
-                                    <div
-                                        key={media.id}
-                                        className={styles.imageWrapper}
-                                    >
+                                    <div key={media.id} className={styles.imageWrapper}>
                                         <img
                                             src={media.url}
                                             alt={news.title}
                                             className={styles.newsImage}
                                             loading="lazy"
-                                            onError={(e) =>
-                                                (e.target.src = defaultImage)
-                                            }
+                                            onError={(e) => (e.target.src = defaultImage)}
                                         />
                                     </div>
                                 ))}
@@ -193,5 +184,5 @@ export const NewsDetail = memo(
                 />
             </div>
         );
-    },
+    }
 );

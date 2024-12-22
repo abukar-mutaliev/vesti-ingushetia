@@ -31,7 +31,6 @@ export const updateExpirationDate = (id, newExpirationDate) => {
 
 export const pauseVideoAdApi = (id) => api.patch(`${API_URL}/pause/${id}`);
 
-export const activateVideoAdApi = (id) =>
-    api.patch(`${API_URL}/activate/${id}`);
+export const activateVideoAdApi = (id) => api.patch(`${API_URL}/activate/${id}`);
 
 export const deleteVideoAdApi = (id) => api.delete(`${API_URL}/delete/${id}`);

@@ -8,6 +8,7 @@ import { getVideoThumbnailUrl } from '@shared/lib/getVideoThumbnailUrl/getVideoT
 export const NewsCardDetailPage = memo(({ news }) => {
     const { title, createdAt, mediaFiles, id } = news;
 
+
     const videoMedia = useMemo(() => {
         return mediaFiles?.find((media) => media.type === 'video') || null;
     }, [mediaFiles]);
@@ -16,12 +17,9 @@ export const NewsCardDetailPage = memo(({ news }) => {
         return mediaFiles?.find((media) => media.type === 'image') || null;
     }, [mediaFiles]);
 
+
     const videoPosterUrl = useMemo(() => {
-        return (
-            videoMedia?.poster?.url ||
-            getVideoThumbnailUrl(videoMedia?.url) ||
-            null
-        );
+        return videoMedia?.poster?.url || getVideoThumbnailUrl(videoMedia?.url) || null;
     }, [videoMedia]);
 
     const imageUrl = useMemo(() => {
@@ -31,6 +29,9 @@ export const NewsCardDetailPage = memo(({ news }) => {
     const hasVideoWithPoster = useMemo(() => {
         return Boolean(videoMedia && videoPosterUrl);
     }, [videoMedia, videoPosterUrl]);
+
+
+
 
     return (
         <div className={styles.newsCardDetailPage}>

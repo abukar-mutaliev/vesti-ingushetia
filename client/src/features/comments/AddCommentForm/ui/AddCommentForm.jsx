@@ -86,11 +86,7 @@ export const AddCommentForm = React.memo(({ newsId }) => {
                 rows="4"
             />
             {error.comment && <p className={styles.error}>{error.comment}</p>}
-            <button
-                className={styles.submitButton}
-                type="submit"
-                disabled={loading}
-            >
+            <button className={styles.submitButton} type="submit" disabled={loading}>
                 {loading ? 'Отправка...' : 'Отправить'}
             </button>
         </form>

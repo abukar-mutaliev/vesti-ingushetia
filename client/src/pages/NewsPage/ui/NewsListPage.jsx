@@ -38,7 +38,7 @@ const NewsListPage = () => {
         const dates = newsList.map((news) =>
             news.publishDate
                 ? new Date(news.publishDate).toDateString()
-                : new Date(news.createdAt).toDateString(),
+                : new Date(news.createdAt).toDateString()
         );
         return Array.from(new Set(dates));
     }, [newsList]);

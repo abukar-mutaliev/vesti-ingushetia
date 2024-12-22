@@ -8,30 +8,30 @@ const formatComment = (comment, currentUserId) => {
     const commentJson = comment.toJSON();
     const likesCount = commentJson.likedBy.length;
     const likedByCurrentUser = currentUserId
-        ? commentJson.likedBy.some((user) => user.id === currentUserId)
+        ? commentJson.likedBy.some(user => user.id === currentUserId)
         : false;
     const authorDetails = commentJson.user
         ? {
-              ...commentJson.user,
-              avatarUrl: commentJson.user.avatarUrl
-                  ? `${baseUrl}/${commentJson.user.avatarUrl}`
-                  : null,
-          }
+            ...commentJson.user,
+            avatarUrl: commentJson.user.avatarUrl
+                ? `${baseUrl}/${commentJson.user.avatarUrl}`
+                : null,
+        }
         : null;
 
-    const formattedReplies = commentJson.replies.map((reply) => ({
+    const formattedReplies = commentJson.replies.map(reply => ({
         ...reply,
         likesCount: reply.likedBy.length,
         likedByCurrentUser: currentUserId
-            ? reply.likedBy.some((user) => user.id === currentUserId)
+            ? reply.likedBy.some(user => user.id === currentUserId)
             : false,
         authorDetails: reply.user
             ? {
-                  ...reply.user,
-                  avatarUrl: reply.user.avatarUrl
-                      ? `${baseUrl}/${reply.user.avatarUrl}`
-                      : null,
-              }
+                ...reply.user,
+                avatarUrl: reply.user.avatarUrl
+                    ? `${baseUrl}/${reply.user.avatarUrl}`
+                    : null,
+            }
             : null,
     }));
 
@@ -110,15 +110,10 @@ exports.getCommentsForNews = async (req, res) => {
                     ],
                 },
             ],
-            order: [
-                ['createdAt', 'DESC'],
-                [{ model: Comment, as: 'replies' }, 'createdAt', 'ASC'],
-            ],
+            order: [['createdAt', 'DESC'], [{ model: Comment, as: 'replies' }, 'createdAt', 'ASC']],
         });
 
-        const commentsData = comments.map((comment) =>
-            formatComment(comment, currentUserId),
-        );
+        const commentsData = comments.map(comment => formatComment(comment, currentUserId));
 
         res.json(commentsData);
     } catch (err) {
@@ -169,15 +164,10 @@ exports.getAllComments = async (req, res) => {
                     through: { attributes: [] },
                 },
             ],
-            order: [
-                ['createdAt', 'DESC'],
-                [{ model: Comment, as: 'replies' }, 'createdAt', 'ASC'],
-            ],
+            order: [['createdAt', 'DESC'], [{ model: Comment, as: 'replies' }, 'createdAt', 'ASC']],
         });
 
-        const commentsData = comments.map((comment) =>
-            formatComment(comment, currentUserId),
-        );
+        const commentsData = comments.map(comment => formatComment(comment, currentUserId));
 
         res.json(commentsData);
     } catch (err) {
@@ -258,9 +248,7 @@ exports.replyToComment = async (req, res) => {
     try {
         const parentComment = await Comment.findByPk(parentCommentId);
         if (!parentComment) {
-            return res
-                .status(404)
-                .json({ error: 'Родительский комментарий не найден' });
+            return res.status(404).json({ error: 'Родительский комментарий не найден' });
         }
 
         const replyComment = await Comment.create({

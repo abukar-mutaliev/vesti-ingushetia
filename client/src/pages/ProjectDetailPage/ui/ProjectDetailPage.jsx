@@ -4,21 +4,15 @@ import { useParams } from 'react-router-dom';
 import styles from './ProjectDetailPage.module.scss';
 import { Sidebar } from '@widgets/Sidebar';
 import { ProjectDetail } from '@features/projectDetail';
-import {
-    fetchProjectById,
-    fetchAllProjects,
-} from '@entities/projects/model/projectSlice';
+import { fetchProjectById, fetchAllProjects } from '@entities/projects/model/projectSlice';
 import { fetchAllNews } from '@entities/news/model/newsSlice';
 import { fetchCategories } from '@entities/categories/model/categorySlice';
 import {
     selectCurrentProject,
     selectProjectList,
-    selectProjectsLoading,
+    selectProjectsLoading
 } from '@entities/projects/model/projectSelectors';
-import {
-    selectNewsList,
-    selectNewsLoading,
-} from '@entities/news/model/newsSelectors';
+import { selectNewsList, selectNewsLoading } from '@entities/news/model/newsSelectors';
 import { selectCategories } from '@entities/categories/model/categorySelectors';
 import { Loader } from '@shared/ui/Loader';
 import { ProjectsSlider } from '@features/projects/ProjectsSlider';
@@ -39,6 +33,7 @@ const ProjectDetailPage = memo(() => {
         if (projectId) {
             dispatch(fetchProjectById(projectId));
         }
+
     }, [dispatch, projectId]);
 
     useEffect(() => {

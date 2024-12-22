@@ -1,3 +1,4 @@
+import React from 'react';
 import { PuffLoader } from 'react-spinners';
 import PropTypes from 'prop-types';
 import styles from './Loader.module.scss';

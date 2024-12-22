@@ -64,9 +64,7 @@
     color: #333;
     padding: 0 3% 0;
     border-bottom: 0.5px solid #e0e0e0;
-    transition:
-        color 0.3s ease,
-        transform 0.3s ease;
+    transition: color 0.3s ease, transform 0.3s ease;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
@@ -82,11 +80,10 @@
 
     &:hover {
         color: $primary-color-hover;
-        transition:
-            0.3s ease,
-            transform 0.3s ease;
+        transition: 0.3s ease, transform 0.3s ease;
     }
 }
+
 
 .listedNewsSection {
     list-style: none;

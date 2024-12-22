@@ -1,13 +1,9 @@
-import { useEffect, useMemo } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useEffect, useMemo } from 'react';
+import { useSelector, useDispatch, shallowEqual } from 'react-redux';
 import { fetchAllProjects } from '@entities/projects/model/projectSlice';
 import styles from './ProjectsPage.module.scss';
 import { ProjectCard } from '@entities/projects/ui/ProjectCard/index.js';
-import {
-    selectProjectList,
-    selectProjectsLoading,
-    selectProjectsError,
-} from '@entities/projects/model/projectSelectors.js';
+import { selectProjectList } from '@entities/projects/model/projectSelectors.js';
 import { Sidebar } from '@widgets/Sidebar/index.js';
 import {
     selectNewsList,
@@ -21,12 +17,10 @@ import { Link } from 'react-router-dom';
 
 const ProjectsPage = () => {
     const dispatch = useDispatch();
-    const projects = useSelector(selectProjectList);
-    const newsList = useSelector(selectNewsList);
-    const loadingNews = useSelector(selectNewsLoading);
-    const categories = useSelector(selectCategories);
-    const projectsLoading = useSelector(selectProjectsLoading);
-    const projectsError = useSelector(selectProjectsError);
+    const projects = useSelector(selectProjectList, shallowEqual);
+    const newsList = useSelector(selectNewsList, shallowEqual);
+    const loadingNews = useSelector(selectNewsLoading, shallowEqual);
+    const categories = useSelector(selectCategories, shallowEqual);
     const memoizedNewsList = useMemo(() => newsList, [newsList]);
 
     useEffect(() => {
@@ -39,20 +33,10 @@ const ProjectsPage = () => {
         if (!categories.length) {
             dispatch(fetchCategories());
         }
-    }, [
-        dispatch,
-        projects.length,
-        newsList.length,
-        loadingNews,
-        categories.length,
-    ]);
+    }, [dispatch]);
 
-    if (projectsLoading || loadingNews) {
+    if (!projects.length || loadingNews) {
         return <Loader />;
-    }
-
-    if (projectsError) {
-        return <div className={styles.error}>{projectsError}</div>;
     }
 
     return (
@@ -60,19 +44,14 @@ const ProjectsPage = () => {
             <div className={styles.projectsPageContainer}>
                 <h2 className={styles.projectsTitle}>Наши проекты</h2>
                 <div className={styles.projectsGrid}>
-                    {projects.length > 0 ? (
-                        projects.map((project) => (
-                            <Link
-                                key={project.id}
-                                to={`/projects/${project.id}`}
-                                className={styles.projectLink}
-                            >
-                                <ProjectCard project={project} />
-                            </Link>
-                        ))
-                    ) : (
-                        <div>Проекты не найдены</div>
-                    )}
+                    {projects.map((project) => (
+                        <Link
+                            key={project.id}
+                            to={`/projects/${project.id}`}
+                        >
+                            <ProjectCard key={project.id} project={project} />
+                        </Link>
+                    ))}
                 </div>
             </div>
             <div className={styles.sidebarContainer}>
@@ -85,5 +64,4 @@ const ProjectsPage = () => {
         </div>
     );
 };
-
 export default ProjectsPage;

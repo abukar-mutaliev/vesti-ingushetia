@@ -1,4 +1,5 @@
 const { VideoAd } = require('../models');
+const { posix } = require('path');
 const path = require('path');
 const { unlink } = require('fs');
 const { Op } = require('sequelize');
@@ -80,6 +81,7 @@ exports.getVideoAds = async (req, res) => {
         res.status(500).json({ error: 'Ошибка сервера: ' + error.message });
     }
 };
+
 
 exports.getVideoAdById = async (req, res) => {
     try {
