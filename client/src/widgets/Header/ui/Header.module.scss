@@ -142,11 +142,14 @@
                         padding: 2px;
                         gap: 5px;
                     }
+
                     @media screen and (max-width: 856px) {
                         font-size: 14px;
                         padding: 5px;
                         gap: 0;
+                        line-height: 50px;
                     }
+
                     &::after {
                         content: '';
                         position: absolute;
@@ -183,8 +186,10 @@
                 }
                 a.active {
                     color: #dddddd;
+                    line-height: 50px;
                 }
                 a {
+                    line-height: 50px;
                     &.active {
                         color: $primary-background;
 
@@ -270,10 +275,12 @@
                 display: flex;
                 align-items: center;
                 gap: 15px;
+
                 @media screen and (max-width: 768px) {
                     gap: 10px;
                     margin-left: -15px;
                 }
+
                 .searchButton,
                 .closeButton {
                     background: none;
@@ -305,6 +312,7 @@
             display: flex;
             align-items: center;
             gap: 20px;
+
             svg {
                 width: 25px;
                 height: 25px;
@@ -332,6 +340,7 @@
             .navList {
                 gap: 10px;
                 display: grid;
+                line-height: 50px;
             }
         }
 
@@ -345,19 +354,19 @@
         }
 
         .navList li {
-            width: 90%;
             padding: 0 30px;
             gap: 0;
+            line-height: 50px;
         }
 
         .navList li a {
-            width: 90%;
             text-align: left;
             gap: 0;
             font-size: 18px;
             color: $primary-color-header;
             text-decoration: none;
             transition: background-color 0.3s ease;
+            line-height: 50px;
         }
 
         .navList li a:hover {
@@ -407,27 +416,29 @@
         width: 100%;
         padding: 0;
         list-style: none;
-    }
+        line-height: 50px;
 
-    .navList li {
-        width: 90%;
-        padding: 0 50px;
-        gap: 0;
-    }
+        li {
+            padding: 0 10px;
+            gap: 0;
+            height: 50px;
+            line-height: 50px;
 
-    .navList li a {
-        width: 90%;
-        text-align: left;
-        gap: 0;
-        font-size: 18px;
-        color: $primary-color-header;
-        text-decoration: none;
-        transition: background-color 0.3s ease;
-        padding: 10px;
-    }
+            a {
+                text-align: left;
+                gap: 0;
+                font-size: 18px;
+                color: $primary-color-header;
+                text-decoration: none;
+                transition: background-color 0.3s ease;
+                padding: 10px;
+                line-height: 50px;
 
-    .navList li a:hover {
-        background-color: transparent;
+                &:hover {
+                    background-color: transparent;
+                }
+            }
+        }
     }
 
     .logo {
