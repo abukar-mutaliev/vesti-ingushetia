@@ -6,13 +6,14 @@ import { NewsList } from '@features/newsList';
 import { Sidebar } from '@widgets/Sidebar/';
 import { fetchCategories } from '@entities/categories/model/categorySlice';
 import { selectCategories } from '@entities/categories/model/categorySelectors.js';
-import { selectNewsList } from '@entities/news/model/newsSelectors.js';
+import { selectNewsList, selectNewsLoading } from '@entities/news/model/newsSelectors.js';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { FaTimes } from 'react-icons/fa';
 import { SlArrowRight } from 'react-icons/sl';
 import { ProjectsSlider } from '@features/projects/ProjectsSlider/';
 import { fetchAllNews } from '@entities/news/model/newsSlice.js';
+import { Loader } from '@shared/ui/Loader/index.js';
 
 const HomePage = () => {
     const dispatch = useDispatch();
@@ -20,6 +21,7 @@ const HomePage = () => {
 
     const newsList = useSelector(selectNewsList);
     const categories = useSelector(selectCategories);
+    const loading = useSelector(selectNewsLoading)
 
     const loadCategories = useCallback(() => {
         if (!categories.length) {
@@ -39,6 +41,14 @@ const HomePage = () => {
     const closeMenu = () => {
         setIsMenuOpen(false);
     };
+
+    if (loading) {
+        return (
+            <div className={styles.homePageLoader}>
+                <Loader />
+            </div>
+        );
+    }
 
     return (
         <div>

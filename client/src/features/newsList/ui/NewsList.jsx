@@ -6,10 +6,12 @@ import {
     selectPaginatedNewsWithVideos,
     selectPageCount,
     selectPageCountWithVideos,
+    selectLoading,
 } from '@entities/news/model/newsSelectors';
 import { NewsCard } from '@widgets/NewsCard';
 import ReactPaginate from 'react-paginate';
 import styles from './NewsList.module.scss';
+import { Loader } from '@shared/ui/Loader/index.js';
 
 export const NewsList = React.memo(
     ({ selectedDate, onlyWithVideos = false }) => {
@@ -33,6 +35,8 @@ export const NewsList = React.memo(
             shallowEqual,
         );
 
+        const isLoading = useSelector(selectLoading);
+
         const handlePageClick = useCallback(
             ({ selected }) => {
                 dispatch(setPage(selected));
@@ -54,12 +58,12 @@ export const NewsList = React.memo(
             if (!dateString) return 'ВСЕ НОВОСТИ';
             const date = new Date(dateString);
             return `НОВОСТИ ЗА ${date
-                .toLocaleDateString('ru-RU', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                })
-                .toUpperCase()}`;
+            .toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+            })
+            .toUpperCase()}`;
         }, []);
 
         const newsListRef = useRef(null);
@@ -68,28 +72,34 @@ export const NewsList = React.memo(
             <div className={styles.newsListContainer}>
                 <div className={styles.newsList} ref={newsListRef}>
                     <h3>{formatDate(selectedDate)}</h3>
-                    {currentNewsList.length > 0 ? (
+
+                    {isLoading ? (
+                        <Loader />
+                    ) : currentNewsList.length > 0 ? (
                         currentNewsList.map((news) => (
                             <NewsCard key={news.id} news={news} />
                         ))
                     ) : (
                         <div>Новостей нет</div>
                     )}
-                    <ReactPaginate
-                        previousLabel={'← Предыдущая'}
-                        nextLabel={'Следующая →'}
-                        breakLabel={'...'}
-                        pageCount={pageCount}
-                        marginPagesDisplayed={2}
-                        pageRangeDisplayed={3}
-                        onPageChange={handlePageClick}
-                        containerClassName={styles.pagination}
-                        activeClassName={styles.activePage}
-                        pageLinkClassName={styles.pageLink}
-                        previousLinkClassName={styles.pageLink}
-                        nextLinkClassName={styles.pageLink}
-                        breakLinkClassName={styles.pageLink}
-                    />
+
+                    {!isLoading && pageCount > 1 && (
+                        <ReactPaginate
+                            previousLabel={'← Предыдущая'}
+                            nextLabel={'Следующая →'}
+                            breakLabel={'...'}
+                            pageCount={pageCount}
+                            marginPagesDisplayed={2}
+                            pageRangeDisplayed={3}
+                            onPageChange={handlePageClick}
+                            containerClassName={styles.pagination}
+                            activeClassName={styles.activePage}
+                            pageLinkClassName={styles.pageLink}
+                            previousLinkClassName={styles.pageLink}
+                            nextLinkClassName={styles.pageLink}
+                            breakLinkClassName={styles.pageLink}
+                        />
+                    )}
                 </div>
             </div>
         );
