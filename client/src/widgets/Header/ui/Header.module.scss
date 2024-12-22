@@ -308,6 +308,7 @@
         .searchIcon {
             display: none;
         }
+
         .mobileIcons {
             display: flex;
             align-items: center;
@@ -382,7 +383,7 @@
         top: 80px;
         left: 0;
         width: 100vw;
-        height: calc(100vh - 80px);
+        height: calc(110vh - 110px);
         background-color: rgba(0, 0, 0, 0.5);
         z-index: 900;
     }
