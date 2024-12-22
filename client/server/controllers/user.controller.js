@@ -289,11 +289,9 @@ exports.updateUserRole = async (req, res) => {
         }
 
         if (parseInt(id) === requestingUser.id) {
-            return res
-                .status(400)
-                .json({
-                    error: 'Вы не можете изменять свою собственную роль.',
-                });
+            return res.status(400).json({
+                error: 'Вы не можете изменять свою собственную роль.',
+            });
         }
 
         const user = await User.findByPk(id);
@@ -358,8 +356,6 @@ exports.updateAvatar = async (req, res) => {
                             );
                         }
                     });
-                } else {
-                    console.log('Файл не существует:', oldAvatarPath);
                 }
             });
         }
@@ -447,6 +443,7 @@ exports.getUserReplies = async (req, res) => {
 exports.logOutUser = (req, res) => {
     res.clearCookie('auth_token', {
         httpOnly: true,
+
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
     });

@@ -5,9 +5,7 @@ import {
     selectVideoAdLoading,
     selectVideoAdError,
 } from '@entities/videoAd/model/videoAdSelectors';
-import {
-    fetchAllActiveVideoAds,
-} from '@entities/videoAd/model/videoAdSlice';
+import { fetchAllActiveVideoAds } from '@entities/videoAd/model/videoAdSlice';
 import { Loader } from '@shared/ui/Loader/index.js';
 import defaultImg from '@assets/default.jpg';
 import styles from './VideoAdPlayer.module.scss';
@@ -25,7 +23,6 @@ export const VideoAdPlayer = memo(() => {
     const [isVideoVisible, setIsVideoVisible] = useState(false);
     const videoRef = useRef(null);
     const observerRef = useRef(null);
-
 
     useEffect(() => {
         dispatch(fetchAllActiveVideoAds());
@@ -51,7 +48,7 @@ export const VideoAdPlayer = memo(() => {
             },
             {
                 threshold: 0.5,
-            }
+            },
         );
 
         observerRef.current.observe(currentVideo);
@@ -65,9 +62,7 @@ export const VideoAdPlayer = memo(() => {
     }, []);
 
     const handleVideoEnded = () => {
-        console.log('Видео закончилось');
         if (videoAds.length === 1) {
-            // Если одно видео, повторяем его
             if (videoRef.current) {
                 videoRef.current.currentTime = 0;
                 videoRef.current.play().catch((err) => {

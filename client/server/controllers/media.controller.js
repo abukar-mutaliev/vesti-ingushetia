@@ -21,7 +21,6 @@ exports.getMediaFile = (req, res) => {
 
     const filePath = path.resolve(uploadDir, type, filename);
 
-
     if (!checkFileExists(filePath)) {
         return res.status(404).json({ error: 'Файл не найден' });
     }

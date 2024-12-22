@@ -77,6 +77,3 @@ module.exports = (sequelize) => {
 
     return News;
 };
-
-
-

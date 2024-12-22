@@ -31,9 +31,7 @@ export const VideoPlayer = memo(({ videoUrl, posterUrl }) => {
                     controls: ['play', 'progress', 'volume', 'fullscreen'],
                 }}
             />
-            <div className={styles.playOverlay} onClick={handlePlay}>
-            </div>
+            <div className={styles.playOverlay} onClick={handlePlay}></div>
         </div>
     );
 });
-

@@ -87,7 +87,10 @@ api.interceptors.response.use(
         const originalRequest = error.config;
 
         if (error.response?.status === 429) {
-            const retryAfter = error.response.data.retryAfter || error.response.headers['retry-after'] || 60; // секунды
+            const retryAfter =
+                error.response.data.retryAfter ||
+                error.response.headers['retry-after'] ||
+                60; // секунды
             storeInstance.dispatch(setError(`${retryAfter} секунд.`));
 
             return Promise.reject(error);
@@ -98,13 +101,12 @@ api.interceptors.response.use(
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
                 })
-                .then(() => api(originalRequest))
-                .catch((err) => Promise.reject(err));
+                    .then(() => api(originalRequest))
+                    .catch((err) => Promise.reject(err));
             }
 
             originalRequest._retry = true;
             isRefreshing = true;
-
             try {
                 const store = (await import('./store')).default;
                 const actionResult = await store.dispatch(refreshToken());

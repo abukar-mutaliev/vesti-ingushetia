@@ -56,19 +56,20 @@ export default [
                 {
                     selector:
                         "CallExpression[callee.object.name='console']" +
-                        "[callee.property.name!=/^(log|warn|error|info|trace)$/]",
+                        '[callee.property.name!=/^(log|warn|error|info|trace)$/]',
                     message: 'Unexpected property on console object was called',
                 },
             ],
             'unused-imports/no-unused-imports': 'error',
             'unused-imports/no-unused-vars': [
-                "warn",
-                { "vars": "all",
-                    "varsIgnorePattern": "^_",
-                    "args": "after-used",
-                    "argsIgnorePattern": "^_"
-                }
-                ],
+                'warn',
+                {
+                    vars: 'all',
+                    varsIgnorePattern: '^_',
+                    args: 'after-used',
+                    argsIgnorePattern: '^_',
+                },
+            ],
             'import/no-unresolved': 'off',
             'import/prefer-default-export': 'off',
             'no-unused-vars': 'off',

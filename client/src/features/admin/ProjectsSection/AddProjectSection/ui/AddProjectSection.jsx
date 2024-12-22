@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import styles from './AddProjectSection.module.scss';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { selectCategories } from '@entities/categories/model/categorySelectors.js';
 import { fetchCategories } from '@entities/categories/model/categorySlice.js';
-import { createProject, fetchAllProjects } from '@entities/projects/model/projectSlice.js';
+import { createProject } from '@entities/projects/model/projectSlice.js';
 import { RichTextEditor } from '@shared/ui/RichTextEditor';
 import { FaDeleteLeft, FaPlus } from 'react-icons/fa6';
 
-const LOCAL_STORAGE_KEY_ADD_PROJECT = 'adminDashboard_addProjectSectionFormData';
+const LOCAL_STORAGE_KEY_ADD_PROJECT =
+    'adminDashboard_addProjectSectionFormData';
 
 export const AddProjectSection = ({ onSave, onCancel }) => {
     const dispatch = useDispatch();
@@ -31,6 +32,7 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
 
     const [errors, setErrors] = useState({});
 
+
     useEffect(() => {
         dispatch(fetchCategories());
     }, [dispatch]);
@@ -41,7 +43,10 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
             projectContent,
             videoUrls,
         };
-        localStorage.setItem(LOCAL_STORAGE_KEY_ADD_PROJECT, JSON.stringify(formData));
+        localStorage.setItem(
+            LOCAL_STORAGE_KEY_ADD_PROJECT,
+            JSON.stringify(formData),
+        );
     }, [projectTitle, projectContent, videoUrls]);
 
     useEffect(() => {
@@ -71,8 +76,9 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
                 break;
             case 'media':
                 if (!value || !value.some((group) => group.length > 0)) {
-                    if (!videoUrls.some(url => url.trim() !== '')) {
-                        error = 'Необходимо добавить хотя бы одно изображение или ссылку на видео.';
+                    if (!videoUrls.some((url) => url.trim() !== '')) {
+                        error =
+                            'Необходимо добавить хотя бы одно изображение или ссылку на видео.';
                     }
                 }
                 break;
@@ -86,20 +92,26 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
 
     const validateVideoUrls = () => {
         let videoUrlErrors = [];
-        const rutubeRegex = /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
-        const youtubeRegex = /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
+        const rutubeRegex =
+            /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
+        const youtubeRegex =
+            /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
 
         videoUrls.forEach((url, index) => {
             if (url.trim()) {
                 if (!rutubeRegex.test(url) && !youtubeRegex.test(url)) {
-                    videoUrlErrors[index] = 'Видео ссылка должна быть URL от Rutube или YouTube';
+                    videoUrlErrors[index] =
+                        'Видео ссылка должна быть URL от Rutube или YouTube';
                 } else {
                     videoUrlErrors[index] = '';
                 }
             }
         });
 
-        setErrors((prevErrors) => ({ ...prevErrors, videoUrls: videoUrlErrors }));
+        setErrors((prevErrors) => ({
+            ...prevErrors,
+            videoUrls: videoUrlErrors,
+        }));
 
         return videoUrlErrors.every((error) => error === '');
     };
@@ -137,19 +149,18 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
         });
 
         dispatch(createProject(formData))
-        .unwrap()
-        .then(() => {
-            dispatch(fetchAllProjects());
-            localStorage.removeItem(LOCAL_STORAGE_KEY_ADD_PROJECT);
-            onSave();
-        })
-        .catch((error) => {
-            console.error('Ошибка при создании проекта:', error);
-            setErrors((prevErrors) => ({
-                ...prevErrors,
-                submit: 'Произошла ошибка при сохранении проекта. Пожалуйста, попробуйте ещё раз.',
-            }));
-        });
+            .unwrap()
+            .then(() => {
+                localStorage.removeItem(LOCAL_STORAGE_KEY_ADD_PROJECT);
+                onSave();
+            })
+            .catch((error) => {
+                console.error('Ошибка при создании проекта:', error);
+                setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    submit: 'Произошла ошибка при сохранении проекта. Пожалуйста, попробуйте ещё раз.',
+                }));
+            });
     };
 
     const handleInputChange = (field, value) => {
@@ -185,12 +196,13 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
     const removeMedia = (mediaIndex, fileIndex) => {
         setProjectMedia((prevMedia) => {
             const updatedMedia = prevMedia.map((group, idx) =>
-                idx === mediaIndex ? group.filter((_, i) => i !== fileIndex) : group
+                idx === mediaIndex
+                    ? group.filter((_, i) => i !== fileIndex)
+                    : group,
             );
             return updatedMedia;
         });
     };
-
 
     const addVideoUrlField = () => {
         setVideoUrls([...videoUrls, '']);
@@ -308,7 +320,8 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
                                             alt="Preview"
                                             className={styles.imagePreview}
                                             onLoad={() => {
-                                                file.preview = URL.createObjectURL(file);
+                                                file.preview =
+                                                    URL.createObjectURL(file);
                                             }}
                                         />
                                     ) : (
@@ -331,13 +344,18 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
                     + Добавить ещё файлы
                 </button>
                 {errors.media && <p className={styles.error}>{errors.media}</p>}
-                {errors.submit && <p className={styles.error}>{errors.submit}</p>}
+                {errors.submit && (
+                    <p className={styles.error}>{errors.submit}</p>
+                )}
 
                 <div className={styles.buttons}>
                     <button className={styles.saveButton} onClick={handleSave}>
                         Сохранить
                     </button>
-                    <button className={styles.cancelButton} onClick={handleCancel}>
+                    <button
+                        className={styles.cancelButton}
+                        onClick={handleCancel}
+                    >
                         Отмена
                     </button>
                 </div>

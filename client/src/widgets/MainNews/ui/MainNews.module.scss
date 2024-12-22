@@ -4,8 +4,10 @@
     align-items: center;
     height: auto;
 
-    @media (max-width: 468px) {
-        margin-top: 15%;
+    @media (max-width: 568px) {
+        margin-top: 10%;
+        width: 100%;
+        height: 400px;
     }
 }
 .mainNews {
@@ -77,9 +79,13 @@
 }
 .mainNewsMedia {
     width: 100%;
-    height: 400px;
     border-radius: 8px;
     overflow: hidden;
+
+    @media (max-width: 568px) {
+        height: 200px;
+    }
+
 }
 .mainNewsTitleLink {
     text-decoration: none;
