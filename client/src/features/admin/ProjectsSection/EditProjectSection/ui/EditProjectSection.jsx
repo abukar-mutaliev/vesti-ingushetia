@@ -53,6 +53,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
         }
     }, [currentProject]);
 
+
     const handleInputChange = (field, value) => {
         switch (field) {
             case 'title':
@@ -65,7 +66,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
                 break;
         }
         if (hasAttemptedSubmit) {
-            validateField(field, value);
+            validateFields();
         }
     };
 
@@ -76,9 +77,8 @@ export const EditProjectSection = ({ project, onCancel }) => {
             updatedMedia[index] = files;
             return updatedMedia;
         });
-
         if (hasAttemptedSubmit) {
-            validateField('media', updatedMedia);
+            validateFields();
         }
     };
 
@@ -110,6 +110,9 @@ export const EditProjectSection = ({ project, onCancel }) => {
             newVideoUrlErrors.splice(index, 1);
             return { ...prevErrors, videoUrls: newVideoUrlErrors };
         });
+        if (hasAttemptedSubmit) {
+            validateFields();
+        }
     };
 
     const handleVideoUrlChange = (index, value) => {
@@ -119,42 +122,9 @@ export const EditProjectSection = ({ project, onCancel }) => {
             return updatedUrls;
         });
 
-        validateSingleVideoUrl(index, value);
-    };
-
-    const validateSingleVideoUrl = (index, url) => {
-        const rutubeRegex =
-            /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
-        const youtubeRegex =
-            /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
-
-        let error = '';
-        if (url.trim()) {
-            if (!rutubeRegex.test(url) && !youtubeRegex.test(url)) {
-                error = 'Видео ссылка должна быть URL от Rutube или YouTube';
-            }
-        } else {
-            error = 'Ссылка не может быть пустой';
+        if (hasAttemptedSubmit) {
+            validateFields();
         }
-
-        setErrors((prevErrors) => {
-            const videoUrlErrors = prevErrors.videoUrls
-                ? [...prevErrors.videoUrls]
-                : [];
-            videoUrlErrors[index] = error;
-            return { ...prevErrors, videoUrls: videoUrlErrors };
-        });
-
-        return error === '';
-    };
-
-    const validateVideoUrls = () => {
-        let isValid = true;
-        videoUrls.forEach((url, index) => {
-            const valid = validateSingleVideoUrl(index, url);
-            if (!valid) isValid = false;
-        });
-        return isValid;
     };
 
     const validateField = (fieldName, value) => {
@@ -188,37 +158,65 @@ export const EditProjectSection = ({ project, onCancel }) => {
             default:
                 break;
         }
-        setErrors((prevErrors) => ({ ...prevErrors, [fieldName]: error }));
-        return error === '';
+        return error;
     };
 
-    const validateFieldsFinal = () => {
-        setHasAttemptedSubmit(true);
+    const validateSingleVideoUrl = (url) => {
+        const rutubeRegex =
+            /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
+        const youtubeRegex =
+            /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
+
+        let error = '';
+        if (url.trim()) {
+            if (!rutubeRegex.test(url) && !youtubeRegex.test(url)) {
+                error = 'Видео ссылка должна быть URL от Rutube или YouTube';
+            }
+        } else {
+            error = 'Ссылка не может быть пустой';
+        }
+
+        return error;
+    };
+
+    const validateFields = () => {
         const newErrors = {};
 
-        const isTitleValid = validateField('title', editTitle);
-        const isContentValid = validateField('content', editContent);
-        const isMediaValid = validateField('media', newMedia);
+        const titleError = validateField('title', editTitle);
+        if (titleError) {
+            newErrors.title = titleError;
+        }
 
+        const contentError = validateField('content', editContent);
+        if (contentError) {
+            newErrors.content = contentError;
+        }
+
+        const mediaError = validateField('media', newMedia);
+        if (mediaError) {
+            newErrors.media = mediaError;
+        }
+
+        const videoUrlErrors = videoUrls.map((url) => validateSingleVideoUrl(url));
         const hasVideoUrls = videoUrls.some((url) => url.trim() !== '');
+
         if (hasVideoUrls) {
-            const videoUrlsValid = validateVideoUrls();
-            if (!videoUrlsValid) {
-                newErrors.videoUrls = 'Некорректные видео-ссылки.';
+            const anyVideoUrlErrors = videoUrlErrors.some((error) => error !== '');
+            if (anyVideoUrlErrors) {
+                newErrors.videoUrls = videoUrlErrors;
             }
         }
 
         setErrors(newErrors);
-        return (
-            isTitleValid &&
-            isContentValid &&
-            isMediaValid &&
-            (!hasVideoUrls || (hasVideoUrls && validateVideoUrls()))
-        );
+
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleSave = () => {
-        if (!validateFieldsFinal()) return;
+        setHasAttemptedSubmit(true);
+        if (!validateFields()) {
+            return;
+        }
 
         const formData = new FormData();
         formData.append('title', editTitle);
@@ -242,35 +240,33 @@ export const EditProjectSection = ({ project, onCancel }) => {
         });
 
         dispatch(updateProject({ id: project.id, projectData: formData }))
-            .unwrap()
-            .then(() => {
-                onCancel();
-            })
-            .catch((error) => {
-                if (error.errors) {
-                    const serverErrors = {};
-                    error.errors.forEach((err) => {
-                        if (err.path) {
-                            serverErrors[err.path] = err.msg;
-                        }
-                    });
-                    setErrors(serverErrors);
-                } else {
-                    setErrors((prev) => ({
-                        ...prev,
-                        submit: 'Произошла ошибка при обновлении проекта.',
-                    }));
-                    console.error('Ошибка при обновлении проекта:', error);
-                }
-            });
+        .unwrap()
+        .then(() => {
+            onCancel();
+        })
+        .catch((error) => {
+            if (error.errors) {
+                const serverErrors = {};
+                error.errors.forEach((err) => {
+                    if (err.path) {
+                        serverErrors[err.path] = err.msg;
+                    }
+                });
+                setErrors(serverErrors);
+            } else {
+                setErrors((prev) => ({
+                    ...prev,
+                    submit: 'Произошла ошибка при обновлении проекта.',
+                }));
+                console.error('Ошибка при обновлении проекта:', error);
+            }
+        });
     };
 
-    const embedVideo = (url) => {
+    const embedVideo = (url, key) => {
         let embedUrl = '';
         if (url.includes('rutube.ru')) {
-            const videoIdMatch = url.match(
-                /rutube\.ru\/video\/([A-Za-z0-9_-]+)/,
-            );
+            const videoIdMatch = url.match(/rutube\.ru\/video\/([A-Za-z0-9_-]+)/);
             const videoId = videoIdMatch ? videoIdMatch[1] : null;
             if (videoId) {
                 embedUrl = `https://rutube.ru/play/embed/${videoId}/`;
@@ -294,6 +290,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
 
         return embedUrl ? (
             <iframe
+                key={key}
                 width="400"
                 height="215"
                 src={embedUrl}
@@ -313,17 +310,21 @@ export const EditProjectSection = ({ project, onCancel }) => {
 
     const confirmDeleteMedia = () => {
         if (mediaToDelete !== null) {
-            setEditMedia((prevMedia) =>
-                prevMedia.filter((_, i) => i !== mediaToDelete),
-            );
+            const updatedMedia = editMedia.filter((_, i) => i !== mediaToDelete);
+            setEditMedia(updatedMedia);
             setMediaToDelete(null);
             setIsModalOpen(false);
-
             if (hasAttemptedSubmit) {
-                validateField('media', newMedia);
+                validateFields();
             }
         }
     };
+
+    useEffect(() => {
+        if (hasAttemptedSubmit) {
+            validateFields();
+        }
+    }, [editMedia, newMedia, videoUrls]);
 
     return (
         <div className={styles.editProjectSection}>
@@ -338,6 +339,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
                 />
                 {errors.title && <p className={styles.error}>{errors.title}</p>}
 
+                {/* Содержание */}
                 <label>Содержание</label>
                 <div className={styles.richTextEditor}>
                     <RichTextEditor
@@ -364,7 +366,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
                         <FaPlus /> Добавить ещё видео-ссылку
                     </button>
                     {videoUrls.map((url, index) => (
-                        <div key={index} className={styles.videoUrlGroup}>
+                        <div key={`video-url-${index}`} className={styles.videoUrlGroup}>
                             <input
                                 type="text"
                                 value={url}
@@ -391,11 +393,10 @@ export const EditProjectSection = ({ project, onCancel }) => {
                         </div>
                     ))}
 
-                    {videoUrls.map(
-                        (url, index) =>
-                            url.trim() &&
-                            !errors.videoUrls?.[index] &&
-                            embedVideo(url),
+                    {videoUrls.map((url, index) =>
+                        url.trim() && !errors.videoUrls?.[index]
+                            ? embedVideo(url, `embedded-video-${index}-${url}`)
+                            : null,
                     )}
                 </div>
 
@@ -404,7 +405,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
                     Добавить новые медиафайлы
                 </label>
                 {newMedia.map((_, index) => (
-                    <div key={index} className={styles.newMediaGroup}>
+                    <div key={`new-media-group-${index}`} className={styles.newMediaGroup}>
                         <input
                             type="file"
                             accept="image/*,video/*"
@@ -436,7 +437,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
                     <div>
                         <p>Существующие медиафайлы:</p>
                         {editMedia.map((media, index) => (
-                            <div key={index} className={styles.mediaItem}>
+                            <div key={`existing-media-${media.id || index}`} className={styles.mediaItem}>
                                 {media.type.startsWith('image') ? (
                                     <img
                                         className={styles.media}
@@ -444,7 +445,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
                                         alt="media"
                                     />
                                 ) : (
-                                    embedVideo(media.url)
+                                    embedVideo(media.url, `existing-video-${media.id || index}`)
                                 )}
                                 <button
                                     className={styles.deleteButton}
@@ -464,7 +465,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
                         <div className={styles.mediaPreview}>
                             {newMedia.flat().map((file, fileIndex) => (
                                 <div
-                                    key={fileIndex}
+                                    key={`preview-${fileIndex}-${file.name}`}
                                     className={styles.previewItem}
                                 >
                                     <button
@@ -475,10 +476,10 @@ export const EditProjectSection = ({ project, onCancel }) => {
                                                 prev.map((group, i) =>
                                                     i === fileIndex
                                                         ? group.filter(
-                                                              (_, j) =>
-                                                                  j !==
-                                                                  fileIndex,
-                                                          )
+                                                            (_, j) =>
+                                                                j !==
+                                                                fileIndex,
+                                                        )
                                                         : group,
                                                 ),
                                             )
@@ -508,7 +509,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
                 {/* Ошибки */}
                 {errors.media && <p className={styles.error}>{errors.media}</p>}
                 {errors.videoUrls && (
-                    <p className={styles.error}>{errors.videoUrls}</p>
+                    <p className={styles.error}>Некорректные видео-ссылки.</p>
                 )}
                 {errors.submit && (
                     <p className={styles.error}>{errors.submit}</p>
@@ -521,7 +522,12 @@ export const EditProjectSection = ({ project, onCancel }) => {
                         onClick={handleSave}
                         disabled={
                             hasAttemptedSubmit &&
-                            Object.values(errors).some((error) => error)
+                            Object.values(errors).some((error) => {
+                                if (Array.isArray(error)) {
+                                    return error.some((err) => err);
+                                }
+                                return error;
+                            })
                         }
                     >
                         Сохранить
