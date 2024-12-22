@@ -107,10 +107,6 @@ api.interceptors.response.use(
 
             originalRequest._retry = true;
             isRefreshing = true;
-<<<<<<< HEAD
-
-=======
->>>>>>> parent of d965d87 (revert commit  Removed saving data to local storage, minor bugs fixed)
             try {
                 const store = (await import('./store')).default;
                 const actionResult = await store.dispatch(refreshToken());

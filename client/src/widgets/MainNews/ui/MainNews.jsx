@@ -17,14 +17,6 @@ export const MainNews = memo(() => {
     }
 
     const videoMedia = useMemo(() => {
-<<<<<<< HEAD
-        return latestNews.mediaFiles?.find((media) => media.type === 'video') || null;
-    }, [latestNews.mediaFiles]);
-
-    const imageMedia = useMemo(() => {
-        return latestNews.mediaFiles?.find((media) => media.type === 'image') || null;
-    }, [latestNews.mediaFiles]);
-=======
         return (
             latestNews?.mediaFiles?.find((media) => media.type === 'video') ||
             null
@@ -37,12 +29,10 @@ export const MainNews = memo(() => {
             null
         );
     }, [latestNews?.mediaFiles]);
->>>>>>> parent of d965d87 (revert commit  Removed saving data to local storage, minor bugs fixed)
 
     const imageUrl = useMemo(() => {
         return imageMedia?.url || defaultImage;
     }, [imageMedia]);
-
 
     const processedContent = useMemo(() => {
         let content = DOMPurify.sanitize(latestNews.content);
@@ -51,15 +41,6 @@ export const MainNews = memo(() => {
 
         const truncatedContent = truncateHtmlToSentences(content, 1);
         return truncatedContent;
-<<<<<<< HEAD
-    }, [latestNews.content]);
-
-    const otherMediaFiles = useMemo(() => {
-        return latestNews.mediaFiles?.filter(
-            (m) => m.type === 'image' && m.url !== imageUrl
-        ) || [];
-    }, [latestNews.mediaFiles, imageUrl]);
-=======
     }, [latestNews]);
 
     const otherMediaFiles = useMemo(() => {
@@ -70,24 +51,19 @@ export const MainNews = memo(() => {
         );
     }, [latestNews?.mediaFiles, imageUrl]);
 
-    if (!latestNews) {
-        return <div className={styles.mainNews}>Новостей нет</div>;
-    }
->>>>>>> parent of d965d87 (revert commit  Removed saving data to local storage, minor bugs fixed)
-
     return (
         <div className={styles.mainNewsContainer}>
             <Link className={styles.mainNewsLink} to={`/news/${latestNews.id}`}>
                 <div className={styles.mainNews}>
-                        <MediaElement
-                            imageUrl={imageUrl}
-                            videoUrl={videoMedia?.url || null}
-                            alt={latestNews.title}
-                            className={styles.mainNewsMedia}
-                            playIconSize={70}
-                            showPlayIcon={true}
-                            onError={(e) => (e.target.src = defaultImage)}
-                        />
+                    <MediaElement
+                        imageUrl={imageUrl}
+                        videoUrl={videoMedia?.url || null}
+                        alt={latestNews.title}
+                        className={styles.mainNewsMedia}
+                        playIconSize={70}
+                        showPlayIcon={true}
+                        onError={(e) => (e.target.src = defaultImage)}
+                    />
                     <div className={styles.mainNewsContent}>
                         <h2 className={styles.mainNewsTitle}>
                             {latestNews.title}
