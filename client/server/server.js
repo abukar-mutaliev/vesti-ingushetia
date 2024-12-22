@@ -1,6 +1,6 @@
 require('dotenv').config();
 const helmet = require('helmet');
-const http = require('http');
+const https = require('https');
 const logger = require('./logger');
 const express = require('express');
 const cookieParser = require('cookie-parser');
@@ -65,8 +65,16 @@ app.use(
                 connectSrc: ["'self'", 'http://ingushetiatv.ru'],
                 imgSrc: ["'self'", 'data:', 'blob:', 'http://ingushetiatv.ru'],
                 mediaSrc: ["'self'", 'http://ingushetiatv.ru'],
-                scriptSrc: ["'self'", "'unsafe-inline'", 'http://ingushetiatv.ru'],
-                styleSrc: ["'self'", "'unsafe-inline'", 'http://ingushetiatv.ru'],
+                scriptSrc: [
+                    "'self'",
+                    "'unsafe-inline'",
+                    'http://ingushetiatv.ru',
+                ],
+                styleSrc: [
+                    "'self'",
+                    "'unsafe-inline'",
+                    'http://ingushetiatv.ru',
+                ],
                 fontSrc: ["'self'", 'http://ingushetiatv.ru', 'data:'],
                 frameSrc: [
                     "'self'",
@@ -189,15 +197,15 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(distDir, 'index.html'));
 });
 sequelize
-.sync()
-.then(() => {
-    logger.info('Все модели были синхронизированы с базой данных.');
-    http.createServer(credentials, app).listen(PORT, () => {
-        logger.info(`HTTPS сервер запущен на порту ${PORT}`);
+    .sync()
+    .then(() => {
+        logger.info('Все модели были синхронизированы с базой данных.');
+        https.createServer(credentials, app).listen(PORT, () => {
+            logger.info(`HTTPS сервер запущен на порту ${PORT}`);
+        });
+    })
+    .catch((err) => {
+        logger.error(
+            'Ошибка при синхронизации моделей с базой данных: ' + err.message,
+        );
     });
-})
-.catch((err) => {
-    logger.error(
-        'Ошибка при синхронизации моделей с базой данных: ' + err.message,
-    );
-});
