@@ -17,14 +17,16 @@ export class ErrorBoundary extends React.Component {
     render() {
         if (this.state.hasError) {
             return (
-                <div style={{
-                    textAlign: 'center',
-                    color: 'red',
-                    height: '80vh',
-                    minHeight: "80vh",
-                    lineHeight: "80vh",
-                    marginTop: "20%"
-                }}>
+                <div
+                    style={{
+                        textAlign: 'center',
+                        color: 'red',
+                        height: '80vh',
+                        minHeight: '80vh',
+                        lineHeight: '80vh',
+                        marginTop: '20%',
+                    }}
+                >
                     <h1>Что-то пошло не так.</h1>
                 </div>
             );

@@ -16,9 +16,12 @@ export const CommentSection = memo(({ newsId, authorName, userId }) => {
     const dispatch = useDispatch();
     const loading = useSelector(selectCommentsLoading);
     const error = useSelector(selectCommentsError);
-    const commentsSelector = useMemo(() => selectCommentsByNewsId(newsId), [newsId]);
+    const commentsSelector = useMemo(
+        () => selectCommentsByNewsId(newsId),
+        [newsId],
+    );
     const comments = useSelector(commentsSelector, shallowEqual);
-    const user = useSelector(selectUserAuth, shallowEqual)
+    const user = useSelector(selectUserAuth, shallowEqual);
 
     const [isCommentsVisible, setIsCommentsVisible] = useState(false);
     const [showAddComment, setShowAddComment] = useState(false);
@@ -68,7 +71,9 @@ export const CommentSection = memo(({ newsId, authorName, userId }) => {
                     {loading ? (
                         <Loader />
                     ) : comments.length === 0 ? (
-                        <p className={styles.noComments}>Комментарии отсутствуют</p>
+                        <p className={styles.noComments}>
+                            Комментарии отсутствуют
+                        </p>
                     ) : (
                         <ul className={styles.commentList} id="comments-list">
                             {comments.map((comment) => (
@@ -93,16 +98,16 @@ export const CommentSection = memo(({ newsId, authorName, userId }) => {
                     Написать комментарий
                 </button>
             ) : (
-            <button
-                onClick={handleShowAddComment}
-                className={styles.addCommentButton}
-                aria-expanded={showAddComment}
-                aria-controls="add-comment-form"
-            >
-                Написать комментарий
-            </button>
+                <button
+                    onClick={handleShowAddComment}
+                    className={styles.addCommentButton}
+                    aria-expanded={showAddComment}
+                    aria-controls="add-comment-form"
+                >
+                    Написать комментарий
+                </button>
             )}
-            {showAddComment &&  (
+            {showAddComment && (
                 <AddCommentForm
                     newsId={newsId}
                     authorName={authorName}

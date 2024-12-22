@@ -61,13 +61,21 @@ app.use(
         crossOriginResourcePolicy: { policy: 'cross-origin' },
         contentSecurityPolicy: {
             directives: {
-                defaultSrc: ["'self'", 'http://ingushetiatv.ru'],
-                connectSrc: ["'self'", 'http://ingushetiatv.ru'],
-                imgSrc: ["'self'", 'data:', 'blob:', 'http://ingushetiatv.ru'],
-                mediaSrc: ["'self'", 'http://ingushetiatv.ru'],
-                scriptSrc: ["'self'", "'unsafe-inline'", 'http://ingushetiatv.ru'],
-                styleSrc: ["'self'", "'unsafe-inline'", 'http://ingushetiatv.ru'],
-                fontSrc: ["'self'", 'http://ingushetiatv.ru', 'data:'],
+                defaultSrc: ["'self'", 'https://ingushetiatv.ru'],
+                connectSrc: ["'self'", 'https://ingushetiatv.ru'],
+                imgSrc: ["'self'", 'data:', 'blob:', 'https://ingushetiatv.ru'],
+                mediaSrc: ["'self'", 'https://ingushetiatv.ru'],
+                scriptSrc: [
+                    "'self'",
+                    "'unsafe-inline'",
+                    'https://ingushetiatv.ru',
+                ],
+                styleSrc: [
+                    "'self'",
+                    "'unsafe-inline'",
+                    'https://ingushetiatv.ru',
+                ],
+                fontSrc: ["'self'", 'https://ingushetiatv.ru', 'data:'],
                 frameSrc: [
                     "'self'",
                     'https://www.youtube.com',
@@ -189,15 +197,15 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(distDir, 'index.html'));
 });
 sequelize
-.sync()
-.then(() => {
-    logger.info('Все модели были синхронизированы с базой данных.');
-    https.createServer(credentials, app).listen(PORT, () => {
-        logger.info(`HTTPS сервер запущен на порту ${PORT}`);
+    .sync()
+    .then(() => {
+        logger.info('Все модели были синхронизированы с базой данных.');
+        https.createServer(credentials, app).listen(PORT, () => {
+            logger.info(`HTTPS сервер запущен на порту ${PORT}`);
+        });
+    })
+    .catch((err) => {
+        logger.error(
+            'Ошибка при синхронизации моделей с базой данных: ' + err.message,
+        );
     });
-})
-.catch((err) => {
-    logger.error(
-        'Ошибка при синхронизации моделей с базой данных: ' + err.message,
-    );
-});

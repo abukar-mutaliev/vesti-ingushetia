@@ -83,16 +83,23 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 }
                 break;
             case 'videoUrl':
-                const rutubeRegex = /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
-                const youtubeRegex = /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
-                if (value && !(rutubeRegex.test(value) || youtubeRegex.test(value))) {
-                    error = 'Видео ссылка должна быть URL от Rutube или YouTube';
+                const rutubeRegex =
+                    /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
+                const youtubeRegex =
+                    /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
+                if (
+                    value &&
+                    !(rutubeRegex.test(value) || youtubeRegex.test(value))
+                ) {
+                    error =
+                        'Видео ссылка должна быть URL от Rutube или YouTube';
                 }
                 break;
             case 'media':
                 if (!value || !value.some((group) => group.length > 0)) {
                     if (!videoUrl.trim()) {
-                        error = 'Необходимо добавить хотя бы одно изображение или ссылку на видео.';
+                        error =
+                            'Необходимо добавить хотя бы одно изображение или ссылку на видео.';
                     }
                 }
                 break;
@@ -119,14 +126,22 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         const isVideoUrlValid = validateField('videoUrl', videoUrl);
         const isPublishDateValid = validateField('publishDate', publishDate);
 
-        const isMediaValid = videoUrl.trim() || newsMedia.some((group) => group.length > 0);
+        const isMediaValid =
+            videoUrl.trim() || newsMedia.some((group) => group.length > 0);
         setErrors((prevErrors) => ({
             ...prevErrors,
-            media: isMediaValid ? '' : 'Необходимо добавить хотя бы одно изображение или ссылку на видео.',
+            media: isMediaValid
+                ? ''
+                : 'Необходимо добавить хотя бы одно изображение или ссылку на видео.',
         }));
 
         return (
-            isTitleValid && isContentValid && isCategoryValid && isVideoUrlValid && isPublishDateValid && isMediaValid
+            isTitleValid &&
+            isContentValid &&
+            isCategoryValid &&
+            isVideoUrlValid &&
+            isPublishDateValid &&
+            isMediaValid
         );
     };
 
@@ -153,19 +168,19 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         });
 
         dispatch(createNews(formData))
-        .unwrap()
-        .then(() => {
-            dispatch(fetchAllNews());
-            localStorage.removeItem(LOCAL_STORAGE_KEY);
-            onSave();
-        })
-        .catch((error) => {
-            console.error('Ошибка при создании новости:', error);
-            setErrors((prevErrors) => ({
-                ...prevErrors,
-                submit: 'Произошла ошибка при сохранении новости. Пожалуйста, попробуйте ещё раз.',
-            }));
-        });
+            .unwrap()
+            .then(() => {
+                dispatch(fetchAllNews());
+                localStorage.removeItem(LOCAL_STORAGE_KEY);
+                onSave();
+            })
+            .catch((error) => {
+                console.error('Ошибка при создании новости:', error);
+                setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    submit: 'Произошла ошибка при сохранении новости. Пожалуйста, попробуйте ещё раз.',
+                }));
+            });
     };
 
     const handleInputChange = (field, value) => {
@@ -207,7 +222,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
     const removeMedia = (index, fileIndex) => {
         setNewsMedia((prevMedia) => {
             const updatedMedia = prevMedia.map((group, idx) =>
-                idx === index ? group.filter((_, i) => i !== fileIndex) : group
+                idx === index ? group.filter((_, i) => i !== fileIndex) : group,
             );
             return updatedMedia;
         });
@@ -242,7 +257,9 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 <label>Категория</label>
                 <select
                     value={selectedCategoryId}
-                    onChange={(e) => handleInputChange('category', e.target.value)}
+                    onChange={(e) =>
+                        handleInputChange('category', e.target.value)
+                    }
                 >
                     <option value="">Выберите категорию</option>
                     {categories.map((category) => (
@@ -260,17 +277,25 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                     type="text"
                     value={videoUrl}
                     placeholder="https://www.youtube.com/watch?v=..."
-                    onChange={(e) => handleInputChange('videoUrl', e.target.value)}
+                    onChange={(e) =>
+                        handleInputChange('videoUrl', e.target.value)
+                    }
                 />
-                {errors.videoUrl && <p className={styles.error}>{errors.videoUrl}</p>}
+                {errors.videoUrl && (
+                    <p className={styles.error}>{errors.videoUrl}</p>
+                )}
 
                 <label>Дата публикации (опционально)</label>
                 <input
                     type="datetime-local"
                     value={publishDate}
-                    onChange={(e) => handleInputChange('publishDate', e.target.value)}
+                    onChange={(e) =>
+                        handleInputChange('publishDate', e.target.value)
+                    }
                 />
-                {errors.publishDate && <p className={styles.error}>{errors.publishDate}</p>}
+                {errors.publishDate && (
+                    <p className={styles.error}>{errors.publishDate}</p>
+                )}
 
                 <label>Изображения</label>
                 {newsMedia.map((mediaGroup, index) => (
@@ -317,13 +342,18 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                     + Добавить ещё файлы
                 </button>
                 {errors.media && <p className={styles.error}>{errors.media}</p>}
-                {errors.submit && <p className={styles.error}>{errors.submit}</p>}
+                {errors.submit && (
+                    <p className={styles.error}>{errors.submit}</p>
+                )}
 
                 <div className={styles.buttons}>
                     <button className={styles.saveButton} onClick={handleSave}>
                         Сохранить
                     </button>
-                    <button className={styles.cancelButton} onClick={handleCancel}>
+                    <button
+                        className={styles.cancelButton}
+                        onClick={handleCancel}
+                    >
                         Отмена
                     </button>
                 </div>

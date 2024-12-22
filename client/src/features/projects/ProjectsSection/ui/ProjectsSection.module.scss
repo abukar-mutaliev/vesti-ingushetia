@@ -1,106 +1,106 @@
 .projectsSection {
-  display: grid;
-  align-content: stretch;
-  justify-content: center;
-  align-items: baseline;
-  justify-items: center;
-  margin-top: 5%;
-
-  h2 {
-    margin-left: 40px;
-    font-size: 28px;
-    font-family: 'Russia', Arial, sans-serif;
-    color: #333333;
-
-    @media (max-width: 768px) {
-      margin-left: 20px;
-      font-size: 24px;
-    }
-
-    @media (max-width: 480px) {
-      margin-left: 10px;
-      font-size: 20px;
-    }
-  }
-
-  @media (max-width: 1268px) {
-    width: 90%;
-    margin: auto;
-  }
-
-  .projectsGrid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    width: 100%;
-    max-width: 90rem;
-    justify-items: center;
-    padding: 20px;
-
-    @media (max-width: 1224px) {
-      grid-template-columns: repeat(4, 1fr);
-      width: 100%;
-    }
-
-    @media (max-width: 768px) {
-      grid-template-columns: repeat(1, 1fr);
-      gap: 15px;
-      width: 100%;
-    }
-
-    @media (max-width: 480px) {
-      grid-template-columns: repeat(1, 1fr);
-      gap: 10px;
-    }
-  }
-
-  .pagination {
-    display: flex;
-    list-style: none;
+    align-content: stretch;
     justify-content: center;
-    padding: 0;
-    margin-top: 20px;
-    color: #333;
+    align-items: baseline;
+    justify-items: center;
+    margin-top: 5%;
 
-    @media (max-width: 1244px) {
-      padding: 4px 4px;
-      margin: 0 3px;
-      font-size: 14px;
+    h2 {
+        margin-left: 40px;
+        font-size: 28px;
+        font-family: 'Russia', Arial, sans-serif;
+        color: #333333;
+
+        @media (max-width: 768px) {
+            margin-left: 20px;
+            font-size: 24px;
+        }
+
+        @media (max-width: 480px) {
+            margin-left: 10px;
+            font-size: 20px;
+        }
     }
 
-    @media (max-width: 780px) {
-      padding: 4px 4px;
-      margin: 2px;
+    @media (max-width: 1268px) {
+        width: 90%;
+        margin: auto;
     }
 
-    @media (max-width: 486px) {
-      padding: 2px 2px;
-      margin: 1px;
-      font-size: 10px;
+    .projectsGrid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        width: 100%;
+        max-width: 90rem;
+        justify-items: center;
+        padding: 20px;
+
+        @media (max-width: 1224px) {
+            grid-template-columns: repeat(4, 1fr);
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            grid-template-columns: repeat(1, 1fr);
+            gap: 15px;
+            width: 100%;
+        }
+
+        @media (max-width: 480px) {
+            grid-template-columns: repeat(1, 1fr);
+            gap: 10px;
+        }
     }
 
-    li {
-      margin: 0 5px;
-    }
+    .pagination {
+        display: flex;
+        list-style: none;
+        justify-content: center;
+        padding: 0;
+        margin-top: 20px;
+        color: #333;
 
-    .pageLink {
-      padding: 8px 12px;
-      border: 1px solid #747bff;
-      border-radius: 4px;
-      cursor: pointer;
-      color: #747bff;
-      text-decoration: none;
+        @media (max-width: 1244px) {
+            padding: 4px 4px;
+            margin: 0 3px;
+            font-size: 14px;
+        }
 
-      &:hover {
-        background-color: #747bff;
-        color: white;
-      }
-    }
+        @media (max-width: 780px) {
+            padding: 4px 4px;
+            margin: 2px;
+        }
 
-    .activePage a {
-      background-color: #007bff;
-      color: white;
-      border-color: #007bff;
+        @media (max-width: 486px) {
+            padding: 2px 2px;
+            margin: 1px;
+            font-size: 10px;
+        }
+
+        li {
+            margin: 0 5px;
+        }
+
+        .pageLink {
+            padding: 8px 12px;
+            border: 1px solid #747bff;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #747bff;
+            text-decoration: none;
+
+            &:hover {
+                background-color: #747bff;
+                color: white;
+            }
+        }
+
+        .activePage a {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
     }
-  }
 }

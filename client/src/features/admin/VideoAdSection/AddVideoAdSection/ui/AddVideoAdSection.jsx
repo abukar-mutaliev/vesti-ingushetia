@@ -6,6 +6,7 @@ import {
     fetchAllVideoAds,
 } from '@entities/videoAd/model/videoAdSlice';
 import { FaDeleteLeft } from 'react-icons/fa6';
+import { Loader } from '@shared/ui/Loader/index.js';
 
 export const AddVideoAdSection = ({ onSave, onCancel }) => {
     const [newTitle, setNewTitle] = useState('');
@@ -52,24 +53,24 @@ export const AddVideoAdSection = ({ onSave, onCancel }) => {
         formData.append('expirationDate', expirationDate);
 
         dispatch(createVideoAd(formData))
-        .unwrap()
-        .then(() => {
-            dispatch(fetchAllVideoAds());
-            setIsLoading(false);
-            onSave();
-        })
-        .catch((error) => {
-            setIsLoading(false);
-            if (error?.errors) {
-                const serverErrors = error.errors.reduce((acc, err) => {
-                    if (err.path) acc[err.path] = err.msg;
-                    return acc;
-                }, {});
-                setErrors(serverErrors);
-            } else {
-                console.error('Ошибка при создании видеорекламы:', error);
-            }
-        });
+            .unwrap()
+            .then(() => {
+                dispatch(fetchAllVideoAds());
+                setIsLoading(false);
+                onSave();
+            })
+            .catch((error) => {
+                setIsLoading(false);
+                if (error?.errors) {
+                    const serverErrors = error.errors.reduce((acc, err) => {
+                        if (err.path) acc[err.path] = err.msg;
+                        return acc;
+                    }, {});
+                    setErrors(serverErrors);
+                } else {
+                    console.error('Ошибка при создании видеорекламы:', error);
+                }
+            });
     };
 
     useEffect(() => {
@@ -79,6 +80,10 @@ export const AddVideoAdSection = ({ onSave, onCancel }) => {
             }
         };
     }, [newVideo]);
+
+    if (isLoading) {
+        return <Loader />
+    }
 
     return (
         <div className={styles.addVideoAdSection}>

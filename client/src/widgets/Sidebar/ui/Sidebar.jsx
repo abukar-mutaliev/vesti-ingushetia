@@ -5,7 +5,6 @@ import { NewsCardSidebar } from '@widgets/NewsCardSidebar/index.js';
 import { VideoAdPlayer } from '@widgets/VideoAdPlayer/index.js';
 
 export const Sidebar = React.memo(({ newsList, categories }) => {
-
     const memoizedGroupedNews = useMemo(() => {
         return newsList.reduce((acc, news) => {
             if (!acc[news.categoryId]) {
@@ -32,11 +31,9 @@ export const Sidebar = React.memo(({ newsList, categories }) => {
         return shuffledArray;
     };
 
-
     return (
         <div className={styles.sidebar}>
-            <p>Рекламная служба ГТРК "Ингушетия" - 8928-793-47-86
-            </p>
+            <p>Рекламная служба ГТРК "Ингушетия" - 8928-793-47-86</p>
             <VideoAdPlayer />
             {categories.map((category) => {
                 const categoryNews = memoizedGroupedNews[category.id] || [];

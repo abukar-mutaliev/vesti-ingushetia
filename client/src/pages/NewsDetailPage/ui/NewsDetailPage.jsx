@@ -45,7 +45,6 @@ const NewsDetailPage = memo(() => {
         }
     }, [dispatch, newsId]);
 
-
     useEffect(() => {
         window.scrollTo(0, 0);
     }, [id]);

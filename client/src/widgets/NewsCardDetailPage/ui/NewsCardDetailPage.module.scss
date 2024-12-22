@@ -7,7 +7,9 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     background-color: #ffffff;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
     margin: 20px;
 
     &:hover {
@@ -49,7 +51,9 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                transition: background-color 0.3s ease, transform 0.3s ease;
+                transition:
+                    background-color 0.3s ease,
+                    transform 0.3s ease;
                 cursor: pointer;
 
                 &:hover {

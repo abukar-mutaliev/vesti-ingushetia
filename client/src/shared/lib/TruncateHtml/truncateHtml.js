@@ -1,9 +1,4 @@
 export const truncateHtmlToSentences = (html, sentenceLimit) => {
-    const countSentences = (text) => {
-        const regex = /[^\.!\?]+[\.!\?]+/g;
-        const matches = text.match(regex);
-        return matches ? matches.length : 0;
-    };
 
     const truncateToSentences = (htmlContent, limit) => {
         let sentenceCount = 0;
@@ -28,16 +23,16 @@ export const truncateHtmlToSentences = (html, sentenceLimit) => {
                 }
             } else if (node.nodeType === Node.ELEMENT_NODE) {
                 truncatedHtml += `<${node.nodeName.toLowerCase()}`;
-                Array.from(node.attributes).forEach(attr => {
+                Array.from(node.attributes).forEach((attr) => {
                     truncatedHtml += ` ${attr.name}="${attr.value}"`;
                 });
                 truncatedHtml += '>';
-                Array.from(node.childNodes).forEach(child => traverse(child));
+                Array.from(node.childNodes).forEach((child) => traverse(child));
                 truncatedHtml += `</${node.nodeName.toLowerCase()}>`;
             }
         };
 
-        Array.from(div.childNodes).forEach(child => traverse(child));
+        Array.from(div.childNodes).forEach((child) => traverse(child));
 
         if (sentenceCount < limit) {
             return htmlContent;

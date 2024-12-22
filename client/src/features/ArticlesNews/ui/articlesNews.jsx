@@ -1,6 +1,10 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectArticlesNews, selectNewsLoading, selectError } from '@entities/news/model/newsSelectors';
+import {
+    selectArticlesNews,
+    selectNewsLoading,
+    selectError,
+} from '@entities/news/model/newsSelectors';
 import { truncateHtmlToSentences } from '@shared/lib/TruncateHtml/truncateHtml.js';
 import styles from './ArticlesNewsList.module.scss';
 import { fetchAllNews } from '@entities/news/model/newsSlice.js';

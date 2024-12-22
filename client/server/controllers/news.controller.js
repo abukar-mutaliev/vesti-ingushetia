@@ -34,12 +34,9 @@ const formatMediaUrls = (newsItems) => {
     });
 };
 
-
-
 exports.getAllNews = async (req, res) => {
     try {
         const news = await News.findAll({
-
             order: [['createdAt', 'DESC']],
             include: [
                 { model: User, as: 'authorDetails' },
@@ -97,7 +94,6 @@ exports.getNewsById = async (req, res) => {
     }
 };
 
-
 exports.getNewsByDate = async (req, res) => {
     try {
         const { date } = req.query;
@@ -120,8 +116,8 @@ exports.getNewsByDate = async (req, res) => {
 
         if (!news || news.length === 0)
             return res
-            .status(404)
-            .json({ message: 'Новости на эту дату не найдены.' });
+                .status(404)
+                .json({ message: 'Новости на эту дату не найдены.' });
 
         const modifiedNews = formatMediaUrls(news);
         res.json(modifiedNews);
@@ -166,7 +162,7 @@ exports.createNews = async (req, res) => {
                 const imageUrl = path.posix.join(
                     'uploads',
                     'images',
-                    file.filename
+                    file.filename,
                 );
                 const media = await Media.create(
                     {
@@ -207,7 +203,8 @@ exports.createNews = async (req, res) => {
 
 exports.updateNews = async (req, res) => {
     const { id } = req.params;
-    const { title, content, categoryId, videoUrl, existingMedia, publishDate } = req.body; // Добавлено publishDate
+    const { title, content, categoryId, videoUrl, existingMedia, publishDate } =
+        req.body;
     const mediaFiles = req.files;
     const authorId = req.user.id;
 
@@ -242,12 +239,16 @@ exports.updateNews = async (req, res) => {
             const existingMediaIds = JSON.parse(existingMedia || '[]');
 
             const mediaToDelete = news.mediaFiles.filter(
-                (media) => !existingMediaIds.includes(media.id)
+                (media) => !existingMediaIds.includes(media.id),
             );
 
             for (let media of mediaToDelete) {
                 if (media.type === 'image' || media.type === 'audio') {
-                    const mediaPath = path.join(__dirname, '../../', media.url.replace(/\/+/g, path.sep));
+                    const mediaPath = path.join(
+                        __dirname,
+                        '../../',
+                        media.url.replace(/\/+/g, path.sep),
+                    );
                     fs.unlink(mediaPath, (err) => {
                         if (err) {
                             console.error('Ошибка удаления медиафайла:', err);
@@ -257,7 +258,10 @@ exports.updateNews = async (req, res) => {
             }
 
             await Media.destroy({
-                where: { id: mediaToDelete.map((media) => media.id), type: { [Op.ne]: 'video' } },
+                where: {
+                    id: mediaToDelete.map((media) => media.id),
+                    type: { [Op.ne]: 'video' },
+                },
                 transaction,
             });
 
@@ -267,7 +271,7 @@ exports.updateNews = async (req, res) => {
                     const imageUrl = path.posix.join(
                         'uploads',
                         'images',
-                        file.filename
+                        file.filename,
                     );
                     const media = await Media.create(
                         {
@@ -280,11 +284,16 @@ exports.updateNews = async (req, res) => {
                 }
             }
 
-            const existingVideo = news.mediaFiles.find((m) => m.type === 'video');
+            const existingVideo = news.mediaFiles.find(
+                (m) => m.type === 'video',
+            );
 
             if (videoUrl && videoUrl.trim() !== '') {
                 if (existingVideo) {
-                    await existingVideo.update({ url: videoUrl.trim() }, { transaction });
+                    await existingVideo.update(
+                        { url: videoUrl.trim() },
+                        { transaction },
+                    );
                 } else {
                     const newVideo = await Media.create(
                         {
@@ -334,7 +343,6 @@ exports.updateNews = async (req, res) => {
     }
 };
 
-
 exports.deleteNews = async (req, res) => {
     try {
         const { id } = req.params;
@@ -355,7 +363,9 @@ exports.deleteNews = async (req, res) => {
                     await fs.promises.unlink(mediaPath);
                 } catch (err) {
                     if (err.code === 'ENOENT') {
-                        console.warn(`Файл для удаления не найден: ${mediaPath}`);
+                        console.warn(
+                            `Файл для удаления не найден: ${mediaPath}`,
+                        );
                     } else {
                         console.error('Ошибка удаления медиафайла:', err);
                         throw err;
@@ -363,7 +373,7 @@ exports.deleteNews = async (req, res) => {
                 }
             }
 
-            const mediaIds = news.mediaFiles.map(media => media.id);
+            const mediaIds = news.mediaFiles.map((media) => media.id);
             if (mediaIds.length > 0) {
                 await Media.destroy({
                     where: { id: mediaIds },

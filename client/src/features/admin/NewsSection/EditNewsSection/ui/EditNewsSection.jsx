@@ -30,9 +30,13 @@ export const EditNewsSection = ({ news, onCancel }) => {
             setEditContent(news.content || '');
             setSelectedCategoryId(news.categoryId || '');
             setEditMedia(news.mediaFiles || []);
-            const videoMedia = (news.mediaFiles || []).find((m) => m.type === 'video');
+            const videoMedia = (news.mediaFiles || []).find(
+                (m) => m.type === 'video',
+            );
             setVideoUrl(videoMedia?.url || '');
-            setPublishDate(news.publishDate ? formatDateForInput(news.publishDate) : '');
+            setPublishDate(
+                news.publishDate ? formatDateForInput(news.publishDate) : '',
+            );
         }
         dispatch(fetchCategories());
     }, [news, dispatch]);
@@ -52,8 +56,10 @@ export const EditNewsSection = ({ news, onCancel }) => {
     const isSupportedVideoUrl = (url) => {
         if (!url) return true;
 
-        const rutubeRegex = /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
-        const youtubeRegex = /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
+        const rutubeRegex =
+            /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
+        const youtubeRegex =
+            /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
 
         return rutubeRegex.test(url) || youtubeRegex.test(url);
     };
@@ -81,8 +87,10 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 }
                 break;
             case 'media':
-                const hasExistingImages = editMedia.some((media) => media.type === 'image');
-                const hasNewImages = value.some(group => group.length > 0);
+                const hasExistingImages = editMedia.some(
+                    (media) => media.type === 'image',
+                );
+                const hasNewImages = value.some((group) => group.length > 0);
 
                 if (!hasExistingImages && !hasNewImages) {
                     error = 'Необходимо добавить хотя бы одно изображение.';
@@ -90,7 +98,8 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 break;
             case 'videoUrl':
                 if (value && !isSupportedVideoUrl(value)) {
-                    error = 'Видео ссылка должна быть URL от Rutube или YouTube';
+                    error =
+                        'Видео ссылка должна быть URL от Rutube или YouTube';
                 }
                 break;
             case 'publishDate':
@@ -158,14 +167,14 @@ export const EditNewsSection = ({ news, onCancel }) => {
         });
 
         dispatch(updateNews({ id: news.id, newsData: formData }))
-        .unwrap()
-        .then(() => {
-            dispatch(fetchAllNews());
-            onCancel();
-        })
-        .catch((error) => {
-            console.error('Ошибка при обновлении новости:', error);
-        });
+            .unwrap()
+            .then(() => {
+                dispatch(fetchAllNews());
+                onCancel();
+            })
+            .catch((error) => {
+                console.error('Ошибка при обновлении новости:', error);
+            });
     };
 
     const handleInputChange = (field, value) => {
@@ -202,7 +211,11 @@ export const EditNewsSection = ({ news, onCancel }) => {
         });
 
         if (hasAttemptedSubmit) {
-            validateField('media', [...newMedia.slice(0, index), files, ...newMedia.slice(index + 1)]);
+            validateField('media', [
+                ...newMedia.slice(0, index),
+                files,
+                ...newMedia.slice(index + 1),
+            ]);
         }
     };
 
@@ -277,23 +290,32 @@ export const EditNewsSection = ({ news, onCancel }) => {
                     type="text"
                     value={videoUrl}
                     placeholder="https://www.youtube.com/watch?v=..."
-                    onChange={(e) => handleInputChange('videoUrl', e.target.value)}
+                    onChange={(e) =>
+                        handleInputChange('videoUrl', e.target.value)
+                    }
                 />
-                {errors.videoUrl && <p className={styles.error}>{errors.videoUrl}</p>}
+                {errors.videoUrl && (
+                    <p className={styles.error}>{errors.videoUrl}</p>
+                )}
 
                 <label>Дата публикации (опционально)</label>
                 <input
                     type="datetime-local"
                     value={publishDate}
-                    onChange={(e) => handleInputChange('publishDate', e.target.value)}
+                    onChange={(e) =>
+                        handleInputChange('publishDate', e.target.value)
+                    }
                 />
-                {errors.publishDate && <p className={styles.error}>{errors.publishDate}</p>}
+                {errors.publishDate && (
+                    <p className={styles.error}>{errors.publishDate}</p>
+                )}
 
                 <label>Изображения (обязательны)</label>
                 {editMedia.length > 0 ? (
                     editMedia.map((media, index) => (
                         <div key={index} className={styles.mediaItem}>
-                            {media.type === 'image' || media.type.startsWith('image') ? (
+                            {media.type === 'image' ||
+                            media.type.startsWith('image') ? (
                                 <img
                                     className={styles.media}
                                     src={`${media.url}`}

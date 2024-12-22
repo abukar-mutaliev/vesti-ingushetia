@@ -51,14 +51,14 @@ export function AppRouter() {
                     <Route path="/login" element={<LoginForm />} />
                     <Route path="/register" element={<RegisterForm />} />
                     <Route path="/profile" element={<ProfilePage />} />
-                    {isAdmin ?
+                    {isAdmin ? (
                         <Route
                             path="/admin/dashboard"
                             element={<AdminDashboardPage />}
-                    />
-                        :
-                        <Route path="/login" element={<LoginForm />}
-                    />}
+                        />
+                    ) : (
+                        <Route path="/login" element={<LoginForm />} />
+                    )}
 
                     <Route path="/" element={<HomePage />} />
                     <Route path="/news" element={<NewsListPage />} />
@@ -86,7 +86,10 @@ export function AppRouter() {
                     <Route path="/live" element={<LiveStreamPage />} />
                     <Route path="/about" element={<AboutUsPage />} />
                     <Route path="*" element={<NotFoundPage />} />
-                    <Route path="/too-many-requests" element={<TooManyRequests />} />
+                    <Route
+                        path="/too-many-requests"
+                        element={<TooManyRequests />}
+                    />
                 </Routes>
             </Suspense>
         </ErrorBoundary>

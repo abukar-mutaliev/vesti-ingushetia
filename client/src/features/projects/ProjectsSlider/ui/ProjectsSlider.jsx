@@ -112,17 +112,14 @@ export const ProjectsSlider = ({ title = 'Наши проекты', itemsToShow 
     if (error) {
         return (
             <div className={styles.projectsSlider}>
-                Ошибка загрузки проектов: {error.message || 'Неизвестная ошибка'}
+                Ошибка загрузки проектов:{' '}
+                {error.message || 'Неизвестная ошибка'}
             </div>
         );
     }
 
     if (!projects.length) {
-        return (
-            <div className={styles.projectsSlider}>
-                Проекты отсутствуют
-            </div>
-        );
+        return <div className={styles.projectsSlider}>Проекты отсутствуют</div>;
     }
 
     return (
