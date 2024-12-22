@@ -13,37 +13,37 @@ import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
 export const MainNews = memo(() => {
     const latestNews = useSelector(selectLatestNews, shallowEqual);
 
+    if (!latestNews) {
+        return <div className={styles.mainNews}>Новостей нет</div>;
+    }
+
     const videoMedia = useMemo(() => {
-        return latestNews?.mediaFiles?.find((media) => media.type === 'video') || null;
-    }, [latestNews?.mediaFiles]);
+        return latestNews.mediaFiles?.find((media) => media.type === 'video') || null;
+    }, [latestNews.mediaFiles]);
 
     const imageMedia = useMemo(() => {
-        return latestNews?.mediaFiles?.find((media) => media.type === 'image') || null;
-    }, [latestNews?.mediaFiles]);
+        return latestNews.mediaFiles?.find((media) => media.type === 'image') || null;
+    }, [latestNews.mediaFiles]);
 
     const imageUrl = useMemo(() => {
         return imageMedia?.url || defaultImage;
     }, [imageMedia]);
 
+
     const processedContent = useMemo(() => {
-        if (!latestNews) return '';
         let content = DOMPurify.sanitize(latestNews.content);
         content = highlightKeywordsInHtml(content, '');
         content = DOMPurify.sanitize(content);
 
         const truncatedContent = truncateHtmlToSentences(content, 1);
         return truncatedContent;
-    }, [latestNews?.content]);
+    }, [latestNews.content]);
 
     const otherMediaFiles = useMemo(() => {
-        return latestNews?.mediaFiles?.filter(
+        return latestNews.mediaFiles?.filter(
             (m) => m.type === 'image' && m.url !== imageUrl
         ) || [];
-    }, [latestNews?.mediaFiles, imageUrl]);
-
-    if (!latestNews) {
-        return <div className={styles.mainNews}>Новостей нет</div>;
-    }
+    }, [latestNews.mediaFiles, imageUrl]);
 
     return (
         <div className={styles.mainNewsContainer}>
