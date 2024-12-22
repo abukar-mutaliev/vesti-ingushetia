@@ -11,7 +11,7 @@ export const SideMenu = () => {
         <div className={styles.sideMenu}>
             <h3>Категории</h3>
             <div>
-                <CategoryList/>
+                <CategoryList />
                 <ul>
                     <li className={isActiveTv ? styles.active : ''}>
                         <Link to="/tv">ТВ</Link>
@@ -19,10 +19,9 @@ export const SideMenu = () => {
                 </ul>
                 <div className={styles.articlesNews}>
                     <h4>Лента новостей</h4>
-                    <ArticlesNewsList/>
+                    <ArticlesNewsList />
                 </div>
             </div>
         </div>
-    )
-        ;
+    );
 };

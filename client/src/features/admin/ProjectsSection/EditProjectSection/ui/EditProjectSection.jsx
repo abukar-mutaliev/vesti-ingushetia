@@ -11,18 +11,18 @@ import { ConfirmDeleteModal } from '@shared/ui/ConfirmDeleteModal/index.js';
 import { RichTextEditor } from '@shared/ui/RichTextEditor';
 import {
     selectCurrentProject,
-    selectProjectList
+    selectProjectList,
 } from '@entities/projects/model/projectSelectors.js';
 
-export const EditProjectSection = ({ projectId, onCancel }) => {
+export const EditProjectSection = ({ project, onCancel }) => {
     const dispatch = useDispatch();
     const projects = useSelector(selectProjectList);
-    const project = useSelector(selectCurrentProject) || projects.find(p => p.id === projectId);
+    const projectId = project?.id;
 
     const [editTitle, setEditTitle] = useState('');
     const [editContent, setEditContent] = useState('');
     const [editMedia, setEditMedia] = useState([]);
-    const [newMedia, setNewMedia] = useState([]);
+    const [newMedia, setNewMedia] = useState([[]]);
     const [videoUrls, setVideoUrls] = useState(['']);
     const [errors, setErrors] = useState({});
     const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
@@ -30,18 +30,28 @@ export const EditProjectSection = ({ projectId, onCancel }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        dispatch(fetchCategories());
-        dispatch(fetchProjectById(projectId));
+        if (projectId) {
+            dispatch(fetchCategories());
+            dispatch(fetchProjectById(projectId));
+        }
     }, [dispatch, projectId]);
 
+    const currentProject =
+        useSelector(selectCurrentProject) ||
+        projects.find((p) => p.id === projectId);
+
     useEffect(() => {
-        if (project) {
-            setEditTitle(project.title || '');
-            setEditContent(project.content || '');
-            setEditMedia(project.mediaFiles || []);
-            setVideoUrls(project.videoUrls && project.videoUrls.length > 0 ? project.videoUrls : ['']);
+        if (currentProject) {
+            setEditTitle(currentProject.title || '');
+            setEditContent(currentProject.content || '');
+            setEditMedia(currentProject.mediaFiles || []);
+            setVideoUrls(
+                currentProject.videoUrls && currentProject.videoUrls.length > 0
+                    ? currentProject.videoUrls
+                    : [''],
+            );
         }
-    }, [project]);
+    }, [currentProject]);
 
     const handleInputChange = (field, value) => {
         switch (field) {
@@ -59,12 +69,32 @@ export const EditProjectSection = ({ projectId, onCancel }) => {
         }
     };
 
-    const handleMediaChange = (e) => {
+    const handleMediaChange = (e, index) => {
         const files = Array.from(e.target.files);
-        setNewMedia((prevMedia) => [...prevMedia, ...files]);
+        setNewMedia((prevMedia) => {
+            const updatedMedia = [...prevMedia];
+            updatedMedia[index] = files;
+            return updatedMedia;
+        });
+
         if (hasAttemptedSubmit) {
-            validateField('media', [...newMedia, ...files]);
+            validateField('media', updatedMedia);
         }
+    };
+
+    const addNewMediaField = () => {
+        setNewMedia([...newMedia, []]);
+    };
+
+    const removeNewMediaField = (index) => {
+        setNewMedia((prevMedia) => prevMedia.filter((_, i) => i !== index));
+        setErrors((prevErrors) => {
+            const newMediaErrors = prevErrors.newMedia
+                ? [...prevErrors.newMedia]
+                : [];
+            newMediaErrors.splice(index, 1);
+            return { ...prevErrors, newMedia: newMediaErrors };
+        });
     };
 
     const addVideoUrlField = () => {
@@ -93,8 +123,10 @@ export const EditProjectSection = ({ projectId, onCancel }) => {
     };
 
     const validateSingleVideoUrl = (index, url) => {
-        const rutubeRegex = /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
-        const youtubeRegex = /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
+        const rutubeRegex =
+            /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
+        const youtubeRegex =
+            /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
 
         let error = '';
         if (url.trim()) {
@@ -143,11 +175,14 @@ export const EditProjectSection = ({ projectId, onCancel }) => {
                 }
                 break;
             case 'media':
-                const hasExistingImages = editMedia.some(media => media.type.startsWith('image'));
-                const hasNewImages = newMedia.some(file => file.type.startsWith('image'));
-                const hasVideoUrls = videoUrls.some(url => url.trim() !== '');
+                const hasExistingImages = editMedia.some((media) =>
+                    media.type.startsWith('image'),
+                );
+                const hasNewImages = value.some((group) => group.length > 0);
+                const hasVideoUrls = videoUrls.some((url) => url.trim() !== '');
                 if (!hasExistingImages && !hasNewImages && !hasVideoUrls) {
-                    error = 'Проект должен содержать хотя бы одно изображение или видео-ссылку.';
+                    error =
+                        'Проект должен содержать хотя бы одно изображение или видео-ссылку.';
                 }
                 break;
             default:
@@ -165,7 +200,7 @@ export const EditProjectSection = ({ projectId, onCancel }) => {
         const isContentValid = validateField('content', editContent);
         const isMediaValid = validateField('media', newMedia);
 
-        const hasVideoUrls = videoUrls.some(url => url.trim() !== '');
+        const hasVideoUrls = videoUrls.some((url) => url.trim() !== '');
         if (hasVideoUrls) {
             const videoUrlsValid = validateVideoUrls();
             if (!videoUrlsValid) {
@@ -194,7 +229,7 @@ export const EditProjectSection = ({ projectId, onCancel }) => {
             JSON.stringify(editMedia.map((media) => media.id)),
         );
 
-        newMedia.forEach((file) => {
+        newMedia.flat().forEach((file) => {
             const mediaType = file.type.startsWith('image')
                 ? 'images'
                 : 'videos';
@@ -207,30 +242,35 @@ export const EditProjectSection = ({ projectId, onCancel }) => {
         });
 
         dispatch(updateProject({ id: project.id, projectData: formData }))
-        .unwrap()
-        .then(() => {
-            onCancel();
-        })
-        .catch((error) => {
-            if (error.errors) {
-                const serverErrors = {};
-                error.errors.forEach((err) => {
-                    if (err.path) {
-                        serverErrors[err.path] = err.msg;
-                    }
-                });
-                setErrors(serverErrors);
-            } else {
-                setErrors(prev => ({ ...prev, submit: 'Произошла ошибка при обновлении проекта.' }));
-                console.error('Ошибка при обновлении проекта:', error);
-            }
-        });
+            .unwrap()
+            .then(() => {
+                onCancel();
+            })
+            .catch((error) => {
+                if (error.errors) {
+                    const serverErrors = {};
+                    error.errors.forEach((err) => {
+                        if (err.path) {
+                            serverErrors[err.path] = err.msg;
+                        }
+                    });
+                    setErrors(serverErrors);
+                } else {
+                    setErrors((prev) => ({
+                        ...prev,
+                        submit: 'Произошла ошибка при обновлении проекта.',
+                    }));
+                    console.error('Ошибка при обновлении проекта:', error);
+                }
+            });
     };
 
     const embedVideo = (url) => {
         let embedUrl = '';
         if (url.includes('rutube.ru')) {
-            const videoIdMatch = url.match(/rutube\.ru\/video\/([A-Za-z0-9_-]+)/);
+            const videoIdMatch = url.match(
+                /rutube\.ru\/video\/([A-Za-z0-9_-]+)/,
+            );
             const videoId = videoIdMatch ? videoIdMatch[1] : null;
             if (videoId) {
                 embedUrl = `https://rutube.ru/play/embed/${videoId}/`;
@@ -311,8 +351,11 @@ export const EditProjectSection = ({ projectId, onCancel }) => {
                     )}
                 </div>
 
+                {/* Видео-ссылки */}
                 <div className={styles.previewVideosContainer}>
-                    <label className={styles.label}>Видео-ссылки (Rutube или YouTube)</label>
+                    <label className={styles.label}>
+                        Видео-ссылки (Rutube или YouTube)
+                    </label>
                     <button
                         type="button"
                         className={styles.addButton}
@@ -348,19 +391,46 @@ export const EditProjectSection = ({ projectId, onCancel }) => {
                         </div>
                     ))}
 
-                    {videoUrls.map((url, index) => (
-                        url.trim() && !errors.videoUrls?.[index] && embedVideo(url)
-                    ))}
+                    {videoUrls.map(
+                        (url, index) =>
+                            url.trim() &&
+                            !errors.videoUrls?.[index] &&
+                            embedVideo(url),
+                    )}
                 </div>
 
-                <label className={styles.label}>Добавить новые медиафайлы</label>
-                <input
-                    type="file"
-                    accept="image/*,video/*"
-                    multiple
-                    onChange={handleMediaChange}
-                />
+                {/* Добавление новых медиафайлов */}
+                <label className={styles.label}>
+                    Добавить новые медиафайлы
+                </label>
+                {newMedia.map((_, index) => (
+                    <div key={index} className={styles.newMediaGroup}>
+                        <input
+                            type="file"
+                            accept="image/*,video/*"
+                            multiple
+                            onChange={(e) => handleMediaChange(e, index)}
+                        />
+                        {newMedia.length > 1 && (
+                            <button
+                                type="button"
+                                className={styles.removeButton}
+                                onClick={() => removeNewMediaField(index)}
+                            >
+                                <FaDeleteLeft />
+                            </button>
+                        )}
+                    </div>
+                ))}
+                <button
+                    type="button"
+                    className={styles.addButton}
+                    onClick={addNewMediaField}
+                >
+                    <FaPlus /> Добавить ещё медиафайл
+                </button>
 
+                {/* Просмотр существующих медиафайлов */}
                 <label className={styles.label}>Медиафайлы</label>
                 {editMedia.length > 0 && (
                     <div>
@@ -387,11 +457,12 @@ export const EditProjectSection = ({ projectId, onCancel }) => {
                     </div>
                 )}
 
-                {newMedia.length > 0 && (
+                {/* Просмотр добавленных медиафайлов */}
+                {newMedia.flat().length > 0 && (
                     <div>
                         <p>Добавленные медиафайлы:</p>
                         <div className={styles.mediaPreview}>
-                            {newMedia.map((file, fileIndex) => (
+                            {newMedia.flat().map((file, fileIndex) => (
                                 <div
                                     key={fileIndex}
                                     className={styles.previewItem}
@@ -401,7 +472,15 @@ export const EditProjectSection = ({ projectId, onCancel }) => {
                                         className={styles.removeButton}
                                         onClick={() =>
                                             setNewMedia((prev) =>
-                                                prev.filter((_, i) => i !== fileIndex)
+                                                prev.map((group, i) =>
+                                                    i === fileIndex
+                                                        ? group.filter(
+                                                              (_, j) =>
+                                                                  j !==
+                                                                  fileIndex,
+                                                          )
+                                                        : group,
+                                                ),
                                             )
                                         }
                                     >
@@ -426,10 +505,16 @@ export const EditProjectSection = ({ projectId, onCancel }) => {
                     </div>
                 )}
 
+                {/* Ошибки */}
                 {errors.media && <p className={styles.error}>{errors.media}</p>}
-                {errors.videoUrls && <p className={styles.error}>{errors.videoUrls}</p>}
-                {errors.submit && <p className={styles.error}>{errors.submit}</p>}
+                {errors.videoUrls && (
+                    <p className={styles.error}>{errors.videoUrls}</p>
+                )}
+                {errors.submit && (
+                    <p className={styles.error}>{errors.submit}</p>
+                )}
 
+                {/* Кнопки */}
                 <div className={styles.buttons}>
                     <button
                         className={styles.saveButton}

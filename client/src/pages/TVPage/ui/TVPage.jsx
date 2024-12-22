@@ -5,9 +5,7 @@ import {
     filterNewsByDate,
     setPage,
 } from '@entities/news/model/newsSlice';
-import {
-    selectNewsWithVideos,
-} from '@entities/news/model/newsSelectors';
+import { selectNewsWithVideos } from '@entities/news/model/newsSelectors';
 import { CustomCalendar } from '@widgets/Calendar';
 import styles from './TVPage.module.scss';
 import { NewsList } from '@features/newsList';
@@ -48,11 +46,10 @@ const TVPage = () => {
         const dates = newsList.map((news) =>
             news.publishDate
                 ? new Date(news.publishDate).toDateString()
-                : new Date(news.createdAt).toDateString()
+                : new Date(news.createdAt).toDateString(),
         );
         return Array.from(new Set(dates));
     }, [newsList]);
-
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -73,19 +70,22 @@ const TVPage = () => {
             )}
             <div className={styles.newsContent}>
                 <div className={styles.mobileMenuIcon}>
-                    <SlArrowRight size={20} onClick={toggleMenu}/>
+                    <SlArrowRight size={20} onClick={toggleMenu} />
                 </div>
                 <div
                     className={`${styles.sideMenu} ${isMenuOpen ? styles.open : ''}`}
                 >
                     <button className={styles.closeButton} onClick={closeMenu}>
-                        <FaTimes size={20}/>
+                        <FaTimes size={20} />
                     </button>
-                    <SideMenu onCategoryClick={closeMenu}/>
+                    <SideMenu onCategoryClick={closeMenu} />
                 </div>
                 <div>
                     <h1 className={styles.title}>ТВ</h1>
-                    <NewsList selectedDate={selectedDate} onlyWithVideos={true}/>
+                    <NewsList
+                        selectedDate={selectedDate}
+                        onlyWithVideos={true}
+                    />
                 </div>
                 <div className={styles.sidebarContainer}>
                     <p>Архивные телепередачи</p>
@@ -101,7 +101,7 @@ const TVPage = () => {
                             Показать все новости
                         </button>
                     )}
-                    <Sidebar categories={categories} newsList={newsList}/>
+                    <Sidebar categories={categories} newsList={newsList} />
                 </div>
             </div>
         </div>

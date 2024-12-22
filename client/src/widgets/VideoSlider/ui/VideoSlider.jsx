@@ -67,7 +67,6 @@ export const VideoSlider = () => {
         }
     }, []);
 
-
     const videoNewsElements = useMemo(() => {
         return videoNews.map((news) => {
             const video = news.mediaFiles.find(
@@ -104,7 +103,6 @@ export const VideoSlider = () => {
                                 playIconSize={50}
                                 onError={() => {}}
                             />
-
                         </div>
                         <div className={styles.videoInfo}>
                             <h3>{news.title}</h3>

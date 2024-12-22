@@ -19,7 +19,6 @@ cron.schedule('0 * * * *', async () => {
             ad.status = 'paused';
             await ad.save();
         }
-
     } catch (error) {
         console.error('Ошибка в cron job для видеорекламы:', error);
     }

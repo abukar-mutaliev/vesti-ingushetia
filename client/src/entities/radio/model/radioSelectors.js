@@ -1,8 +1,23 @@
+import { createSelector } from 'reselect';
 
-export const selectRadioList = (state) => state.radio.radio;
+const selectRadioState = (state) => state.radio;
 
-export const selectCurrentRadio = (state) => state.radio.currentRadio;
+export const selectRadioList = createSelector(
+    [selectRadioState],
+    (radioState) => radioState.radio,
+);
 
-export const selectRadioStatus = (state) => state.radio.status;
+export const selectCurrentRadio = createSelector(
+    [selectRadioState],
+    (radioState) => radioState.currentRadio,
+);
 
-export const selectRadioError = (state) => state.radio.error;
+export const selectRadioStatus = createSelector(
+    [selectRadioState],
+    (radioState) => radioState.status,
+);
+
+export const selectRadioError = createSelector(
+    [selectRadioState],
+    (radioState) => radioState.error,
+);

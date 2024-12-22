@@ -30,7 +30,6 @@ function formatMediaUrls(projectItems) {
     }));
 }
 
-
 exports.getAllProjects = async (req, res) => {
     try {
         const projects = await Project.findAll({
@@ -108,7 +107,7 @@ exports.createProject = async (req, res) => {
             }
         }
 
-       if (videoUrls && Array.isArray(videoUrls)) {
+        if (videoUrls && Array.isArray(videoUrls)) {
             for (let url of videoUrls) {
                 const media = await Media.create(
                     {
@@ -162,7 +161,9 @@ exports.updateProject = async (req, res) => {
                 const mediaPath = path.join(
                     __dirname,
                     '..',
-                    media.url.startsWith(baseUrl) ? media.url.replace(`${baseUrl}/`, '') : media.url
+                    media.url.startsWith(baseUrl)
+                        ? media.url.replace(`${baseUrl}/`, '')
+                        : media.url,
                 );
                 fs.unlink(mediaPath, (err) => {
                     if (err) console.error('Ошибка удаления медиафайла:', err);
@@ -181,7 +182,11 @@ exports.updateProject = async (req, res) => {
                     for (let file of mediaFiles.images) {
                         const media = await Media.create(
                             {
-                                url: posix.join('uploads', 'images', file.filename),
+                                url: posix.join(
+                                    'uploads',
+                                    'images',
+                                    file.filename,
+                                ),
                                 type: 'image',
                             },
                             { transaction },
@@ -194,7 +199,11 @@ exports.updateProject = async (req, res) => {
                     for (let file of mediaFiles.videos) {
                         const media = await Media.create(
                             {
-                                url: posix.join('uploads', 'videos', file.filename),
+                                url: posix.join(
+                                    'uploads',
+                                    'videos',
+                                    file.filename,
+                                ),
                                 type: 'video',
                             },
                             { transaction },
@@ -249,7 +258,6 @@ exports.updateProject = async (req, res) => {
         res.status(500).json({ error: `Ошибка: ${err.message}` });
     }
 };
-
 
 exports.deleteProject = async (req, res) => {
     try {

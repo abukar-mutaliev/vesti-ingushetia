@@ -8,7 +8,12 @@ const initialState = {
     error: null,
 };
 
-const updateCommentLikes = (comments, commentId, likesCount, likedByCurrentUser) => {
+const updateCommentLikes = (
+    comments,
+    commentId,
+    likesCount,
+    likedByCurrentUser,
+) => {
     return comments.map((comment) => {
         if (comment.id === commentId) {
             return {
@@ -52,15 +57,14 @@ const addReplyToComments = (comments, reply) => {
 
 const removeCommentById = (comments, commentId) => {
     return comments
-    .filter((comment) => comment.id !== commentId)
-    .map((comment) => ({
-        ...comment,
-        replies: comment.replies
-            ? removeCommentById(comment.replies, commentId)
-            : [],
-    }));
+        .filter((comment) => comment.id !== commentId)
+        .map((comment) => ({
+            ...comment,
+            replies: comment.replies
+                ? removeCommentById(comment.replies, commentId)
+                : [],
+        }));
 };
-
 
 export const fetchCommentsForNews = createAsyncThunk(
     'comments/fetchForNews',
@@ -79,7 +83,7 @@ export const fetchCommentsForNews = createAsyncThunk(
                 err.response?.data || 'Ошибка загрузки комментариев',
             );
         }
-    }
+    },
 );
 
 export const fetchAllComments = createAsyncThunk(
@@ -119,7 +123,7 @@ export const addComment = createAsyncThunk(
                 error.response?.data || 'Ошибка добавления комментария',
             );
         }
-    }
+    },
 );
 
 export const deleteComment = createAsyncThunk(
@@ -180,7 +184,7 @@ export const replyToComment = createAsyncThunk(
         } catch (error) {
             return rejectWithValue(
                 error.response?.data ||
-                'Ошибка добавления ответа на комментарий',
+                    'Ошибка добавления ответа на комментарий',
             );
         }
     },
@@ -192,126 +196,126 @@ const commentSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder
-        .addCase(fetchCommentsForNews.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        })
-        .addCase(fetchCommentsForNews.fulfilled, (state, action) => {
-            const { newsId, comments } = action.payload;
-            state.commentsByNews[newsId] = comments;
-            state.comments = [...state.comments, ...comments];
-            state.loading = false;
-        })
-        .addCase(fetchCommentsForNews.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.payload;
-        })
-        .addCase(fetchAllComments.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        })
-        .addCase(fetchAllComments.fulfilled, (state, action) => {
-            state.loading = false;
-            state.comments = action.payload;
-            const commentsByNews = {};
-            action.payload.forEach((comment) => {
-                const newsId = comment.newsId;
-                if (!commentsByNews[newsId]) {
-                    commentsByNews[newsId] = [];
+            .addCase(fetchCommentsForNews.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchCommentsForNews.fulfilled, (state, action) => {
+                const { newsId, comments } = action.payload;
+                state.commentsByNews[newsId] = comments;
+                state.comments = [...state.comments, ...comments];
+                state.loading = false;
+            })
+            .addCase(fetchCommentsForNews.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(fetchAllComments.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchAllComments.fulfilled, (state, action) => {
+                state.loading = false;
+                state.comments = action.payload;
+                const commentsByNews = {};
+                action.payload.forEach((comment) => {
+                    const newsId = comment.newsId;
+                    if (!commentsByNews[newsId]) {
+                        commentsByNews[newsId] = [];
+                    }
+                    commentsByNews[newsId].push(comment);
+                });
+                state.commentsByNews = commentsByNews;
+            })
+            .addCase(fetchAllComments.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(addComment.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(addComment.fulfilled, (state, action) => {
+                const { newsId, comment } = action.payload;
+
+                if (state.commentsByNews[newsId]) {
+                    state.commentsByNews[newsId].push(comment);
+                } else {
+                    state.commentsByNews[newsId] = [comment];
                 }
-                commentsByNews[newsId].push(comment);
-            });
-            state.commentsByNews = commentsByNews;
-        })
-        .addCase(fetchAllComments.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.payload;
-        })
-        .addCase(addComment.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        })
-        .addCase(addComment.fulfilled, (state, action) => {
-            const { newsId, comment } = action.payload;
 
-            if (state.commentsByNews[newsId]) {
-                state.commentsByNews[newsId].push(comment);
-            } else {
-                state.commentsByNews[newsId] = [comment];
-            }
-
-            state.comments.push(comment);
-            state.loading = false;
-        })
-        .addCase(addComment.rejected, (state, action) => {
-            state.error = action.payload;
-            state.loading = false;
-        })
-        .addCase(deleteComment.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        })
-        .addCase(deleteComment.fulfilled, (state, action) => {
-            const commentId = action.payload;
-            Object.keys(state.commentsByNews).forEach((newsId) => {
-                state.commentsByNews[newsId] = removeCommentById(
-                    state.commentsByNews[newsId],
-                    commentId,
-                );
-            });
-            state.comments = removeCommentById(state.comments, commentId);
-            state.loading = false;
-        })
-        .addCase(deleteComment.rejected, (state, action) => {
-            state.error = action.payload;
-            state.loading = false;
-        })
-        .addCase(likeComment.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        })
-        .addCase(likeComment.fulfilled, (state, action) => {
-            const { commentId, likesCount, likedByCurrentUser } =
-                action.payload;
-            Object.keys(state.commentsByNews).forEach((newsId) => {
-                state.commentsByNews[newsId] = updateCommentLikes(
-                    state.commentsByNews[newsId],
+                state.comments.push(comment);
+                state.loading = false;
+            })
+            .addCase(addComment.rejected, (state, action) => {
+                state.error = action.payload;
+                state.loading = false;
+            })
+            .addCase(deleteComment.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(deleteComment.fulfilled, (state, action) => {
+                const commentId = action.payload;
+                Object.keys(state.commentsByNews).forEach((newsId) => {
+                    state.commentsByNews[newsId] = removeCommentById(
+                        state.commentsByNews[newsId],
+                        commentId,
+                    );
+                });
+                state.comments = removeCommentById(state.comments, commentId);
+                state.loading = false;
+            })
+            .addCase(deleteComment.rejected, (state, action) => {
+                state.error = action.payload;
+                state.loading = false;
+            })
+            .addCase(likeComment.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(likeComment.fulfilled, (state, action) => {
+                const { commentId, likesCount, likedByCurrentUser } =
+                    action.payload;
+                Object.keys(state.commentsByNews).forEach((newsId) => {
+                    state.commentsByNews[newsId] = updateCommentLikes(
+                        state.commentsByNews[newsId],
+                        commentId,
+                        likesCount,
+                        likedByCurrentUser,
+                    );
+                });
+                state.comments = updateCommentLikes(
+                    state.comments,
                     commentId,
                     likesCount,
                     likedByCurrentUser,
                 );
+                state.loading = false;
+            })
+            .addCase(likeComment.rejected, (state, action) => {
+                state.error = action.payload;
+                state.loading = false;
+            })
+            .addCase(replyToComment.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(replyToComment.fulfilled, (state, action) => {
+                const { newsId, reply } = action.payload;
+                if (state.commentsByNews[newsId]) {
+                    state.commentsByNews[newsId] = addReplyToComments(
+                        state.commentsByNews[newsId],
+                        reply,
+                    );
+                }
+                state.comments.push(reply);
+                state.loading = false;
+            })
+            .addCase(replyToComment.rejected, (state, action) => {
+                state.error = action.payload;
+                state.loading = false;
             });
-            state.comments = updateCommentLikes(
-                state.comments,
-                commentId,
-                likesCount,
-                likedByCurrentUser,
-            );
-            state.loading = false;
-        })
-        .addCase(likeComment.rejected, (state, action) => {
-            state.error = action.payload;
-            state.loading = false;
-        })
-        .addCase(replyToComment.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        })
-        .addCase(replyToComment.fulfilled, (state, action) => {
-            const { newsId, reply } = action.payload;
-            if (state.commentsByNews[newsId]) {
-                state.commentsByNews[newsId] = addReplyToComments(
-                    state.commentsByNews[newsId],
-                    reply,
-                );
-            }
-            state.comments.push(reply);
-            state.loading = false;
-        })
-        .addCase(replyToComment.rejected, (state, action) => {
-            state.error = action.payload;
-            state.loading = false;
-        });
     },
 });
 

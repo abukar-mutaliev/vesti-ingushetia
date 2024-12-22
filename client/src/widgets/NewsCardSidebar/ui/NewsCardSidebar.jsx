@@ -19,7 +19,11 @@ export const NewsCardSidebar = React.memo(({ item }) => {
     }, [item.mediaFiles]);
 
     const videoPosterUrl = useMemo(() => {
-        return videoMedia?.poster?.url || getVideoThumbnailUrl(videoMedia?.url) || null;
+        return (
+            videoMedia?.poster?.url ||
+            getVideoThumbnailUrl(videoMedia?.url) ||
+            null
+        );
     }, [videoMedia]);
 
     const imageUrl = useMemo(() => {
@@ -99,7 +103,9 @@ export const NewsCardSidebar = React.memo(({ item }) => {
         <li className={styles.newsItem}>
             {mediaElement}
             <div className={styles.newsOverlay}>
-                <p className={styles.newsTitle}>{truncateHtmlToSentences(item.title, 1)}</p>
+                <p className={styles.newsTitle}>
+                    {truncateHtmlToSentences(item.title, 1)}
+                </p>
             </div>
         </li>
     );

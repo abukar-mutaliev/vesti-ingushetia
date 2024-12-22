@@ -1,11 +1,4 @@
-const {
-    News,
-    User,
-    Category,
-    Comment,
-    Author,
-    Media,
-} = require('../models');
+const { News, User, Category, Comment, Author, Media } = require('../models');
 const { body, param, validationResult } = require('express-validator');
 
 exports.getAllAuthors = async (req, res) => {

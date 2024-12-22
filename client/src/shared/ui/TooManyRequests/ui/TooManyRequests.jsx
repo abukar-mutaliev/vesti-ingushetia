@@ -11,9 +11,15 @@ const TooManyRequests = () => {
     return (
         <div style={styles.overlay}>
             <div style={styles.container}>
-                <p>Вы сделали слишком много запросов за короткий промежуток времени. Пожалуйста,
-                    подождите несколько минут и попробуйте снова через {errorMessage}.</p>
-                <button onClick={() => dispatch(clearError())} style={styles.button}>
+                <p>
+                    Вы сделали слишком много запросов за короткий промежуток
+                    времени. Пожалуйста, подождите несколько минут и попробуйте
+                    снова через {errorMessage}.
+                </p>
+                <button
+                    onClick={() => dispatch(clearError())}
+                    style={styles.button}
+                >
                     Закрыть
                 </button>
             </div>
@@ -52,6 +58,5 @@ const styles = {
         cursor: 'pointer',
     },
 };
-
 
 export default TooManyRequests;

@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useDispatch, useSelector as useReduxSelector } from 'react-redux';
+import {
+    useSelector,
+    useSelector as useReduxSelector,
+} from 'react-redux';
 import { Sidebar } from '@features/admin/Sidebar';
 import { NewsSection } from '@features/admin/NewsSection';
 import { UsersSection } from '@features/admin/UsersSection';
@@ -21,16 +24,22 @@ import { AddVideoAdSection } from '@features/admin/VideoAdSection/AddVideoAdSect
 import { ProjectsSection } from '@features/admin/ProjectsSection';
 import { AddProjectSection } from '@features/admin/ProjectsSection/AddProjectSection';
 import { EditProjectSection } from '@features/admin/ProjectsSection/EditProjectSection';
-import { selectIsAdmin } from '@entities/user/auth/model/authSelectors.js';
-import { useNavigate } from 'react-router-dom';
+import {
+    selectIsAdmin,
+    selectUserAuth,
+} from '@entities/user/auth/model/authSelectors.js';
+import { Link, useNavigate } from 'react-router-dom';
 
 const LOCAL_STORAGE_KEY_ADD_NEWS = 'adminDashboard_addNewsSectionFormData';
 const LOCAL_STORAGE_KEY_ACTIVE_SECTION = 'adminDashboard_activeSection';
-const LOCAL_STORAGE_KEY_ADD_PROJECT = 'adminDashboard_addProjectSectionFormData';
+const LOCAL_STORAGE_KEY_ADD_PROJECT =
+    'adminDashboard_addProjectSectionFormData';
 
 export const AdminDashboard = () => {
     const [activeSection, setActiveSection] = useState(() => {
-        const savedSection = localStorage.getItem(LOCAL_STORAGE_KEY_ACTIVE_SECTION);
+        const savedSection = localStorage.getItem(
+            LOCAL_STORAGE_KEY_ACTIVE_SECTION,
+        );
         return savedSection ? savedSection : 'news';
     });
     const [newsToEdit, setNewsToEdit] = useState(null);
@@ -46,6 +55,7 @@ export const AdminDashboard = () => {
     const [isAddingProject, setIsAddingProject] = useState(false);
     const isAdmin = useReduxSelector(selectIsAdmin);
     const navigate = useNavigate();
+    const isAuthenticated = useSelector(selectUserAuth);
 
     useEffect(() => {
         if (!isAdmin) {
@@ -67,7 +77,9 @@ export const AdminDashboard = () => {
     }, [activeSection]);
 
     useEffect(() => {
-        const savedFormData = localStorage.getItem(LOCAL_STORAGE_KEY_ADD_PROJECT);
+        const savedFormData = localStorage.getItem(
+            LOCAL_STORAGE_KEY_ADD_PROJECT,
+        );
         if (activeSection === 'projects' && savedFormData) {
             setIsAddingProject(true);
         } else {
@@ -90,6 +102,15 @@ export const AdminDashboard = () => {
         setIsAddingProject(false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
+    if (!isAuthenticated) {
+        return (
+            <div className={styles.unAuthorized}>
+                Вы не авторизованы, пожалуйста{' '}
+                <Link to={'/login'}>пройдите авторизацию</Link>
+            </div>
+        );
+    }
 
     const renderSection = () => {
         if (isAddingNews) {
