@@ -61,21 +61,21 @@ app.use(
         crossOriginResourcePolicy: { policy: 'cross-origin' },
         contentSecurityPolicy: {
             directives: {
-                defaultSrc: ["'self'", 'http://ingushetiatv.ru'],
-                connectSrc: ["'self'", 'http://ingushetiatv.ru'],
-                imgSrc: ["'self'", 'data:', 'blob:', 'http://ingushetiatv.ru'],
-                mediaSrc: ["'self'", 'http://ingushetiatv.ru'],
+                defaultSrc: ["'self'", 'https://ingushetiatv.ru'],
+                connectSrc: ["'self'", 'https://ingushetiatv.ru'],
+                imgSrc: ["'self'", 'data:', 'blob:', 'https://ingushetiatv.ru'],
+                mediaSrc: ["'self'", 'https://ingushetiatv.ru'],
                 scriptSrc: [
                     "'self'",
                     "'unsafe-inline'",
-                    'http://ingushetiatv.ru',
+                    'https://ingushetiatv.ru',
                 ],
                 styleSrc: [
                     "'self'",
                     "'unsafe-inline'",
-                    'http://ingushetiatv.ru',
+                    'https://ingushetiatv.ru',
                 ],
-                fontSrc: ["'self'", 'http://ingushetiatv.ru', 'data:'],
+                fontSrc: ["'self'", 'https://ingushetiatv.ru', 'data:'],
                 frameSrc: [
                     "'self'",
                     'https://www.youtube.com',
