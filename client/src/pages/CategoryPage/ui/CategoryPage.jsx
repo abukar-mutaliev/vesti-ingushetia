@@ -1,4 +1,4 @@
-import  { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { fetchNewsByCategory } from '@entities/categories/model/categorySlice.js';
@@ -88,7 +88,7 @@ const CategoryPage = () => {
             </div>
             <div className={styles.content}>
                 <div className={styles.mobileMenuIcon}>
-                    <SlArrowRight size={20} onClick={toggleMenu}/>
+                    <SlArrowRight size={20} onClick={toggleMenu} />
                 </div>
                 <h1>
                     {currentCategory
@@ -98,7 +98,7 @@ const CategoryPage = () => {
                 <div className={styles.newsList}>
                     {currentNews.length > 0 ? (
                         currentNews.map((news) => (
-                            <NewsCard key={news.id} news={news}/>
+                            <NewsCard key={news.id} news={news} />
                         ))
                     ) : (
                         <div>Новостей в этой категории пока нет.</div>

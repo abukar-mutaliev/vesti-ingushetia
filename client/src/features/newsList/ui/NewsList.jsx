@@ -54,12 +54,12 @@ export const NewsList = React.memo(
             if (!dateString) return 'ВСЕ НОВОСТИ';
             const date = new Date(dateString);
             return `НОВОСТИ ЗА ${date
-            .toLocaleDateString('ru-RU', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-            })
-            .toUpperCase()}`;
+                .toLocaleDateString('ru-RU', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                })
+                .toUpperCase()}`;
         }, []);
 
         const newsListRef = useRef(null);

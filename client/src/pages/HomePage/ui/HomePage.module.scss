@@ -1,5 +1,5 @@
 .homePage {
-    max-width: 90rem;
+    max-width: 100%;
     margin: 5% auto;
     color: black;
     display: flex;
@@ -14,7 +14,13 @@
         justify-content: space-between;
         flex-direction: column;
         align-items: center;
-        margin-top: 15%;
+        margin-top: 7%;
+    }
+    @media screen and (max-width: 1160px) {
+        max-width: 60%;
+    }
+    @media screen and (max-width: 990px) {
+        max-width: 90%;
     }
     @media (max-width: 768px) {
         margin-top: 0;
@@ -45,13 +51,14 @@
         display: flex;
         box-sizing: border-box;
     }
-    @media (max-width: 768px) {
+    @media (max-width: 1268px) {
         display: flex;
         box-sizing: border-box;
         top: 60px;
         background-color: #5db1ff;
         color: white;
         padding: 10px;
+        margin-top: 5%;
     }
 }
 
@@ -60,17 +67,17 @@
     transition: transform 0.3s ease-in-out;
     border: none;
     height: auto;
-    width: 360px;
-    background-color: #2376d1;
+    width: 100%;
+    max-width: 360px;
+    background: #2376d1;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 
     @media screen and (max-width: 1320px) {
         position: absolute;
         top: 40px;
         left: 0;
-        width: 250px;
+        width: 100%;
         height: 100%;
-
         transform: translateX(-100%);
         z-index: 500;
         overflow-y: auto;
@@ -79,11 +86,15 @@
         position: absolute;
         top: 0;
         left: 0;
-        width: 250px;
-        height: 100%;
+        width: 100%;
         transform: translateX(-100%);
         z-index: 1000;
         overflow-y: auto;
+    }
+
+    @media screen and (max-width: 768px) {
+        width: 100%;
+        max-width: 90vw;
     }
 
     &.open {
@@ -139,16 +150,23 @@
     box-sizing: border-box;
     padding-bottom: 5%;
     margin-top: 4%;
+
     @media (max-width: 1244px) {
         flex: 1;
     }
     @media (max-width: 768px) {
-        margin-top: 10%;
+        margin-top: 20%;
         flex: 1;
         gap: 15px;
         max-width: 90%;
         align-items: center;
         box-sizing: border-box;
+    }
+    @media (max-width: 568px) {
+        margin-top: 15%;
+    }
+    @media (max-width: 456px) {
+        margin-top: 20%;
     }
 }
 .sidebarContainer {

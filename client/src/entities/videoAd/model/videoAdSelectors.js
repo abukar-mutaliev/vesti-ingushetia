@@ -4,7 +4,7 @@ export const selectVideoAdState = (state) => state.videoAd;
 
 export const selectAllVideoAds = createSelector(
     [selectVideoAdState],
-    (videoAdState) => videoAdState.ads || []
+    (videoAdState) => videoAdState.ads || [],
 );
 
 export const selectAllActiveVideoAds = createSelector(
@@ -12,10 +12,11 @@ export const selectAllActiveVideoAds = createSelector(
     (ads) =>
         Array.isArray(ads)
             ? ads.filter(
-                (ad) =>
-                    ad.status === 'active' && new Date(ad.expirationDate) > new Date()
-            )
-            : []
+                  (ad) =>
+                      ad.status === 'active' &&
+                      new Date(ad.expirationDate) > new Date(),
+              )
+            : [],
 );
 
 export const selectVideoAdLoading = createSelector(

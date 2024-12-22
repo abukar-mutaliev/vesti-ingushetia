@@ -10,19 +10,12 @@ import {
     PURGE,
     REGISTER,
 } from 'redux-persist';
-import { setStore } from './apiClient'
+import { setStore } from './apiClient';
 
 const persistConfig = {
     key: 'root',
     storage,
-    whitelist: [
-        'auth',
-        'categories',
-        'newsList',
-        'videoAd',
-        'radio',
-        'projects'
-    ],
+    whitelist: ['auth', 'newsList', 'videoAd'],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

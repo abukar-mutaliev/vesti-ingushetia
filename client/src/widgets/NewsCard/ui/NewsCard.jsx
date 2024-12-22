@@ -22,15 +22,23 @@ export const NewsCard = React.memo(
         }, [news.createdAt]);
 
         const imageMedia = useMemo(() => {
-            return news.mediaFiles?.find((media) => media.type === 'image') || null;
+            return (
+                news.mediaFiles?.find((media) => media.type === 'image') || null
+            );
         }, [news.mediaFiles]);
 
         const videoMedia = useMemo(() => {
-            return news.mediaFiles?.find((media) => media.type === 'video') || null;
+            return (
+                news.mediaFiles?.find((media) => media.type === 'video') || null
+            );
         }, [news.mediaFiles]);
 
         const videoPosterUrl = useMemo(() => {
-            return videoMedia?.poster?.url || getVideoThumbnailUrl(videoMedia?.url) || null;
+            return (
+                videoMedia?.poster?.url ||
+                getVideoThumbnailUrl(videoMedia?.url) ||
+                null
+            );
         }, [videoMedia]);
 
         const imageUrl = useMemo(() => {
@@ -156,7 +164,9 @@ export const NewsCard = React.memo(
                         {showDate && (
                             <span className={styles.date}>{formattedDate}</span>
                         )}
-                        <span className={styles.readMoreButton}>Читать полностью</span>
+                        <span className={styles.readMoreButton}>
+                            Читать полностью
+                        </span>
                     </Link>
                 </div>
             </div>

@@ -8,22 +8,15 @@ import styles from './ProjectDetail.module.scss';
 import defaultImage from '@assets/default.jpg';
 
 export const ProjectDetail = ({ project }) => {
-    const {
-        title,
-        categoryId,
-        categoryName,
-        createdAt,
-        mediaFiles,
-        content,
-    } = project;
+    const { title, categoryId, categoryName, createdAt, mediaFiles, content } =
+        project;
 
     const firstImage = mediaFiles?.find((media) => media.type === 'image');
     const firstVideo = mediaFiles?.find((media) => media.type === 'video');
 
     const otherMediaFiles = mediaFiles?.filter(
-        (media) => media.id !== firstImage?.id
+        (media) => media.id !== firstImage?.id,
     );
-
 
     const processedContent = useMemo(() => {
         let sanitizedContent = DOMPurify.sanitize(content, {
@@ -116,7 +109,6 @@ export const ProjectDetail = ({ project }) => {
             </div>
 
             <div className={styles.mediaSection}>
-
                 {firstImage && (
                     <div className={styles.imageWrapper}>
                         <img

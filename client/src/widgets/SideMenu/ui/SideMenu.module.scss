@@ -40,16 +40,16 @@
             cursor: pointer;
             text-align: left;
             transition:
-                    0.3s ease,
-                    transform,
-                    0.3s ease;
+                0.3s ease,
+                transform,
+                0.3s ease;
 
             &:hover {
                 background-color: $primary-color;
                 transition:
-                        0.3s ease,
-                        transform,
-                        0.3s ease;
+                    0.3s ease,
+                    transform,
+                    0.3s ease;
             }
             &::after {
                 content: '';
@@ -64,7 +64,6 @@
             }
             &:hover {
                 color: #f8f9fa;
-
             }
             &.active {
                 background-color: $primary-color;

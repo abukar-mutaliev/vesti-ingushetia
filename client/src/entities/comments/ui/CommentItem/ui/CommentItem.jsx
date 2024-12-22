@@ -22,7 +22,9 @@ export const CommentItem = memo(({ comment, isReply }) => {
     const isAdmin = useSelector(selectIsAdmin, shallowEqual);
 
     const [imgSrc, setImgSrc] = useState(
-        comment.authorDetails?.avatarUrl ? comment.authorDetails.avatarUrl : defaultAvatar
+        comment.authorDetails?.avatarUrl
+            ? comment.authorDetails.avatarUrl
+            : defaultAvatar,
     );
 
     const handleImageError = () => {
@@ -51,7 +53,6 @@ export const CommentItem = memo(({ comment, isReply }) => {
     const handleCancelDelete = useCallback(() => {
         setIsModalOpen(false);
     }, []);
-
 
     return (
         <div className={`${styles.comment} ${isReply ? styles.reply : ''}`}>

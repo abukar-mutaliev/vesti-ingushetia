@@ -27,7 +27,7 @@ const credentials = {
 const uploadDir =
     process.env.UPLOAD_DIR || path.resolve(__dirname, '..', '../uploads');
 
-const corsOrigin = process.env.CORS_ORIGIN ||  'https://5.35.92.185';
+const corsOrigin = process.env.CORS_ORIGIN || 'https://5.35.92.185';
 const imagesDir = path.join(uploadDir, 'images');
 const videoAdDir = path.join(uploadDir, 'videoAd');
 const audioDir = path.join(uploadDir, 'audio');
@@ -65,8 +65,16 @@ app.use(
                 connectSrc: ["'self'", 'http://ingushetiatv.ru'],
                 imgSrc: ["'self'", 'data:', 'blob:', 'http://ingushetiatv.ru'],
                 mediaSrc: ["'self'", 'http://ingushetiatv.ru'],
-                scriptSrc: ["'self'", "'unsafe-inline'", 'http://ingushetiatv.ru'],
-                styleSrc: ["'self'", "'unsafe-inline'", 'http://ingushetiatv.ru'],
+                scriptSrc: [
+                    "'self'",
+                    "'unsafe-inline'",
+                    'http://ingushetiatv.ru',
+                ],
+                styleSrc: [
+                    "'self'",
+                    "'unsafe-inline'",
+                    'http://ingushetiatv.ru',
+                ],
                 fontSrc: ["'self'", 'http://ingushetiatv.ru', 'data:'],
                 frameSrc: [
                     "'self'",
@@ -189,15 +197,15 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(distDir, 'index.html'));
 });
 sequelize
-.sync()
-.then(() => {
-    logger.info('Все модели были синхронизированы с базой данных.');
-    https.createServer(credentials, app).listen(PORT, () => {
-        logger.info(`HTTPS сервер запущен на порту ${PORT}`);
+    .sync()
+    .then(() => {
+        logger.info('Все модели были синхронизированы с базой данных.');
+        https.createServer(credentials, app).listen(PORT, () => {
+            logger.info(`HTTPS сервер запущен на порту ${PORT}`);
+        });
+    })
+    .catch((err) => {
+        logger.error(
+            'Ошибка при синхронизации моделей с базой данных: ' + err.message,
+        );
     });
-})
-.catch((err) => {
-    logger.error(
-        'Ошибка при синхронизации моделей с базой данных: ' + err.message,
-    );
-});

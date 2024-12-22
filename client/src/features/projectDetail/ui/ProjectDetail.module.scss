@@ -88,6 +88,7 @@
     object-fit: cover;
     display: block;
     border-radius: 8px;
+
     @media (max-width: 768px) {
         height: 300px;
     }
@@ -199,8 +200,8 @@
         line-height: 50px;
         border-radius: 8px;
         transition:
-                0.5s ease,
-                transform 0.5s ease;
+            0.5s ease,
+            transform 0.5s ease;
         font-size: 24px;
         color: #555;
         display: flex;

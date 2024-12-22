@@ -87,7 +87,10 @@ api.interceptors.response.use(
         const originalRequest = error.config;
 
         if (error.response?.status === 429) {
-            const retryAfter = error.response.data.retryAfter || error.response.headers['retry-after'] || 60; // секунды
+            const retryAfter =
+                error.response.data.retryAfter ||
+                error.response.headers['retry-after'] ||
+                60; // секунды
             storeInstance.dispatch(setError(`${retryAfter} секунд.`));
 
             return Promise.reject(error);
@@ -95,34 +98,29 @@ api.interceptors.response.use(
 
         if (error.response?.status === 401 && !originalRequest._retry) {
             if (isRefreshing) {
-                console.log('Token is already refreshing, adding to queue.');
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
                 })
-                .then(() => api(originalRequest))
-                .catch((err) => Promise.reject(err));
+                    .then(() => api(originalRequest))
+                    .catch((err) => Promise.reject(err));
             }
 
             originalRequest._retry = true;
             isRefreshing = true;
-            console.log('Access token expired, attempting to refresh.');
             try {
                 const store = (await import('./store')).default;
                 const actionResult = await store.dispatch(refreshToken());
 
                 if (actionResult.meta.requestStatus === 'fulfilled') {
-                    console.log('Token refreshed successfully.');
                     isRefreshing = false;
                     processQueue(null);
                     return api(originalRequest);
                 } else {
-                    console.log('Token refreshed successfully.');
                     isRefreshing = false;
                     processQueue(actionResult.payload);
                     return Promise.reject(actionResult.payload);
                 }
             } catch (refreshError) {
-                console.log('Error during token refresh:', refreshError);
                 isRefreshing = false;
                 processQueue(refreshError);
                 return Promise.reject(refreshError);

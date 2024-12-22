@@ -1,19 +1,14 @@
 import React, { memo, useMemo } from 'react';
 import ReactPlayer from 'react-player';
 import styles from './RadioPlayer.module.scss';
-import { IoPlayCircleOutline, IoPlaySkipForwardCircleSharp } from 'react-icons/io5';
+import {
+    IoPlayCircleOutline,
+    IoPlaySkipForwardCircleSharp,
+} from 'react-icons/io5';
 import { Loader } from '@shared/ui/Loader/index.js';
 
 export const RadioPlayer = memo(
-    ({
-         radio,
-         currentRadio,
-         status,
-         error,
-         onPlay,
-         onStop,
-     }) => {
-
+    ({ radio, currentRadio, status, error, onPlay, onStop }) => {
         const trackList = useMemo(() => {
             return radio.map((track) => (
                 <li
@@ -25,7 +20,7 @@ export const RadioPlayer = memo(
                     }`}
                     onClick={() => onPlay(track.id)}
                 >
-                    <IoPlaySkipForwardCircleSharp size={30}/>
+                    <IoPlaySkipForwardCircleSharp size={30} />
                     <span className={styles.trackItem}>{track.title}</span>
                 </li>
             ));
@@ -35,8 +30,8 @@ export const RadioPlayer = memo(
             <div className={styles.RadioPlayerWrapper}>
                 <h2>Радио России "Ингушетия"</h2>
                 <p>
-                    Выходит в эфир по будням 5 раз в сутки и по 2 раза в выходные
-                    дни.
+                    Выходит в эфир по будням 5 раз в сутки и по 2 раза в
+                    выходные дни.
                 </p>
 
                 <ul>
@@ -60,7 +55,8 @@ export const RadioPlayer = memo(
                     </a>
                 </p>
                 <p>
-                    Телефон: <a href="tel:8(8732)-22-41-34">8 (8732)-22-41-34</a>
+                    Телефон:{' '}
+                    <a href="tel:8(8732)-22-41-34">8 (8732)-22-41-34</a>
                 </p>
 
                 {status === 'loading' && <Loader />}
@@ -91,5 +87,5 @@ export const RadioPlayer = memo(
                 )}
             </div>
         );
-    }
+    },
 );
