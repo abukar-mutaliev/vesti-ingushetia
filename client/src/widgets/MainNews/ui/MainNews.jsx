@@ -1,16 +1,18 @@
 import { memo, useMemo } from 'react';
 import { useSelector, shallowEqual } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { selectLatestNews } from '@entities/news/model/newsSelectors';
+import { selectLatestNews, selectIsLoading } from '@entities/news/model/newsSelectors';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
 import DOMPurify from 'dompurify';
 import defaultImage from '@assets/default.jpg';
 import styles from './MainNews.module.scss';
 import { truncateHtmlToSentences } from '@shared/lib/TruncateHtml/truncateHtml';
 import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
+import { Loader } from '@shared/ui/Loader/index.js';
 
 export const MainNews = memo(() => {
     const latestNews = useSelector(selectLatestNews, shallowEqual);
+    const isLoading = useSelector(selectIsLoading);
 
     const videoMedia = useMemo(() => {
         return (
@@ -49,6 +51,14 @@ export const MainNews = memo(() => {
         );
     }, [latestNews?.mediaFiles, imageUrl]);
 
+    if (isLoading) {
+        return (
+            <div className={styles.mainNewsLoader}>
+                <Loader />
+            </div>
+        );
+    }
+
     if (!latestNews) {
         return <div className={styles.mainNews}>Новостей нет</div>;
     }
@@ -84,7 +94,7 @@ export const MainNews = memo(() => {
             </Link>
 
             {videoMedia && otherMediaFiles.length > 0 && (
-                <div>
+                <div className={styles.otherMediaContainer}>
                     {otherMediaFiles.map((media) => (
                         <div key={media.id} className={styles.imageWrapper}>
                             <MediaElement

@@ -86,10 +86,7 @@ export const selectNewsLoading = createSelector(
     (newsState) => newsState.loading,
 );
 
-export const selectNewsByIdLoading = createSelector(
-    [selectNewsState],
-    (newsState) => newsState.newsByIdLoading,
-);
+
 
 export const selectError = createSelector(
     [selectNewsState],
@@ -98,4 +95,24 @@ export const selectError = createSelector(
 
 export const selectArticlesNews = createSelector([selectNewsList], (newsList) =>
     newsList.filter((news) => news.category?.name === 'Статьи'),
+);
+
+export const selectLoading = createSelector(
+    [selectNewsState],
+    (newsState) => newsState.loading || newsState.newsLoading
+);
+
+export const selectNewsByIdLoading = createSelector(
+    [selectNewsState],
+    (newsState) => newsState.newsByIdLoading,
+);
+
+export const selectNewsLoadingAll = createSelector(
+    [selectNewsState],
+    (newsState) => newsState.newsLoading
+);
+
+export const selectIsLoading = createSelector(
+    [selectNewsLoading, selectNewsLoadingAll],
+    (loading, newsLoading) => loading || newsLoading
 );
