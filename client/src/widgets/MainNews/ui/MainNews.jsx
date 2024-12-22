@@ -12,10 +12,6 @@ import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
 export const MainNews = memo(() => {
     const latestNews = useSelector(selectLatestNews, shallowEqual);
 
-    if (!latestNews) {
-        return <div className={styles.mainNews}>Новостей нет</div>;
-    }
-
     const videoMedia = useMemo(() => {
         return (
             latestNews?.mediaFiles?.find((media) => media.type === 'video') ||
@@ -35,13 +31,15 @@ export const MainNews = memo(() => {
     }, [imageMedia]);
 
     const processedContent = useMemo(() => {
+        if (!latestNews?.content) return 'Нет описания';
+
         let content = DOMPurify.sanitize(latestNews.content);
         content = highlightKeywordsInHtml(content, '');
         content = DOMPurify.sanitize(content);
 
         const truncatedContent = truncateHtmlToSentences(content, 1);
         return truncatedContent;
-    }, [latestNews]);
+    }, [latestNews?.content]);
 
     const otherMediaFiles = useMemo(() => {
         return (
@@ -50,6 +48,10 @@ export const MainNews = memo(() => {
             ) || []
         );
     }, [latestNews?.mediaFiles, imageUrl]);
+
+    if (!latestNews) {
+        return <div className={styles.mainNews}>Новостей нет</div>;
+    }
 
     return (
         <div className={styles.mainNewsContainer}>
