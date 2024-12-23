@@ -65,15 +65,16 @@ export const RadioPlayer = memo(
                 <ul className={styles.TrackList}>{trackList}</ul>
 
                 {currentRadio ? (
-                    <div className={styles.radioPlayer}>
+                    <div className={styles.radioPlayerContainer}>
                         <h2>{currentRadio.title}</h2>
                         <h3>{currentRadio.description}</h3>
                         <ReactPlayer
                             url={currentRadio.url}
+                            className={styles.radioPlayer}
                             playing
                             controls
                             width="100%"
-                            height="20px"
+                            height="60px"
                         />
                     </div>
                 ) : (

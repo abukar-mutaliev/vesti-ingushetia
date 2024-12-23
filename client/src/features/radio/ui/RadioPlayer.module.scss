@@ -79,7 +79,7 @@
     }
 }
 
-.radioPlayer {
+.radioPlayerContainer {
     width: 100%;
     display: grid;
 
@@ -87,5 +87,8 @@
         color: #333333;
         font-family: 'RussiaMedium';
         text-align: center;
+    }
+    .radioPlayer {
+        padding: 20px;
     }
 }

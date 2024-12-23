@@ -110,7 +110,7 @@ const SearchResultsPage = () => {
                                     news={{
                                         ...news,
                                         title: highlightKeywordsInHtml(
-                                            news.title,
+                                            news.title || '',
                                             initialKeywords,
                                         ),
                                         content: highlightKeywordsInHtml(
