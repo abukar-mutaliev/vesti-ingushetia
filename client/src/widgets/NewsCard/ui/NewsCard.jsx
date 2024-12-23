@@ -4,7 +4,6 @@ import styles from './NewsCard.module.scss';
 import { FaPlayCircle } from 'react-icons/fa';
 import defaultImage from '@assets/default.jpg';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
-import DOMPurify from 'dompurify';
 import { truncateHtmlToSentences } from '@shared/lib/TruncateHtml/truncateHtml.js';
 import { getVideoThumbnailUrl } from '@shared/lib/getVideoThumbnailUrl/getVideoThumbnailUrl.js';
 
@@ -131,17 +130,24 @@ export const NewsCard = React.memo(
                 contentToProcess = truncateHtmlToSentences(news.content, 1);
             }
 
-            let sanitizedContent = DOMPurify.sanitize(contentToProcess);
-
-            let highlightedContent = highlightKeywordsInHtml(
-                sanitizedContent,
+            const highlightedContent = highlightKeywordsInHtml(
+                contentToProcess,
                 keywords,
             );
 
-            highlightedContent = DOMPurify.sanitize(highlightedContent);
-
             return highlightedContent;
         }, [news.content, showContent, keywords]);
+
+        const processedTitle = useMemo(() => {
+            const titleToProcess = news.title;
+            const highlightedTitle = highlightKeywordsInHtml(
+                titleToProcess,
+                keywords,
+            );
+
+
+            return highlightedTitle;
+        }, [news.title, keywords]);
 
         return (
             <div className={styles.newsCard}>
@@ -152,9 +158,12 @@ export const NewsCard = React.memo(
                         className={styles.link}
                         state={{ id: news.id }}
                     >
-                        <h2 className={styles.title}>
-                            {truncateHtmlToSentences(news.title, 1)}
-                        </h2>
+                        <h2
+                            className={styles.title}
+                            dangerouslySetInnerHTML={{
+                                __html: processedTitle,
+                            }}
+                        ></h2>
                         <div
                             className={styles.content}
                             dangerouslySetInnerHTML={{
