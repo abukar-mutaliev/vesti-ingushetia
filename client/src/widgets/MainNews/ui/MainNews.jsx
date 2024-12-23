@@ -60,7 +60,7 @@ export const MainNews = memo(() => {
     }
 
     if (!latestNews) {
-        return <div className={styles.mainNews}>Новостей нет</div>;
+        return <div className={styles.mainNewsNotFound}>Новостей нет</div>;
     }
 
     return (

@@ -10,8 +10,10 @@
         height: 400px;
     }
 }
+
 .mainNewsLoader {
     width: 100%;
+    min-width: 60vw;
     height: 100vw;
 }
 .mainNews {
@@ -160,4 +162,9 @@
 .mainNewsDescription {
     font-size: 1rem;
     color: #555;
+}
+
+.mainNewsNotFound {
+    width: 100%;
+    min-width: 60vw;
 }
