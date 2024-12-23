@@ -52,32 +52,33 @@ const HomePage = () => {
 
     return (
         <div>
+            {isMenuOpen && (
+                <div className={styles.backdrop} onClick={closeMenu}></div>
+            )}
+            <div className={styles.mobileMenuIcon}>
+                <SlArrowRight size={20} onClick={toggleMenu}/>
+            </div>
             <div className={styles.homePage}>
-                {isMenuOpen && (
-                    <div className={styles.backdrop} onClick={closeMenu}></div>
-                )}
 
                 <div
                     className={`${styles.sideMenu} ${isMenuOpen ? styles.open : ''}`}
                 >
                     <button className={styles.closeButton} onClick={closeMenu}>
-                        <FaTimes size={20} />
+                        <FaTimes size={20}/>
                     </button>
-                    <SideMenu onCategoryClick={closeMenu} />
+                    <SideMenu onCategoryClick={closeMenu}/>
                 </div>
                 <div className={styles.mainContent}>
-                    <div className={styles.mobileMenuIcon}>
-                        <SlArrowRight size={20} onClick={toggleMenu} />
-                    </div>
-                    <MainNews />
-                    <NewsList newsList={newsList} />
+
+                    <MainNews/>
+                    <NewsList newsList={newsList}/>
                 </div>
                 <div className={styles.sidebarContainer}>
-                    <Sidebar categories={categories} newsList={newsList} />
+                    <Sidebar categories={categories} newsList={newsList}/>
                 </div>
             </div>
             <div className={styles.projectsSliderContainer}>
-                <ProjectsSlider />
+                <ProjectsSlider/>
             </div>
         </div>
     );

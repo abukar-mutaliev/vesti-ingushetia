@@ -58,9 +58,10 @@
     border-radius: 0 15px 15px 0;
 
     @media screen and (max-width: 1320px) {
-        top: 120px;
+        width: 40px;
         display: flex;
         box-sizing: border-box;
+        z-index: 999;
     }
 
     @media (max-width: 1268px) {
@@ -175,7 +176,7 @@
     }
 
     @media (max-width: 768px) {
-        margin-top: 20%;
+        margin-top: 15%;
         flex: 1;
         gap: 15px;
         max-width: 90%;
