@@ -263,7 +263,8 @@
                 color: $primary-color-header;
 
                 @media screen and (max-width: 768px) {
-                    padding: 0;
+                    padding: 20px;
+                    width: 50%;
                 }
                 &::placeholder {
                     color: $primary-color-header;
