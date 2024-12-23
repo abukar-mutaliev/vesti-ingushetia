@@ -2,11 +2,12 @@ import React, { useEffect, useCallback, useRef } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { setPage } from '@entities/news/model/newsSlice';
 import {
-    selectPaginatedNews,
-    selectPaginatedNewsWithVideos,
-    selectPageCount,
-    selectPageCountWithVideos,
+    selectPaginatedNewsExcludingLast,
+    selectPageCountExcludingLast,
+    selectPaginatedNewsWithVideosExcludingLast,
+    selectPageCountWithVideosExcludingLast,
     selectLoading,
+    selectNewsPerPage,
 } from '@entities/news/model/newsSelectors';
 import { NewsCard } from '@widgets/NewsCard';
 import ReactPaginate from 'react-paginate';
@@ -14,28 +15,30 @@ import styles from './NewsList.module.scss';
 import { Loader } from '@shared/ui/Loader/index.js';
 
 export const NewsList = React.memo(
-    ({ selectedDate, onlyWithVideos = false }) => {
+    ({ newsList, selectedDate, onlyWithVideos = false }) => {
         const dispatch = useDispatch();
 
-        const newsPerPage = 8;
+        const newsPerPage = useSelector(selectNewsPerPage);
 
-        const currentNewsList = useSelector(
+        const paginatedNews = useSelector(
             (state) =>
                 onlyWithVideos
-                    ? selectPaginatedNewsWithVideos(state, newsPerPage)
-                    : selectPaginatedNews(state, newsPerPage),
+                    ? selectPaginatedNewsWithVideosExcludingLast(state, newsPerPage)
+                    : selectPaginatedNewsExcludingLast(state, newsPerPage),
             shallowEqual,
         );
 
         const pageCount = useSelector(
             (state) =>
                 onlyWithVideos
-                    ? selectPageCountWithVideos(state, newsPerPage)
-                    : selectPageCount(state, newsPerPage),
+                    ? selectPageCountWithVideosExcludingLast(state, newsPerPage)
+                    : selectPageCountExcludingLast(state, newsPerPage),
             shallowEqual,
         );
 
         const isLoading = useSelector(selectLoading);
+
+        const displayNewsList = newsList || paginatedNews;
 
         const handlePageClick = useCallback(
             ({ selected }) => {
@@ -74,13 +77,16 @@ export const NewsList = React.memo(
                     <h3>{formatDate(selectedDate)}</h3>
 
                     {isLoading ? (
-                        <Loader />
-                    ) : currentNewsList.length > 0 ? (
-                        currentNewsList.map((news) => (
+                        <div className={styles.newsListLoader}>
+                            <Loader />
+                        </div>
+
+                    ) : displayNewsList.length > 0 ? (
+                        displayNewsList.map((news) => (
                             <NewsCard key={news.id} news={news} />
                         ))
                     ) : (
-                        <div>Новостей нет</div>
+                        <div className={styles.newsListLoader}>Новостей нет</div>
                     )}
 
                     {!isLoading && pageCount > 1 && (

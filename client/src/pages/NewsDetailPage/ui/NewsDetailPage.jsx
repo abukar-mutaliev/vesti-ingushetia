@@ -8,10 +8,10 @@ import { fetchCategories } from '@entities/categories/model/categorySlice';
 import { useParams } from 'react-router-dom';
 
 import {
-    selectCurrentNews,
     selectNewsList,
     selectNewsByIdLoading,
     selectNewsLoading,
+    selectNewsById,
 } from '@entities/news/model/newsSelectors';
 import { selectCategories } from '@entities/categories/model/categorySelectors';
 import { selectCommentsByNewsId } from '@entities/comments/model/commentSelectors.js';
@@ -23,15 +23,16 @@ const NewsDetailPage = memo(() => {
     const dispatch = useDispatch();
     const { id } = useParams();
     const newsId = id;
-    const currentNews = useSelector(selectCurrentNews, shallowEqual);
+
+    const currentNews = useSelector((state) => selectNewsById(state, newsId), shallowEqual);
     const newsList = useSelector(selectNewsList, shallowEqual);
     const loadingNews = useSelector(selectNewsLoading, shallowEqual);
     const loadingNewsById = useSelector(selectNewsByIdLoading, shallowEqual);
     const categories = useSelector(selectCategories, shallowEqual);
-    const comments = useSelector(selectCommentsByNewsId(newsId), shallowEqual);
+    const comments = useSelector((state) => selectCommentsByNewsId(state, newsId), shallowEqual);
 
     useEffect(() => {
-        if (id && (!currentNews || currentNews.id !== newsId)) {
+        if (id && (!currentNews || currentNews.id !== parseInt(newsId, 10))) {
             dispatch(fetchNewsById(newsId));
         }
         if (newsList.length === 0) {
@@ -43,13 +44,13 @@ const NewsDetailPage = memo(() => {
         if (comments.length === 0) {
             dispatch(fetchCommentsForNews(newsId));
         }
-    }, [dispatch, newsId]);
+    }, [dispatch, newsId, currentNews, newsList.length, categories.length, comments.length]);
 
     useEffect(() => {
         window.scrollTo(0, 0);
     }, [id]);
 
-    if (!newsList || loadingNewsById) {
+    if (!currentNews || loadingNewsById || loadingNews) {
         return <Loader />;
     }
 
@@ -64,7 +65,7 @@ const NewsDetailPage = memo(() => {
                 />
                 <div className={styles.sidebarContainer}>
                     <Sidebar
-                        newsList={newsList}
+                        newsList={newsList.filter(news => news.id !== parseInt(newsId, 10))}
                         loading={loadingNews}
                         categories={categories}
                     />

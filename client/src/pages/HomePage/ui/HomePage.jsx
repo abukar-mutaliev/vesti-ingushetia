@@ -5,8 +5,7 @@ import { MainNews } from '@widgets/MainNews/';
 import { NewsList } from '@features/newsList';
 import { Sidebar } from '@widgets/Sidebar/';
 import { fetchCategories } from '@entities/categories/model/categorySlice';
-import { selectCategories } from '@entities/categories/model/categorySelectors.js';
-import { selectNewsList, selectNewsLoading } from '@entities/news/model/newsSelectors.js';
+import { selectNewsList, selectNewsLoading, selectNewsListExcludingLast } from '@entities/news/model/newsSelectors.js';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { FaTimes } from 'react-icons/fa';
@@ -14,14 +13,16 @@ import { SlArrowRight } from 'react-icons/sl';
 import { ProjectsSlider } from '@features/projects/ProjectsSlider/';
 import { fetchAllNews } from '@entities/news/model/newsSlice.js';
 import { Loader } from '@shared/ui/Loader/index.js';
+import { selectCategories } from '@entities/categories/model/categorySelectors.js';
 
 const HomePage = () => {
     const dispatch = useDispatch();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const newsList = useSelector(selectNewsList);
+    const newsListExcludingLast = useSelector(selectNewsListExcludingLast);
     const categories = useSelector(selectCategories);
-    const loading = useSelector(selectNewsLoading)
+    const loading = useSelector(selectNewsLoading);
 
     const loadCategories = useCallback(() => {
         if (!categories.length) {
@@ -69,12 +70,13 @@ const HomePage = () => {
                     <SideMenu onCategoryClick={closeMenu}/>
                 </div>
                 <div className={styles.mainContent}>
-
-                    <MainNews/>
-                    <NewsList newsList={newsList}/>
+                    {newsList.length > 0 && (
+                        <MainNews news={newsList[0]}/>
+                    )}
+                    <NewsList newsList={newsListExcludingLast}/>
                 </div>
                 <div className={styles.sidebarContainer}>
-                    <Sidebar categories={categories} newsList={newsList}/>
+                    <Sidebar categories={categories} newsList={newsListExcludingLast}/>
                 </div>
             </div>
             <div className={styles.projectsSliderContainer}>
