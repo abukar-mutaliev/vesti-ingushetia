@@ -87,7 +87,6 @@ export const selectNewsLoading = createSelector(
 );
 
 
-
 export const selectError = createSelector(
     [selectNewsState],
     (newsState) => newsState.error,
