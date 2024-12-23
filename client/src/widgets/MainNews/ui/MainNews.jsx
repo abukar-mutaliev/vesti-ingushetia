@@ -1,7 +1,6 @@
 import { memo, useMemo } from 'react';
-import { useSelector, shallowEqual } from 'react-redux';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { selectLatestNews, selectIsLoading } from '@entities/news/model/newsSelectors';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
 import DOMPurify from 'dompurify';
 import defaultImage from '@assets/default.jpg';
@@ -10,46 +9,46 @@ import { truncateHtmlToSentences } from '@shared/lib/TruncateHtml/truncateHtml';
 import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
 import { Loader } from '@shared/ui/Loader/index.js';
 
-export const MainNews = memo(() => {
-    const latestNews = useSelector(selectLatestNews, shallowEqual);
-    const isLoading = useSelector(selectIsLoading);
-
+export const MainNews = memo(({ news, isLoading }) => {
     const videoMedia = useMemo(() => {
         return (
-            latestNews?.mediaFiles?.find((media) => media.type === 'video') ||
+            news?.mediaFiles?.find((media) => media.type === 'video') ||
             null
         );
-    }, [latestNews?.mediaFiles]);
+    }, [news?.mediaFiles]);
 
     const imageMedia = useMemo(() => {
         return (
-            latestNews?.mediaFiles?.find((media) => media.type === 'image') ||
+            news?.mediaFiles?.find((media) => media.type === 'image') ||
             null
         );
-    }, [latestNews?.mediaFiles]);
+    }, [news?.mediaFiles]);
 
     const imageUrl = useMemo(() => {
         return imageMedia?.url || defaultImage;
     }, [imageMedia]);
 
     const processedContent = useMemo(() => {
-        if (!latestNews?.content) return 'Нет описания';
+        if (!news?.content) return 'Нет описания';
 
-        let content = DOMPurify.sanitize(latestNews.content);
+        let content = DOMPurify.sanitize(news.content);
+
+
         content = highlightKeywordsInHtml(content, '');
+
         content = DOMPurify.sanitize(content);
 
         const truncatedContent = truncateHtmlToSentences(content, 1);
         return truncatedContent;
-    }, [latestNews?.content]);
+    }, [news?.content]);
 
     const otherMediaFiles = useMemo(() => {
         return (
-            latestNews?.mediaFiles?.filter(
+            news?.mediaFiles?.filter(
                 (m) => m.type === 'image' && m.url !== imageUrl,
             ) || []
         );
-    }, [latestNews?.mediaFiles, imageUrl]);
+    }, [news?.mediaFiles, imageUrl]);
 
     if (isLoading) {
         return (
@@ -59,18 +58,18 @@ export const MainNews = memo(() => {
         );
     }
 
-    if (!latestNews) {
+    if (!news) {
         return <div className={styles.mainNewsNotFound}>Новостей нет</div>;
     }
 
     return (
         <div className={styles.mainNewsContainer}>
-            <Link className={styles.mainNewsLink} to={`/news/${latestNews.id}`}>
+            <Link className={styles.mainNewsLink} to={`/news/${news.id}`}>
                 <div className={styles.mainNews}>
                     <MediaElement
                         imageUrl={imageUrl}
                         videoUrl={videoMedia?.url || null}
-                        alt={latestNews.title}
+                        alt={news.title}
                         className={styles.mainNewsMedia}
                         playIconSize={70}
                         showPlayIcon={true}
@@ -78,7 +77,7 @@ export const MainNews = memo(() => {
                     />
                     <div className={styles.mainNewsContent}>
                         <h2 className={styles.mainNewsTitle}>
-                            {latestNews.title}
+                            {news.title}
                         </h2>
                         <div
                             className={styles.mainNewsDescription}
@@ -100,7 +99,7 @@ export const MainNews = memo(() => {
                             <MediaElement
                                 imageUrl={media.url}
                                 videoUrl={null}
-                                alt={latestNews.title}
+                                alt={news.title}
                                 className={styles.mainNewsImage}
                                 onError={(e) => (e.target.src = defaultImage)}
                             />
@@ -111,3 +110,19 @@ export const MainNews = memo(() => {
         </div>
     );
 });
+
+MainNews.propTypes = {
+    news: PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        title: PropTypes.string.isRequired,
+        content: PropTypes.string,
+        mediaFiles: PropTypes.arrayOf(
+            PropTypes.shape({
+                id: PropTypes.number.isRequired,
+                type: PropTypes.string.isRequired,
+                url: PropTypes.string.isRequired,
+            })
+        ),
+    }),
+    isLoading: PropTypes.bool,
+};

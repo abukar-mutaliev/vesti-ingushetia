@@ -37,6 +37,7 @@
     }
     @media (max-width: 680px) {
         max-width: 100%;
+        padding-top: 20px;
     }
 
     @media (max-width: 480px) {
@@ -49,6 +50,11 @@
         color: black;
         width: 100%;
         text-align: center;
+    }
+    .newsListLoader {
+        width: 100%;
+        min-width: 67vw;
+        height: 100%;
     }
 }
 

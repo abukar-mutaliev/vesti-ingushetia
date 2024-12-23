@@ -7,14 +7,28 @@ export const selectNewsList = createSelector(
     (newsState) => newsState.newsList || [],
 );
 
-export const selectCurrentNews = createSelector(
-    [selectNewsState],
-    (newsState) => newsState.currentNews,
+export const selectNewsById = (state, id) => {
+    return state.news.newsList.find((news) => news.id === parseInt(id, 10));
+};
+
+export const selectNewsWithVideos = createSelector(
+    [selectNewsList],
+    (newsList) =>
+        newsList.filter((news) =>
+            news.mediaFiles?.some((media) => media.type === 'video'),
+        ),
 );
 
-export const selectSelectedDate = createSelector(
-    [selectNewsState],
-    (newsState) => newsState.selectedDate,
+export const selectLatestNews = createSelector([selectNewsList], (newsList) =>
+    newsList.length > 0 ? newsList[0] : null,
+);
+
+export const selectNewsListExcludingLast = createSelector(
+    [selectNewsList],
+    (newsList) => {
+        if (newsList.length === 0) return [];
+        return newsList.slice(1);
+    }
 );
 
 export const selectCurrentPage = createSelector(
@@ -37,8 +51,24 @@ export const selectFilteredNewsWithVideos = createSelector(
     (newsState) => newsState.filteredNewsWithVideos || [],
 );
 
-export const selectPaginatedNews = createSelector(
-    [selectFilteredNews, selectCurrentPage, selectNewsPerPage],
+export const selectFilteredNewsExcludingLast = createSelector(
+    [selectFilteredNews, selectLatestNews],
+    (filteredNews, latestNews) => {
+        if (!latestNews) return filteredNews;
+        return filteredNews.filter((news) => news.id !== latestNews.id);
+    }
+);
+
+export const selectFilteredNewsWithVideosExcludingLast = createSelector(
+    [selectFilteredNewsWithVideos, selectLatestNews],
+    (filteredNewsWithVideos, latestNews) => {
+        if (!latestNews) return filteredNewsWithVideos;
+        return filteredNewsWithVideos.filter((news) => news.id !== latestNews.id);
+    }
+);
+
+export const selectPaginatedNewsExcludingLast = createSelector(
+    [selectFilteredNewsExcludingLast, selectCurrentPage, selectNewsPerPage],
     (filteredNews, currentPage, newsPerPage) => {
         const start = currentPage * newsPerPage;
         const end = start + newsPerPage;
@@ -46,23 +76,15 @@ export const selectPaginatedNews = createSelector(
     },
 );
 
-export const selectPageCount = createSelector(
-    [selectFilteredNews, selectNewsPerPage],
+export const selectPageCountExcludingLast = createSelector(
+    [selectFilteredNewsExcludingLast, selectNewsPerPage],
     (filteredNews, newsPerPage) => {
         return Math.ceil(filteredNews.length / newsPerPage);
     },
 );
 
-export const selectNewsWithVideos = createSelector(
-    [selectNewsList],
-    (newsList) =>
-        newsList.filter((news) =>
-            news.mediaFiles?.some((media) => media.type === 'video'),
-        ),
-);
-
-export const selectPaginatedNewsWithVideos = createSelector(
-    [selectFilteredNewsWithVideos, selectCurrentPage, selectNewsPerPage],
+export const selectPaginatedNewsWithVideosExcludingLast = createSelector(
+    [selectFilteredNewsWithVideosExcludingLast, selectCurrentPage, selectNewsPerPage],
     (filteredNewsWithVideos, currentPage, newsPerPage) => {
         const start = currentPage * newsPerPage;
         const end = start + newsPerPage;
@@ -70,22 +92,17 @@ export const selectPaginatedNewsWithVideos = createSelector(
     },
 );
 
-export const selectPageCountWithVideos = createSelector(
-    [selectFilteredNewsWithVideos, selectNewsPerPage],
+export const selectPageCountWithVideosExcludingLast = createSelector(
+    [selectFilteredNewsWithVideosExcludingLast, selectNewsPerPage],
     (filteredNewsWithVideos, newsPerPage) => {
         return Math.ceil(filteredNewsWithVideos.length / newsPerPage);
     },
-);
-
-export const selectLatestNews = createSelector([selectNewsList], (newsList) =>
-    newsList.length > 0 ? newsList[0] : null,
 );
 
 export const selectNewsLoading = createSelector(
     [selectNewsState],
     (newsState) => newsState.loading,
 );
-
 
 export const selectError = createSelector(
     [selectNewsState],
