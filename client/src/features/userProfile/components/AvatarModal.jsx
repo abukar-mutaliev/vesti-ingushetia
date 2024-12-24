@@ -3,7 +3,7 @@ import Modal from 'react-modal';
 import styles from '../ui/UserProfile.module.scss';
 import defaultAvatar from '@assets/default-avatar.jpg';
 
-Modal.setAppElement('#root'); // Важно добавить это для доступности
+Modal.setAppElement('#root');
 
 export const AvatarModal = ({ isModalOpen, closeModal, avatarUrl }) => {
     const customStyles = {
