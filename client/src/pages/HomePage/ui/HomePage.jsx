@@ -5,7 +5,12 @@ import { MainNews } from '@widgets/MainNews/';
 import { NewsList } from '@features/newsList';
 import { Sidebar } from '@widgets/Sidebar/';
 import { fetchCategories } from '@entities/categories/model/categorySlice';
-import { selectNewsList, selectNewsLoading, selectNewsListExcludingLast } from '@entities/news/model/newsSelectors.js';
+import {
+    selectNewsList,
+    selectNewsLoading,
+    selectNewsListExcludingLast,
+    selectRandomizedNewsList
+} from '@entities/news/model/newsSelectors.js';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { FaTimes } from 'react-icons/fa';
@@ -21,6 +26,7 @@ const HomePage = () => {
 
     const newsList = useSelector(selectNewsList);
     const newsListExcludingLast = useSelector(selectNewsListExcludingLast);
+    const randomizedNewsList = useSelector(selectRandomizedNewsList);
     const categories = useSelector(selectCategories);
     const loading = useSelector(selectNewsLoading);
 
@@ -78,7 +84,7 @@ const HomePage = () => {
                     />
                 </div>
                 <div className={styles.sidebarContainer}>
-                    <Sidebar categories={categories} newsList={newsListExcludingLast}/>
+                    <Sidebar categories={categories} newsList={randomizedNewsList}/>
                 </div>
             </div>
             <div className={styles.projectsSliderContainer}>

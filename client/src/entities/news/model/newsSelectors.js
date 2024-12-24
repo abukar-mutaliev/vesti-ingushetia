@@ -11,6 +11,18 @@ export const selectNewsById = (state, id) => {
     return state.news.newsList.find((news) => news.id === parseInt(id, 10));
 };
 
+export const selectRandomizedNewsList = createSelector(
+    [selectNewsList],
+    (newsList) => {
+        const shuffledNews = [...newsList];
+        for (let i = shuffledNews.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledNews[i], shuffledNews[j]] = [shuffledNews[j], shuffledNews[i]]; // Обмен элементов
+        }
+        return shuffledNews;
+    }
+);
+
 export const selectNewsWithVideos = createSelector(
     [selectNewsList],
     (newsList) =>
@@ -126,11 +138,6 @@ export const selectNewsByIdLoading = createSelector(
 export const selectNewsLoadingAll = createSelector(
     [selectNewsState],
     (newsState) => newsState.newsLoading
-);
-
-export const selectIsLoading = createSelector(
-    [selectNewsLoading, selectNewsLoadingAll],
-    (loading, newsLoading) => loading || newsLoading
 );
 
 
