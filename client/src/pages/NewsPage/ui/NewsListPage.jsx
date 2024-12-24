@@ -46,7 +46,10 @@ const NewsListPage = () => {
     return (
         <div className={styles.newsPage}>
             <div className={styles.newsContent}>
-                <NewsList selectedDate={selectedDate} />
+                <NewsList
+                    selectedDate={selectedDate}
+                    excludeLastNews={false}
+                />
                 <div className={styles.sidebarContainer}>
                     <p>Архивные новости</p>
                     <CustomCalendar

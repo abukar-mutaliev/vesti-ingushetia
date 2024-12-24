@@ -71,6 +71,7 @@ exports.getAllNews = async (req, res) => {
         });
     }
 };
+
 exports.getNewsById = async (req, res) => {
     try {
         const { id } = req.params;

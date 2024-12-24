@@ -60,7 +60,6 @@ const HomePage = () => {
                 <SlArrowRight size={20} onClick={toggleMenu}/>
             </div>
             <div className={styles.homePageContainer}>
-
                 <div
                     className={`${styles.sideMenu} ${isMenuOpen ? styles.open : ''}`}
                 >
@@ -73,7 +72,10 @@ const HomePage = () => {
                     {newsList.length > 0 && (
                         <MainNews news={newsList[0]}/>
                     )}
-                    <NewsList newsList={newsListExcludingLast}/>
+                    <NewsList
+                        newsList={newsListExcludingLast}
+
+                    />
                 </div>
                 <div className={styles.sidebarContainer}>
                     <Sidebar categories={categories} newsList={newsListExcludingLast}/>
