@@ -87,6 +87,7 @@ export const fetchNewsByCategory = createAsyncThunk(
     async (categoryId, { rejectWithValue }) => {
         try {
             const response = await fetchNewsByCategoryApi(categoryId);
+            console.log('Fetched news:', response.data);
             return { categoryId, news: response.data };
         } catch (error) {
             return rejectWithValue(

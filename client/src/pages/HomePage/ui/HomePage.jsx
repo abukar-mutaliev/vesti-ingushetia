@@ -52,14 +52,14 @@ const HomePage = () => {
     }
 
     return (
-        <div>
+        <div className={styles.homePage}>
             {isMenuOpen && (
                 <div className={styles.backdrop} onClick={closeMenu}></div>
             )}
             <div className={styles.mobileMenuIcon}>
                 <SlArrowRight size={20} onClick={toggleMenu}/>
             </div>
-            <div className={styles.homePage}>
+            <div className={styles.homePageContainer}>
 
                 <div
                     className={`${styles.sideMenu} ${isMenuOpen ? styles.open : ''}`}

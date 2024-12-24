@@ -80,8 +80,10 @@ export const NewsDetail = memo(
         }, [news?.content]);
 
         const otherMediaFiles = useMemo(() => {
-            return news?.mediaFiles?.filter((m) => m.type === 'image') || [];
-        }, [news?.mediaFiles]);
+            return news?.mediaFiles?.filter(
+                (m) => m.type === 'image' && m.id !== imageMedia?.id
+            ) || [];
+        }, [news?.mediaFiles, imageMedia]);
 
         const displayDate = useMemo(() => {
             if (news?.publishDate) {
