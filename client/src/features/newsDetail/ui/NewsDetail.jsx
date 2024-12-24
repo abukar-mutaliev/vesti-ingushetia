@@ -12,6 +12,7 @@ import { Loader } from '@shared/ui/Loader/index.js';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
 import defaultImage from '@assets/default.jpg';
 import styles from './NewsDetail.module.scss';
+import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
 
 export const NewsDetail = memo(
     ({ news, loading, newsId, userId, authorName }) => {
@@ -26,27 +27,17 @@ export const NewsDetail = memo(
         }, [dispatch, newsId, news]);
 
         const videoMedia = useMemo(() => {
-            return (
-                news?.mediaFiles?.find((media) => media.type === 'video') || null
-            );
+            return news?.mediaFiles?.find((media) => media.type === 'video') || null;
         }, [news?.mediaFiles]);
 
         const imageMedia = useMemo(() => {
-            return (
-                news?.mediaFiles?.find((media) => media.type === 'image') || null
-            );
+            return news?.mediaFiles?.find((media) => media.type === 'image') || null;
         }, [news?.mediaFiles]);
-
-        const imageUrl = useMemo(() => {
-            return imageMedia?.url || defaultImage;
-        }, [imageMedia]);
 
         const getVideoEmbedUrl = (videoUrl) => {
             if (!videoUrl) return null;
 
-            const isYouTube =
-                videoUrl.includes('youtube.com/watch?v=') ||
-                videoUrl.includes('youtu.be/');
+            const isYouTube = videoUrl.includes('youtube.com/watch?v=') || videoUrl.includes('youtu.be/');
             if (isYouTube) {
                 let videoId = '';
                 if (videoUrl.includes('watch?v=')) {
@@ -142,15 +133,14 @@ export const NewsDetail = memo(
                             ></iframe>
                         </div>
                     ) : (
-                        <div className={styles.imageWrapper}>
-                            <img
-                                src={imageUrl}
-                                alt={news.title}
-                                className={styles.newsImage}
-                                loading="lazy"
-                                onError={(e) => (e.target.src = defaultImage)}
-                            />
-                        </div>
+                        <MediaElement
+                            imageUrl={imageMedia?.url}
+                            videoUrl={videoMedia?.url}
+                            alt={news.title}
+                            className={styles.newsImage}
+                            playIconSize={70}
+                            showPlayIcon={false}
+                        />
                     )}
                 </div>
 
@@ -167,18 +157,12 @@ export const NewsDetail = memo(
                         {otherMediaFiles.length > 0 && (
                             <div className={styles.otherMediaWrapper}>
                                 {otherMediaFiles.map((media) => (
-                                    <div
-                                        key={media.id}
-                                        className={styles.imageWrapper}
-                                    >
-                                        <img
-                                            src={media.url}
+                                    <div key={media.id} className={styles.imageWrapper}>
+                                        <MediaElement
+                                            imageUrl={media.url}
                                             alt={news.title}
                                             className={styles.newsImage}
-                                            loading="lazy"
-                                            onError={(e) =>
-                                                (e.target.src = defaultImage)
-                                            }
+                                            showPlayIcon={false}
                                         />
                                     </div>
                                 ))}
