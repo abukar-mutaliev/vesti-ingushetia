@@ -17,19 +17,31 @@ const path = require('path');
 const formatMediaUrls = (newsItems) => {
     return newsItems.map((item) => {
         const newsObj = item.toJSON();
-        newsObj.mediaFiles = newsObj.mediaFiles.map((media) => {
-            const mediaObj = { ...media };
 
-            if (/^https?:\/\//i.test(mediaObj.url)) {
-                mediaObj.url = mediaObj.url;
+        if (newsObj.mediaFiles) {
+            newsObj.mediaFiles = newsObj.mediaFiles.map((media) => {
+                const mediaObj = { ...media };
+                if (/^https?:\/\//i.test(mediaObj.url)) {
+                    mediaObj.url = mediaObj.url;
+                } else {
+                    mediaObj.url = mediaObj.url.startsWith(baseUrl)
+                        ? mediaObj.url
+                        : `${baseUrl}/${mediaObj.url}`;
+                }
+                return mediaObj;
+            });
+        }
+
+        if (newsObj.authorDetails && newsObj.authorDetails.avatarUrl) {
+            if (/^https?:\/\//i.test(newsObj.authorDetails.avatarUrl)) {
+                newsObj.authorDetails.avatarUrl = newsObj.authorDetails.avatarUrl;
             } else {
-                mediaObj.url = mediaObj.url.startsWith(baseUrl)
-                    ? mediaObj.url
-                    : `${baseUrl}/${mediaObj.url}`;
+                newsObj.authorDetails.avatarUrl = newsObj.authorDetails.avatarUrl.startsWith(baseUrl)
+                    ? newsObj.authorDetails.avatarUrl
+                    : `${baseUrl}/${newsObj.authorDetails.avatarUrl}`;
             }
+        }
 
-            return mediaObj;
-        });
         return newsObj;
     });
 };
@@ -39,19 +51,19 @@ exports.getAllNews = async (req, res) => {
         const news = await News.findAll({
             order: [['createdAt', 'DESC']],
             include: [
-                { model: User, as: 'authorDetails' },
+                {
+                    model: User,
+                    as: 'authorDetails',
+                    attributes: ['id', 'username', 'email', 'avatarUrl', 'isAdmin']
+                },
                 { model: Category, as: 'category' },
                 { model: Comment, as: 'comments' },
                 { model: Author, as: 'author' },
-                {
-                    model: Media,
-                    as: 'mediaFiles',
-                },
+                { model: Media, as: 'mediaFiles' },
             ],
         });
 
         const modifiedNews = formatMediaUrls(news);
-
         res.json(modifiedNews);
     } catch (err) {
         res.status(500).json({
@@ -59,7 +71,6 @@ exports.getAllNews = async (req, res) => {
         });
     }
 };
-
 exports.getNewsById = async (req, res) => {
     try {
         const { id } = req.params;

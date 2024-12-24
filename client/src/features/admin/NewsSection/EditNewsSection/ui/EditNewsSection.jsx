@@ -88,18 +88,18 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 break;
             case 'media':
                 const hasExistingImages = editMedia.some(
-                    (media) => media.type === 'image',
+                    (media) => media.type === 'image'
                 );
                 const hasNewImages = value.some((group) => group.length > 0);
+                const hasVideo = videoUrl && isSupportedVideoUrl(videoUrl);
 
-                if (!hasExistingImages && !hasNewImages) {
-                    error = 'Необходимо добавить хотя бы одно изображение.';
+                if (!hasExistingImages && !hasNewImages && !hasVideo) {
+                    error = 'Необходимо добавить хотя бы одно изображение или видео.';
                 }
                 break;
             case 'videoUrl':
                 if (value && !isSupportedVideoUrl(value)) {
-                    error =
-                        'Видео ссылка должна быть URL от Rutube или YouTube';
+                    error = 'Видео ссылка должна быть URL от Rutube или YouTube';
                 }
                 break;
             case 'publishDate':

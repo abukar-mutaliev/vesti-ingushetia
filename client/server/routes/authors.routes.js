@@ -1,52 +1,41 @@
 const express = require('express');
 const router = express.Router();
-const broadcastController = require('../controllers/broadcast.controller');
+const authorController = require('../controllers/author.controller');
 const { authenticateAdmin } = require('../middlewares/auth.middleware');
 const { validate } = require('../middlewares/validation.middleware');
 const csrfProtection = require('../middlewares/csrfProtection.middleware');
 
-const {
-    createBroadcastValidation,
-    updateBroadcastValidation,
-    getBroadcastByIdValidation,
-    deleteBroadcastValidation,
-} = require('../validation/broadcastValidation');
 
 router.post(
     '/add',
-    authenticateAdmin,
-    csrfProtection,
-    createBroadcastValidation,
-    validate,
-    broadcastController.createBroadcast,
+
+    authorController.createAuthor,
 );
 
-router.get('/all', broadcastController.getAllBroadcasts);
+router.get('/all', authorController.getAllAuthors);
 
 router.get(
     '/:id',
-    authenticateAdmin,
-    getBroadcastByIdValidation,
-    validate,
-    broadcastController.getBroadcastById,
+    authorController.getAuthorById,
+);
+
+router.get(
+    '/news/:authorId',
+    authorController.getNewsByAuthor,
 );
 
 router.put(
     '/update/:id',
     authenticateAdmin,
     csrfProtection,
-    updateBroadcastValidation,
     validate,
-    broadcastController.updateBroadcast,
+    authorController.updateAuthor,
 );
 
 router.delete(
     '/delete/:id',
-    authenticateAdmin,
-    csrfProtection,
-    deleteBroadcastValidation,
     validate,
-    broadcastController.deleteBroadcast,
+    authorController.deleteAuthor,
 );
 
 module.exports = router;

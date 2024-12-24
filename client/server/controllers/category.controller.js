@@ -1,4 +1,25 @@
 const { Category, Author, News, User, Comment, Media } = require('../models');
+const baseUrl = process.env.BASE_URL;
+
+const formatMediaUrls = (newsItems) => {
+    return newsItems.map((item) => {
+        const newsObj = item.toJSON();
+        newsObj.mediaFiles = newsObj.mediaFiles.map((media) => {
+            const mediaObj = { ...media };
+
+            if (/^https?:\/\//i.test(mediaObj.url)) {
+                mediaObj.url = mediaObj.url;
+            } else {
+                mediaObj.url = mediaObj.url.startsWith(baseUrl)
+                    ? mediaObj.url
+                    : `${baseUrl}/${mediaObj.url}`;
+            }
+
+            return mediaObj;
+        });
+        return newsObj;
+    });
+};
 
 exports.addCategory = async (req, res) => {
     const { name } = req.body;
@@ -43,11 +64,12 @@ exports.getNewsByCategory = async (req, res) => {
         if (!category) {
             return res.status(404).json({ message: 'Категория не найдена' });
         }
+        const modifiedNews = formatMediaUrls(category.news);
 
-        return res.status(200).json(category.news);
+        return res.status(200).json(modifiedNews);
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: 'Ошибка сервера' });
+        return res.status(500).json({ message: `Ошибка сервера: ${error}` });
     }
 };
 
