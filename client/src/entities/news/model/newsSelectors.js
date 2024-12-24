@@ -132,3 +132,36 @@ export const selectIsLoading = createSelector(
     [selectNewsLoading, selectNewsLoadingAll],
     (loading, newsLoading) => loading || newsLoading
 );
+
+
+export const selectPaginatedNews = createSelector(
+    [selectFilteredNews, selectCurrentPage, selectNewsPerPage],
+    (filteredNews, currentPage, newsPerPage) => {
+        const start = currentPage * newsPerPage;
+        const end = start + newsPerPage;
+        return filteredNews.slice(start, end);
+    }
+);
+
+export const selectPageCount = createSelector(
+    [selectFilteredNews, selectNewsPerPage],
+    (filteredNews, newsPerPage) => {
+        return Math.ceil(filteredNews.length / newsPerPage);
+    }
+);
+
+export const selectPaginatedNewsWithVideos = createSelector(
+    [selectFilteredNewsWithVideos, selectCurrentPage, selectNewsPerPage],
+    (filteredNewsWithVideos, currentPage, newsPerPage) => {
+        const start = currentPage * newsPerPage;
+        const end = start + newsPerPage;
+        return filteredNewsWithVideos.slice(start, end);
+    }
+);
+
+export const selectPageCountWithVideos = createSelector(
+    [selectFilteredNewsWithVideos, selectNewsPerPage],
+    (filteredNewsWithVideos, newsPerPage) => {
+        return Math.ceil(filteredNewsWithVideos.length / newsPerPage);
+    }
+);
