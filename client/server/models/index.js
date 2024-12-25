@@ -23,6 +23,7 @@ const Broadcast = require('./Broadcast.model')(sequelize);
 const TvProgram = require('./TvProgram.model')(sequelize);
 const VideoAd = require('./VideoAd.model')(sequelize);
 const Project = require('./Projects.model')(sequelize);
+const NewsCategory = require('./NewsCategory.model')(sequelize);
 
 const models = {
     User,
@@ -30,6 +31,7 @@ const models = {
     CommentLike,
     News,
     Category,
+    NewsCategory,
     Media,
     Profile,
     Rating,

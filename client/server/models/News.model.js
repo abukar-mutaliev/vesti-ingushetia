@@ -33,14 +33,6 @@ module.exports = (sequelize) => {
                     key: 'id',
                 },
             },
-            categoryId: {
-                type: DataTypes.INTEGER,
-                allowNull: false,
-                references: {
-                    model: 'categories',
-                    key: 'id',
-                },
-            },
             publishDate: {
                 type: DataTypes.DATE,
                 allowNull: true,
@@ -62,16 +54,27 @@ module.exports = (sequelize) => {
             foreignKey: 'newsAuthorId',
             as: 'author',
         });
-        News.belongsTo(models.Category, {
-            foreignKey: 'categoryId',
-            as: 'category',
+        News.hasMany(models.Comment, {
+            foreignKey: 'newsId',
+            as: 'comments'
         });
-        News.hasMany(models.Comment, { foreignKey: 'newsId', as: 'comments' });
         News.belongsToMany(models.Media, {
-            through: 'NewsMedia',
+            through: {
+                model: 'NewsMedia',
+                timestamps: false
+            },
             foreignKey: 'newsId',
             otherKey: 'mediaId',
             as: 'mediaFiles',
+        });
+        News.belongsToMany(models.Category, {
+            through: {
+                model: 'NewsCategory',
+                timestamps: false
+            },
+            foreignKey: 'newsId',
+            otherKey: 'categoryId',
+            as: 'categories',
         });
     };
 
