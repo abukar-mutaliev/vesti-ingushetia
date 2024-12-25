@@ -1,8 +1,9 @@
-// migrations/xxxx-create-NewsCategory.model.js
 'use strict';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
+    await queryInterface.removeColumn('news', 'categoryId');
+
     await queryInterface.createTable('NewsCategory', {
       newsId: {
         type: Sequelize.INTEGER,
@@ -11,6 +12,7 @@ module.exports = {
           model: 'news',
           key: 'id',
         },
+        onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
         primaryKey: true,
       },
@@ -21,6 +23,7 @@ module.exports = {
           model: 'categories',
           key: 'id',
         },
+        onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
         primaryKey: true,
       },
@@ -28,6 +31,17 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
+    await queryInterface.addColumn('news', 'categoryId', {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'categories',
+        key: 'id',
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE',
+    });
+
     await queryInterface.dropTable('NewsCategory');
   },
 };
