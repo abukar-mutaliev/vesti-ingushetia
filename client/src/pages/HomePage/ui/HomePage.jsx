@@ -80,7 +80,7 @@ const HomePage = () => {
                     )}
                     <NewsList
                         newsList={newsListExcludingLast}
-
+                        excludeLastNews={true}
                     />
                 </div>
                 <div className={styles.sidebarContainer}>
