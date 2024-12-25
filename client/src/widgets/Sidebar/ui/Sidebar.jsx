@@ -5,12 +5,19 @@ import { NewsCardSidebar } from '@widgets/NewsCardSidebar/index.js';
 import { VideoAdPlayer } from '@widgets/VideoAdPlayer/index.js';
 
 export const Sidebar = React.memo(({ newsList, categories }) => {
+    const displayedNews = new Set();
+
     const memoizedGroupedNews = useMemo(() => {
         return newsList.reduce((acc, news) => {
-            if (!acc[news.categoryId]) {
-                acc[news.categoryId] = [];
-            }
-            acc[news.categoryId].push(news);
+            news.categories.forEach((category) => {
+                if (!acc[category.id]) {
+                    acc[category.id] = [];
+                }
+                if (!displayedNews.has(news.id)) {
+                    acc[category.id].push(news);
+                    displayedNews.add(news.id);
+                }
+            });
             return acc;
         }, {});
     }, [newsList]);

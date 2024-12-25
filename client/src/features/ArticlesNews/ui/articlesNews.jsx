@@ -21,7 +21,9 @@ export const ArticlesNewsList = () => {
         if (articlesNews.length === 0 && !loading && !error) {
             dispatch(fetchAllNews());
         }
-    }, [dispatch, articlesNews.length, loading, error]);
+    }, [dispatch]);
+
+
 
     if (loading) {
         return <Loader />;

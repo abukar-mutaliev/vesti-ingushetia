@@ -11,13 +11,18 @@ module.exports = (sequelize) => {
         },
         {
             tableName: 'categories',
-            timestamps: true,
+            timestamps: false,
         },
     );
 
     Category.associate = (models) => {
-        Category.hasMany(models.News, {
+        Category.belongsToMany(models.News, {
+            through: {
+                model: 'NewsCategory',
+                timestamps: false
+            },
             foreignKey: 'categoryId',
+            otherKey: 'newsId',
             as: 'news',
         });
     };

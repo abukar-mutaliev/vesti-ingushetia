@@ -23,9 +23,9 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         return saved ? JSON.parse(saved).newsContent || '' : '';
     });
 
-    const [selectedCategoryId, setSelectedCategoryId] = useState(() => {
+    const [selectedCategoryIds, setSelectedCategoryIds] = useState(() => {
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-        return saved ? JSON.parse(saved).selectedCategoryId || '' : '';
+        return saved ? JSON.parse(saved).selectedCategoryIds || [] : [];
     });
 
     const [videoUrl, setVideoUrl] = useState(() => {
@@ -49,12 +49,12 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         const formData = {
             newsTitle,
             newsContent,
-            selectedCategoryId,
+            selectedCategoryIds,
             videoUrl,
             publishDate,
         };
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(formData));
-    }, [newsTitle, newsContent, selectedCategoryId, videoUrl, publishDate]);
+    }, [newsTitle, newsContent, selectedCategoryIds, videoUrl, publishDate]);
 
     useEffect(() => {
         validateField('media', newsMedia);
@@ -77,9 +77,9 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                     error = 'Содержание должно содержать не менее 20 символов.';
                 }
                 break;
-            case 'category':
-                if (!value) {
-                    error = 'Выберите категорию.';
+            case 'categories':
+                if (!value || value.length === 0) {
+                    error = 'Выберите хотя бы одну категорию.';
                 }
                 break;
             case 'videoUrl':
@@ -122,7 +122,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
     const validateForm = () => {
         const isTitleValid = validateField('title', newsTitle);
         const isContentValid = validateField('content', newsContent);
-        const isCategoryValid = validateField('category', selectedCategoryId);
+        const isCategoriesValid = validateField('categories', selectedCategoryIds);
         const isVideoUrlValid = validateField('videoUrl', videoUrl);
         const isPublishDateValid = validateField('publishDate', publishDate);
 
@@ -138,7 +138,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         return (
             isTitleValid &&
             isContentValid &&
-            isCategoryValid &&
+            isCategoriesValid &&
             isVideoUrlValid &&
             isPublishDateValid &&
             isMediaValid
@@ -151,9 +151,22 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         const formData = new FormData();
         formData.append('title', newsTitle);
         formData.append('content', newsContent);
-        formData.append('categoryId', selectedCategoryId);
 
-        if (videoUrl.trim() !== '') {
+        const validCategoryIds = selectedCategoryIds
+        .map(id => Number(id))
+        .filter(id => Number.isInteger(id) && id > 0);
+
+        if (validCategoryIds.length === 0) {
+            setErrors(prev => ({
+                ...prev,
+                categories: 'Необходимо выбрать хотя бы одну категорию'
+            }));
+            return;
+        }
+
+        formData.append('categoryIds', JSON.stringify(validCategoryIds));
+
+        if (videoUrl.trim()) {
             formData.append('videoUrl', videoUrl.trim());
         }
 
@@ -167,20 +180,33 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             }
         });
 
+
         dispatch(createNews(formData))
-            .unwrap()
-            .then(() => {
-                dispatch(fetchAllNews());
-                localStorage.removeItem(LOCAL_STORAGE_KEY);
-                onSave();
-            })
-            .catch((error) => {
-                console.error('Ошибка при создании новости:', error);
-                setErrors((prevErrors) => ({
-                    ...prevErrors,
-                    submit: 'Произошла ошибка при сохранении новости. Пожалуйста, попробуйте ещё раз.',
+        .unwrap()
+        .then(() => {
+            dispatch(fetchAllNews());
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+            onSave();
+        })
+        .catch((error) => {
+            console.error('Ошибка при создании новости:', error);
+            if (error.errors) {
+                const newErrors = {};
+                error.errors.forEach(err => {
+                    newErrors[err.path] = err.msg;
+                });
+                setErrors(prev => ({
+                    ...prev,
+                    ...newErrors,
+                    submit: 'Пожалуйста, исправьте ошибки в форме.'
                 }));
-            });
+            } else {
+                setErrors(prev => ({
+                    ...prev,
+                    submit: error.error || 'Произошла ошибка при сохранении новости.'
+                }));
+            }
+        });
     };
 
     const handleInputChange = (field, value) => {
@@ -190,9 +216,6 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 break;
             case 'content':
                 setNewsContent(value);
-                break;
-            case 'category':
-                setSelectedCategoryId(value);
                 break;
             case 'videoUrl':
                 setVideoUrl(value);
@@ -204,6 +227,21 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 break;
         }
         validateField(field, value);
+    };
+
+    const handleCategoryChange = (e) => {
+        const { value, checked } = e.target;
+        setSelectedCategoryIds((prev) => {
+            if (checked) {
+                return [...prev, parseInt(value)];
+            } else {
+                return prev.filter((id) => id !== parseInt(value));
+            }
+        });
+        validateField('categories', checked
+            ? [...selectedCategoryIds, parseInt(value)]
+            : selectedCategoryIds.filter((id) => id !== parseInt(value))
+        );
     };
 
     const handleMediaChange = (e, index) => {
@@ -254,22 +292,24 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                     <p className={styles.error}>{errors.content}</p>
                 )}
 
-                <label>Категория</label>
-                <select
-                    value={selectedCategoryId}
-                    onChange={(e) =>
-                        handleInputChange('category', e.target.value)
-                    }
-                >
-                    <option value="">Выберите категорию</option>
+                <label>Категории</label>
+                <div className={styles.checkboxGroup}>
                     {categories.map((category) => (
-                        <option key={category.id} value={category.id}>
+                        <label key={category.id} className={styles.checkboxLabel}>
+                            <input
+                                type="checkbox"
+                                value={category.id}
+                                checked={selectedCategoryIds.includes(category.id)}
+                                onChange={handleCategoryChange}
+                                className={styles.checkboxInput}
+                            />
+                            <span className={styles.checkboxCustom}></span>
                             {category.name}
-                        </option>
+                        </label>
                     ))}
-                </select>
-                {errors.category && (
-                    <p className={styles.error}>{errors.category}</p>
+                </div>
+                {errors.categories && (
+                    <p className={styles.error}>{errors.categories}</p>
                 )}
 
                 <label>Ссылка на видео (YouTube или Rutube)</label>

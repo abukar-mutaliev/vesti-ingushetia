@@ -14,6 +14,7 @@ import { selectCategories } from '@entities/categories/model/categorySelectors';
 import { SlArrowRight } from 'react-icons/sl';
 import { FaTimes } from 'react-icons/fa';
 import { SideMenu } from '@widgets/SideMenu/index.js';
+import { Loader } from '@shared/ui/Loader/index.js';
 
 const TVPage = () => {
     const dispatch = useDispatch();
@@ -23,13 +24,13 @@ const TVPage = () => {
     const newsList = useSelector(selectNewsWithVideos, shallowEqual);
 
     const loading = useSelector((state) => state.news.newsLoading);
-    const categories = useSelector(selectCategories, shallowEqual);
+    const categories = useSelector(selectCategories);
 
     useEffect(() => {
-        if (!newsList.length) {
+        if (newsList.length === 0 && !loading) {
             dispatch(fetchAllNews());
         }
-    }, [dispatch, newsList.length]);
+    }, [dispatch, newsList.length, loading]);
 
     const handleDateChange = (date) => {
         const dateString = date.toISOString();
@@ -60,7 +61,7 @@ const TVPage = () => {
     };
 
     if (loading) {
-        return <div>Загрузка...</div>;
+        return <div><Loader /></div>;
     }
 
     return (

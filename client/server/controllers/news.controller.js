@@ -56,7 +56,11 @@ exports.getAllNews = async (req, res) => {
                     as: 'authorDetails',
                     attributes: ['id', 'username', 'email', 'avatarUrl', 'isAdmin']
                 },
-                { model: Category, as: 'category' },
+                {
+                    model: Category,
+                    as: 'categories',
+                    through: { attributes: [] },
+                },
                 { model: Comment, as: 'comments' },
                 { model: Author, as: 'author' },
                 { model: Media, as: 'mediaFiles' },
@@ -77,7 +81,11 @@ exports.getNewsById = async (req, res) => {
         const { id } = req.params;
         const news = await News.findByPk(id, {
             include: [
-                { model: Category, as: 'category' },
+                {
+                    model: Category,
+                    as: 'categories',
+                    through: { attributes: [] },
+                },
                 { model: User, as: 'authorDetails' },
                 { model: Comment, as: 'comments' },
                 {
@@ -119,7 +127,11 @@ exports.getNewsByDate = async (req, res) => {
             where: { createdAt: { [Op.between]: [startOfDay, endOfDay] } },
             include: [
                 { model: User, as: 'authorDetails' },
-                { model: Category, as: 'category' },
+                {
+                    model: Category,
+                    as: 'categories',
+                    through: { attributes: [] },
+                },
                 { model: Comment, as: 'comments' },
                 { model: Media, as: 'mediaFiles' },
                 { model: Author, as: 'author' },
@@ -141,7 +153,7 @@ exports.getNewsByDate = async (req, res) => {
 };
 
 exports.createNews = async (req, res) => {
-    const { title, content, categoryId, videoUrl, publishDate } = req.body;
+    const { title, content, categoryIds, videoUrl, publishDate } = req.body;
     const mediaFiles = req.files;
     const authorId = req.user.id;
 
@@ -153,7 +165,6 @@ exports.createNews = async (req, res) => {
             title,
             content,
             authorId,
-            categoryId,
         };
 
         if (publishDate) {
@@ -166,6 +177,31 @@ exports.createNews = async (req, res) => {
         }
 
         const news = await News.create(newsData, { transaction });
+
+        let parsedCategoryIds;
+        try {
+            parsedCategoryIds = JSON.parse(categoryIds).map(Number);
+            if (!Array.isArray(parsedCategoryIds) || parsedCategoryIds.some(id => !Number.isInteger(id))) {
+                throw new Error('Неверный формат ID категорий');
+            }
+        } catch (e) {
+            throw new Error('Неверный формат ID категорий');
+        }
+
+        if (parsedCategoryIds.length > 0) {
+            const categories = await Category.findAll({
+                where: { id: parsedCategoryIds },
+                transaction,
+            });
+
+            if (categories.length !== parsedCategoryIds.length) {
+                throw new Error('Некоторые категории не найдены');
+            }
+
+            await news.addCategories(categories, { transaction });
+        } else {
+            throw new Error('Необходимо выбрать хотя бы одну категорию');
+        }
 
         const mediaInstances = [];
 
@@ -203,26 +239,41 @@ exports.createNews = async (req, res) => {
         }
 
         await transaction.commit();
-        res.status(201).json(news);
+        const createdNews = await News.findByPk(news.id, {
+            include: [
+                { model: Category, as: 'categories' },
+                { model: Media, as: 'mediaFiles' }
+            ],
+        });
+        res.status(201).json(createdNews);
     } catch (err) {
         if (transaction) await transaction.rollback();
         console.error('Ошибка создания новости:', err);
-        res.status(500).json({
+        res.status(400).json({
             error: `Ошибка создания новости: ${err.message}`,
+            errors: [{
+                location: "body",
+                msg: err.message,
+                path: "categoryIds",
+                type: "field"
+            }]
         });
     }
 };
 
 exports.updateNews = async (req, res) => {
     const { id } = req.params;
-    const { title, content, categoryId, videoUrl, existingMedia, publishDate } =
+    let { title, content, categoryIds, videoUrl, existingMedia, publishDate } =
         req.body;
     const mediaFiles = req.files;
     const authorId = req.user.id;
 
     try {
         const news = await News.findByPk(id, {
-            include: [{ model: Media, as: 'mediaFiles' }],
+            include: [
+                { model: Media, as: 'mediaFiles' },
+                { model: Category, as: 'categories' },
+            ],
         });
         if (!news) return res.status(404).json({ error: 'Новость не найдена' });
 
@@ -233,7 +284,6 @@ exports.updateNews = async (req, res) => {
             const updateData = {
                 title,
                 content,
-                categoryId,
                 authorId,
             };
 
@@ -247,6 +297,18 @@ exports.updateNews = async (req, res) => {
             }
 
             await news.update(updateData, { transaction });
+
+            if (typeof categoryIds === 'string') {
+                categoryIds = JSON.parse(categoryIds);
+            }
+
+            if (Array.isArray(categoryIds)) {
+                const categories = await Category.findAll({
+                    where: { id: categoryIds },
+                    transaction,
+                });
+                await news.setCategories(categories, { transaction });
+            }
 
             const existingMediaIds = JSON.parse(existingMedia || '[]');
 
@@ -333,7 +395,10 @@ exports.updateNews = async (req, res) => {
             await transaction.commit();
 
             const updatedNews = await News.findByPk(id, {
-                include: [{ model: Media, as: 'mediaFiles' }],
+                include: [
+                    { model: Media, as: 'mediaFiles' },
+                    { model: Category, as: 'categories' },
+                ],
             });
 
             const modifiedNews = formatMediaUrls([updatedNews])[0];
@@ -354,6 +419,7 @@ exports.updateNews = async (req, res) => {
         res.status(500).json({ error: `Ошибка: ${err.message}` });
     }
 };
+
 
 exports.deleteNews = async (req, res) => {
     try {
