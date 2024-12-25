@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import styles from './NewsCard.module.scss';
 import { truncateHtmlToSentences } from '@shared/lib/TruncateHtml/truncateHtml.js';
 import { MediaElement } from '@shared/ui/MediaElement/MediaElement';
+import { FaPlayCircle } from 'react-icons/fa';
 
 export const NewsCardSidebar = React.memo(({ item }) => {
     const videoMedia = useMemo(() => {
@@ -24,6 +25,7 @@ export const NewsCardSidebar = React.memo(({ item }) => {
                     playIconSize={30}
                     showPlayIcon={!!videoMedia}
                 />
+
             </div>
         </Link>
     ), [item.id, item.title, imageMedia, videoMedia]);
