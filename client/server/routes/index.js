@@ -8,8 +8,6 @@ router.use('/news', require('./news.routes'));
 
 router.use('/users', require('./users.routes'));
 
-router.use('/authors', require('./authors.routes'));
-
 router.use('/comments', require('./comments.routes'));
 
 router.use('/ratings', require('./ratings.routes'));
