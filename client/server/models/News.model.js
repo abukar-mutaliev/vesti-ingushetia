@@ -25,14 +25,6 @@ module.exports = (sequelize) => {
                 defaultValue: 0,
                 allowNull: false,
             },
-            newsAuthorId: {
-                type: DataTypes.INTEGER,
-                allowNull: true,
-                references: {
-                    model: 'authors',
-                    key: 'id',
-                },
-            },
             publishDate: {
                 type: DataTypes.DATE,
                 allowNull: true,
@@ -49,10 +41,6 @@ module.exports = (sequelize) => {
         News.belongsTo(models.User, {
             foreignKey: 'authorId',
             as: 'authorDetails',
-        });
-        News.belongsTo(models.Author, {
-            foreignKey: 'newsAuthorId',
-            as: 'author',
         });
         News.hasMany(models.Comment, {
             foreignKey: 'newsId',

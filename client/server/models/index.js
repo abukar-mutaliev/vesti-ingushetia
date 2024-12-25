@@ -14,7 +14,6 @@ const Comment = require('./Comment.model')(sequelize);
 const CommentLike = require('./CommentLike.model')(sequelize);
 const News = require('./News.model')(sequelize);
 const Category = require('./Category.model')(sequelize);
-const Author = require('./Author.model')(sequelize);
 const Media = require('./Media.model')(sequelize);
 const Profile = require('./Profile.model')(sequelize);
 const Rating = require('./Rating.model')(sequelize);
@@ -35,7 +34,6 @@ const models = {
     Media,
     Profile,
     Rating,
-    Author,
     NewsMedia,
     Broadcast,
     TvProgram,

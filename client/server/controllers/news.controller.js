@@ -6,7 +6,6 @@ const {
     Category,
     Comment,
     Media,
-    Author,
     sequelize,
 } = require('../models');
 const fs = require('fs');
@@ -62,7 +61,6 @@ exports.getAllNews = async (req, res) => {
                     through: { attributes: [] },
                 },
                 { model: Comment, as: 'comments' },
-                { model: Author, as: 'author' },
                 { model: Media, as: 'mediaFiles' },
             ],
         });
@@ -91,11 +89,6 @@ exports.getNewsById = async (req, res) => {
                 {
                     model: Media,
                     as: 'mediaFiles',
-                },
-                {
-                    model: Author,
-                    as: 'author',
-                    attributes: ['id', 'name', 'bio'],
                 },
             ],
         });
@@ -134,7 +127,6 @@ exports.getNewsByDate = async (req, res) => {
                 },
                 { model: Comment, as: 'comments' },
                 { model: Media, as: 'mediaFiles' },
-                { model: Author, as: 'author' },
             ],
         });
 
