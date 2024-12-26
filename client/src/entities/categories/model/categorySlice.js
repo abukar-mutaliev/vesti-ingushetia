@@ -17,7 +17,6 @@ const initialState = {
     error: null,
 };
 
-const CACHE_DURATION = import.meta.env.CACHE_DURATION;
 
 export const fetchCategories = createAsyncThunk(
     'categories/fetchAll',
@@ -33,11 +32,14 @@ export const fetchCategories = createAsyncThunk(
     },
     {
         condition: (_, { getState }) => {
-            const { categoriesLastFetched } = getState().categories;
+            const { categories, categoriesLastFetched } = getState().categories;
+            if (categories.length > 0) {
+                return false;
+            }
             if (categoriesLastFetched) {
                 const now = Date.now();
                 const diff = now - categoriesLastFetched;
-                if (diff < CACHE_DURATION) {
+                if (diff < import.meta.env.CACHE_DURATION) {
                     return false;
                 }
             }
@@ -45,6 +47,8 @@ export const fetchCategories = createAsyncThunk(
         },
     },
 );
+
+
 
 export const createCategory = createAsyncThunk(
     'categories/create',
@@ -87,7 +91,6 @@ export const fetchNewsByCategory = createAsyncThunk(
     async (categoryId, { rejectWithValue }) => {
         try {
             const response = await fetchNewsByCategoryApi(categoryId);
-            console.log('Fetched news:', response.data);
             return { categoryId, news: response.data };
         } catch (error) {
             return rejectWithValue(
@@ -102,7 +105,7 @@ export const fetchNewsByCategory = createAsyncThunk(
             if (lastFetched) {
                 const now = Date.now();
                 const diff = now - lastFetched;
-                if (diff < CACHE_DURATION) {
+                if (diff < import.meta.env.CACHE_DURATION) {
                     return false;
                 }
             }
@@ -121,11 +124,11 @@ const categorySlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchCategories.fulfilled, (state, action) => {
-                state.loading = false;
-                state.categories = action.payload;
-                state.categoriesLastFetched = Date.now();
-            })
+             .addCase(fetchCategories.fulfilled, (state, action) => {
+                 state.loading = false;
+                 state.categories = action.payload;
+                 state.categoriesLastFetched = Date.now();
+             })
             .addCase(fetchCategories.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload || action.error.message;
@@ -134,7 +137,7 @@ const categorySlice = createSlice({
                 state.newsLoading = true;
                 state.error = null;
             })
-            .addCase(fetchNewsByCategory.fulfilled, (state, action) => {
+                .addCase(fetchNewsByCategory.fulfilled, (state, action) => {
                 const { categoryId, news } = action.payload;
                 state.newsByCategory[categoryId] = news;
                 state.newsLastFetched[categoryId] = Date.now();

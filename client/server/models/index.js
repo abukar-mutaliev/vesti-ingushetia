@@ -9,20 +9,20 @@ const sequelize = new Sequelize(
     },
 );
 
+
 const User = require('./User.model')(sequelize);
 const Comment = require('./Comment.model')(sequelize);
 const CommentLike = require('./CommentLike.model')(sequelize);
 const News = require('./News.model')(sequelize);
 const Category = require('./Category.model')(sequelize);
-const Author = require('./Author.model')(sequelize);
 const Media = require('./Media.model')(sequelize);
 const Profile = require('./Profile.model')(sequelize);
-const Rating = require('./Rating.model')(sequelize);
 const NewsMedia = require('./NewsMedia.model')(sequelize);
-const Broadcast = require('./Broadcast.model')(sequelize);
+const Radio = require('./Radio.model')(sequelize);
 const TvProgram = require('./TvProgram.model')(sequelize);
 const VideoAd = require('./VideoAd.model')(sequelize);
 const Project = require('./Projects.model')(sequelize);
+const NewsCategory = require('./NewsCategory.model')(sequelize);
 
 const models = {
     User,
@@ -30,12 +30,11 @@ const models = {
     CommentLike,
     News,
     Category,
+    NewsCategory,
     Media,
     Profile,
-    Rating,
-    Author,
     NewsMedia,
-    Broadcast,
+    Radio,
     TvProgram,
     VideoAd,
     Project,

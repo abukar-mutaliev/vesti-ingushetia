@@ -1,11 +1,11 @@
-const { Broadcast } = require('../models');
+const { Radio } = require('../models');
 const { posix } = require('path');
 const path = require('path');
 const baseUrl = process.env.BASE_URL;
 const fs = require('fs').promises;
 const { Op } = require('sequelize');
 
-exports.createBroadcast = async (req, res) => {
+exports.createRadio = async (req, res) => {
     try {
         const { title, description } = req.body;
         const audioFile = req.file;
@@ -18,60 +18,60 @@ exports.createBroadcast = async (req, res) => {
 
         const audioUrl = posix.join('uploads', 'audio', audioFile.filename);
 
-        const broadcast = await Broadcast.create({
+        const radio = await Radio.create({
             title,
             description,
             url: audioUrl,
         });
 
-        res.status(201).json(broadcast);
+        res.status(201).json(radio);
     } catch (error) {
         res.status(500).json({ error: 'Ошибка сервера: ' + error.message });
     }
 };
 
-exports.getAllBroadcasts = async (req, res) => {
+exports.getAllRadios = async (req, res) => {
     try {
-        const broadcasts = await Broadcast.findAll();
-        const modifiedBroadcasts = broadcasts.map((broadcast) => ({
-            ...broadcast.toJSON(),
-            url: `${baseUrl}/${broadcast.url}`,
+        const radio = await Radio.findAll();
+        const modifiedRadios = radio.map((radio) => ({
+            ...radio.toJSON(),
+            url: `${baseUrl}/${radio.url}`,
         }));
-        res.status(200).json(modifiedBroadcasts);
+        res.status(200).json(modifiedRadios);
     } catch (error) {
         res.status(500).json({ error: 'Ошибка сервера: ' + error.message });
     }
 };
 
-exports.getBroadcastById = async (req, res) => {
+exports.getRadioById = async (req, res) => {
     try {
         const { id } = req.params;
-        const broadcast = await Broadcast.findByPk(id);
+        const radio = await Radio.findByPk(id);
 
-        if (!broadcast) {
+        if (!radio) {
             return res.status(404).json({ error: 'Аудиозапись не найдена' });
         }
 
-        broadcast.url = `${baseUrl}/${broadcast.url}`;
-        res.status(200).json(broadcast);
+        radio.url = `${baseUrl}/${radio.url}`;
+        res.status(200).json(radio);
     } catch (error) {
         res.status(500).json({ error: 'Ошибка сервера: ' + error.message });
     }
 };
 
-exports.updateBroadcast = async (req, res) => {
+exports.updateRadio = async (req, res) => {
     try {
         const { id } = req.params;
         const { title, description } = req.body;
 
-        const broadcast = await Broadcast.findByPk(id);
-        if (!broadcast) {
+        const radio = await Radio.findByPk(id);
+        if (!radio) {
             return res.status(404).json({ error: 'Аудиозапись не найдена' });
         }
 
         if (req.file) {
-            if (broadcast.url) {
-                const oldAudioPath = path.join(__dirname, '..', broadcast.url);
+            if (radio.url) {
+                const oldAudioPath = path.join(__dirname, '..', radio.url);
                 try {
                     await fs.promises.unlink(oldAudioPath);
                 } catch (err) {
@@ -83,16 +83,16 @@ exports.updateBroadcast = async (req, res) => {
             }
 
             const audioUrl = posix.join('uploads', 'audio', req.file.filename);
-            broadcast.url = audioUrl;
+            radio.url = audioUrl;
         }
-        broadcast.title = title || broadcast.title;
-        broadcast.description = description || broadcast.description;
+        radio.title = title || radio.title;
+        radio.description = description || radio.description;
 
-        await broadcast.save();
+        await radio.save();
 
         res.status(200).json({
-            ...broadcast.toJSON(),
-            url: `${process.env.BASE_URL}/${broadcast.url}`,
+            ...radio.toJSON(),
+            url: `${process.env.BASE_URL}/${radio.url}`,
         });
     } catch (error) {
         console.error('Ошибка обновления аудиозаписи:', error);
@@ -100,17 +100,17 @@ exports.updateBroadcast = async (req, res) => {
     }
 };
 
-exports.deleteBroadcast = async (req, res) => {
+exports.deleteRadio = async (req, res) => {
     try {
         const { id } = req.params;
-        const broadcast = await Broadcast.findByPk(id);
+        const radio = await Radio.findByPk(id);
 
-        if (!broadcast) {
+        if (!radio) {
             return res.status(404).json({ error: 'Аудиозапись не найдена' });
         }
 
-        if (broadcast.url) {
-            const audioPath = path.join(__dirname, '..', broadcast.url);
+        if (radio.url) {
+            const audioPath = path.join(__dirname, '..', radio.url);
             try {
                 await fs.unlink(audioPath);
             } catch (err) {
@@ -118,7 +118,7 @@ exports.deleteBroadcast = async (req, res) => {
             }
         }
 
-        await broadcast.destroy();
+        await radio.destroy();
         res.status(200).json({ message: 'Аудиозапись успешно удалена' });
     } catch (error) {
         res.status(500).json({ error: 'Ошибка сервера: ' + error.message });

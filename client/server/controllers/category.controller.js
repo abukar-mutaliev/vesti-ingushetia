@@ -53,10 +53,9 @@ exports.getNewsByCategory = async (req, res) => {
                 as: 'news',
                 include: [
                     { model: User, as: 'authorDetails' },
-                    { model: Category, as: 'category' },
+                    { model: Category, as: 'categories' },
                     { model: Comment, as: 'comments' },
                     { model: Media, as: 'mediaFiles' },
-                    { model: Author, as: 'author' },
                 ],
             },
         });
@@ -64,12 +63,12 @@ exports.getNewsByCategory = async (req, res) => {
         if (!category) {
             return res.status(404).json({ message: 'Категория не найдена' });
         }
-        const modifiedNews = formatMediaUrls(category.news);
+        const formattedNews = formatMediaUrls(category.news);
 
-        return res.status(200).json(modifiedNews);
+        return res.status(200).json(formattedNews);
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: `Ошибка сервера: ${error}` });
+        return res.status(500).json({ message: `Ошибка сервера: ${error.message}` });
     }
 };
 

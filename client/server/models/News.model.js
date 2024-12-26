@@ -25,22 +25,6 @@ module.exports = (sequelize) => {
                 defaultValue: 0,
                 allowNull: false,
             },
-            newsAuthorId: {
-                type: DataTypes.INTEGER,
-                allowNull: true,
-                references: {
-                    model: 'authors',
-                    key: 'id',
-                },
-            },
-            categoryId: {
-                type: DataTypes.INTEGER,
-                allowNull: false,
-                references: {
-                    model: 'categories',
-                    key: 'id',
-                },
-            },
             publishDate: {
                 type: DataTypes.DATE,
                 allowNull: true,
@@ -50,7 +34,7 @@ module.exports = (sequelize) => {
         {
             tableName: 'news',
             timestamps: true,
-        },
+        }
     );
 
     News.associate = (models) => {
@@ -58,20 +42,27 @@ module.exports = (sequelize) => {
             foreignKey: 'authorId',
             as: 'authorDetails',
         });
-        News.belongsTo(models.Author, {
-            foreignKey: 'newsAuthorId',
-            as: 'author',
+
+        News.hasMany(models.Comment, {
+            foreignKey: 'newsId',
+            as: 'comments'
         });
-        News.belongsTo(models.Category, {
-            foreignKey: 'categoryId',
-            as: 'category',
-        });
-        News.hasMany(models.Comment, { foreignKey: 'newsId', as: 'comments' });
+
         News.belongsToMany(models.Media, {
             through: 'NewsMedia',
             foreignKey: 'newsId',
             otherKey: 'mediaId',
             as: 'mediaFiles',
+        });
+
+        News.belongsToMany(models.Category, {
+            through: {
+                model: 'newsCategory',
+                timestamps: false
+            },
+            foreignKey: 'newsId',
+            otherKey: 'categoryId',
+            as: 'categories',
         });
     };
 

@@ -72,11 +72,11 @@ export const createNews = createAsyncThunk(
             const response = await newsApi.createNewsApi(newsData);
             return response.data;
         } catch (error) {
+            console.error('Detailed error:', error.response?.data);
             return rejectWithValue(error.response?.data || 'Network Error');
         }
-    },
+    }
 );
-
 export const updateNews = createAsyncThunk(
     'news/updateNews',
     async ({ id, newsData }, { rejectWithValue }) => {

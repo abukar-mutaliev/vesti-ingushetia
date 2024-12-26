@@ -4,177 +4,98 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectCategories } from '@entities/categories/model/categorySelectors.js';
 import { fetchCategories } from '@entities/categories/model/categorySlice.js';
 import { updateNews, fetchAllNews } from '@entities/news/model/newsSlice.js';
-import { FaDeleteLeft } from 'react-icons/fa6';
-import { ConfirmDeleteModal } from '@shared/ui/ConfirmDeleteModal/index.js';
 import { RichTextEditor } from '@shared/ui/RichTextEditor';
+import { FaDeleteLeft } from 'react-icons/fa6';
+import { ConfirmDeleteModal } from '@shared/ui/ConfirmDeleteModal';
 
 export const EditNewsSection = ({ news, onCancel }) => {
+    const dispatch = useDispatch();
+    const categories = useSelector(selectCategories);
+
     const [editTitle, setEditTitle] = useState('');
     const [editContent, setEditContent] = useState('');
+    const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
     const [editMedia, setEditMedia] = useState([]);
-    const [newMedia, setNewMedia] = useState([[]]);
-    const [selectedCategoryId, setSelectedCategoryId] = useState('');
+    const [newMedia, setNewMedia] = useState([]);
     const [videoUrl, setVideoUrl] = useState('');
     const [publishDate, setPublishDate] = useState('');
     const [errors, setErrors] = useState({});
-    const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
     const [mediaToDelete, setMediaToDelete] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-
-    const categories = useSelector(selectCategories);
-    const dispatch = useDispatch();
+    const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
     useEffect(() => {
         if (news) {
             setEditTitle(news.title || '');
             setEditContent(news.content || '');
-            setSelectedCategoryId(news.categoryId || '');
+            setSelectedCategoryIds(news.categories.map((category) => category.id));
             setEditMedia(news.mediaFiles || []);
-            const videoMedia = (news.mediaFiles || []).find(
-                (m) => m.type === 'video',
-            );
+            const videoMedia = news.mediaFiles?.find((m) => m.type === 'video');
             setVideoUrl(videoMedia?.url || '');
             setPublishDate(
-                news.publishDate ? formatDateForInput(news.publishDate) : '',
+                news.publishDate
+                    ? new Date(news.publishDate).toISOString().slice(0, 16)
+                    : '',
             );
         }
         dispatch(fetchCategories());
     }, [news, dispatch]);
 
-    const formatDateForInput = (dateString) => {
-        const date = new Date(dateString);
-        if (isNaN(date)) return '';
-        const pad = (num) => String(num).padStart(2, '0');
-        const year = date.getFullYear();
-        const month = pad(date.getMonth() + 1);
-        const day = pad(date.getDate());
-        const hours = pad(date.getHours());
-        const minutes = pad(date.getMinutes());
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    };
-
-    const isSupportedVideoUrl = (url) => {
-        if (!url) return true;
-
-        const rutubeRegex =
-            /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
-        const youtubeRegex =
-            /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
-
-        return rutubeRegex.test(url) || youtubeRegex.test(url);
-    };
-
     const validateField = (fieldName, value) => {
         let error = '';
         switch (fieldName) {
             case 'title':
-                if (!value.trim()) {
-                    error = 'Поле заголовка обязательно для заполнения.';
-                } else if (value.trim().length < 5) {
-                    error = 'Заголовок должен содержать не менее 5 символов.';
-                }
+                if (!value.trim()) error = 'Поле заголовка обязательно для заполнения.';
+                else if (value.trim().length < 5) error = 'Заголовок должен содержать не менее 5 символов.';
                 break;
             case 'content':
-                if (!value.trim()) {
-                    error = 'Поле содержания обязательно для заполнения.';
-                } else if (value.trim().length < 20) {
-                    error = 'Содержание должно содержать не менее 20 символов.';
-                }
+                if (!value.trim()) error = 'Поле содержания обязательно для заполнения.';
+                else if (value.trim().length < 20) error = 'Содержание должно содержать не менее 20 символов.';
                 break;
-            case 'category':
-                if (!value) {
-                    error = 'Выберите категорию.';
-                }
-                break;
-            case 'media':
-                const hasExistingImages = editMedia.some(
-                    (media) => media.type === 'image'
-                );
-                const hasNewImages = value.some((group) => group.length > 0);
-                const hasVideo = videoUrl && isSupportedVideoUrl(videoUrl);
-
-                if (!hasExistingImages && !hasNewImages && !hasVideo) {
-                    error = 'Необходимо добавить хотя бы одно изображение или видео.';
-                }
+            case 'categories':
+                if (value.length === 0) error = 'Выберите хотя бы одну категорию.';
                 break;
             case 'videoUrl':
-                if (value && !isSupportedVideoUrl(value)) {
-                    error = 'Видео ссылка должна быть URL от Rutube или YouTube';
-                }
-                break;
-            case 'publishDate':
-                if (value) {
-                    const date = new Date(value);
-                    if (isNaN(date)) {
-                        error = 'Неверный формат даты.';
-                    }
+                if (value && !/^(https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|rutube\.ru\/video\/)[\w-]+)$/i.test(value)) {
+                    error = 'Видео ссылка должна быть URL от Rutube или YouTube.';
                 }
                 break;
             default:
                 break;
         }
         setErrors((prevErrors) => ({ ...prevErrors, [fieldName]: error }));
-        return error === '';
+        return !error;
     };
 
     const validateForm = () => {
         const isTitleValid = validateField('title', editTitle);
         const isContentValid = validateField('content', editContent);
-        const isCategoryValid = validateField('category', selectedCategoryId);
-        const isMediaValid = validateField('media', newMedia);
+        const isCategoriesValid = validateField('categories', selectedCategoryIds);
         const isVideoUrlValid = validateField('videoUrl', videoUrl);
-        const isPublishDateValid = validateField('publishDate', publishDate);
 
-        return (
-            isTitleValid &&
+        const hasExistingMedia = editMedia.length > 0;
+        const hasNewMedia = newMedia.length > 0;
+        const hasVideoUrl = videoUrl.trim() !== '';
+
+        const isMediaValid = hasExistingMedia || hasNewMedia || hasVideoUrl;
+
+        if (!isMediaValid) {
+            setErrors(prevErrors => ({
+                ...prevErrors,
+                media: 'Необходимо добавить хотя бы одно изображение или ссылку на видео.'
+            }));
+        } else {
+            setErrors(prevErrors => ({
+                ...prevErrors,
+                media: undefined
+            }));
+        }
+
+        return isTitleValid &&
             isContentValid &&
-            isCategoryValid &&
-            isMediaValid &&
+            isCategoriesValid &&
             isVideoUrlValid &&
-            isPublishDateValid
-        );
-    };
-
-    const handleSave = () => {
-        setHasAttemptedSubmit(true);
-
-        if (!validateForm()) {
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('title', editTitle);
-        formData.append('content', editContent);
-        formData.append('categoryId', selectedCategoryId);
-
-        if (videoUrl.trim() !== '') {
-            formData.append('videoUrl', videoUrl.trim());
-        }
-
-        if (publishDate) {
-            formData.append('publishDate', publishDate);
-        }
-
-        formData.append(
-            'existingMedia',
-            JSON.stringify(editMedia.map((media) => media.id)),
-        );
-
-        newMedia.flat().forEach((file) => {
-            if (file.type.startsWith('image')) {
-                formData.append('images', file);
-            }
-        });
-
-        dispatch(updateNews({ id: news.id, newsData: formData }))
-            .unwrap()
-            .then(() => {
-                dispatch(fetchAllNews());
-                onCancel();
-            })
-            .catch((error) => {
-                console.error('Ошибка при обновлении новости:', error);
-            });
+            isMediaValid;
     };
 
     const handleInputChange = (field, value) => {
@@ -185,9 +106,6 @@ export const EditNewsSection = ({ news, onCancel }) => {
             case 'content':
                 setEditContent(value);
                 break;
-            case 'category':
-                setSelectedCategoryId(value);
-                break;
             case 'videoUrl':
                 setVideoUrl(value);
                 break;
@@ -197,26 +115,71 @@ export const EditNewsSection = ({ news, onCancel }) => {
             default:
                 break;
         }
-        if (hasAttemptedSubmit) {
-            validateField(field, value);
-        }
+        validateField(field, value);
     };
 
-    const handleMediaChange = (e, index) => {
-        const files = Array.from(e.target.files);
-        setNewMedia((prevMedia) => {
-            const updatedMedia = [...prevMedia];
-            updatedMedia[index] = files;
-            return updatedMedia;
+    const handleSave = () => {
+        setHasAttemptedSubmit(true);
+        setErrors({});
+
+        if (!validateForm()) return;
+
+        const formData = new FormData();
+        formData.append('title', editTitle);
+        formData.append('content', editContent);
+        formData.append('categoryIds', JSON.stringify(selectedCategoryIds));
+
+        if (videoUrl.trim()) formData.append('videoUrl', videoUrl.trim());
+        if (publishDate) formData.append('publishDate', publishDate);
+
+        formData.append(
+            'existingMedia',
+            JSON.stringify(editMedia.map((media) => media.id)),
+        );
+
+        newMedia.forEach((file) => {
+            if (file.type.startsWith('image')) formData.append('images', file);
         });
 
-        if (hasAttemptedSubmit) {
-            validateField('media', [
-                ...newMedia.slice(0, index),
-                files,
-                ...newMedia.slice(index + 1),
-            ]);
-        }
+        dispatch(updateNews({ id: news.id, newsData: formData }))
+        .unwrap()
+        .then(() => {
+            dispatch(fetchAllNews());
+            setHasAttemptedSubmit(false);
+            onCancel();
+        })
+        .catch((error) => {
+            console.error('Ошибка при обновлении новости:', error);
+
+            if (error.errors) {
+                const newErrors = {};
+                error.errors.forEach(err => {
+                    newErrors[err.path] = err.msg;
+                });
+                setErrors(prev => ({
+                    ...prev,
+                    ...newErrors,
+                    submit: 'Пожалуйста, исправьте ошибки в форме.'
+                }));
+            } else {
+                setErrors(prev => ({
+                    ...prev,
+                    submit: error.error || 'Произошла ошибка при сохранении новости.'
+                }));
+            }
+        });
+    };
+
+    const handleCategoryChange = (e) => {
+        const { value, checked } = e.target;
+        setSelectedCategoryIds((prev) =>
+            checked ? [...prev, parseInt(value)] : prev.filter((id) => id !== parseInt(value)),
+        );
+    };
+
+    const handleMediaChange = (e) => {
+        const files = Array.from(e.target.files);
+        setNewMedia((prevMedia) => [...prevMedia, ...files]);
     };
 
     const addNewMediaField = () => {
@@ -229,17 +192,14 @@ export const EditNewsSection = ({ news, onCancel }) => {
     };
 
     const confirmDeleteMedia = () => {
-        if (mediaToDelete !== null) {
-            setEditMedia((prevMedia) =>
-                prevMedia.filter((_, i) => i !== mediaToDelete),
-            );
-            setMediaToDelete(null);
-            setIsModalOpen(false);
+        setEditMedia((prevMedia) => prevMedia.filter((_, i) => i !== mediaToDelete));
+        setMediaToDelete(null);
+        setIsModalOpen(false);
+    };
 
-            if (hasAttemptedSubmit) {
-                validateField('media', newMedia);
-            }
-        }
+    const handleCancel = () => {
+        setHasAttemptedSubmit(false);
+        onCancel();
     };
 
     return (
@@ -267,22 +227,24 @@ export const EditNewsSection = ({ news, onCancel }) => {
                     )}
                 </div>
 
-                <label>Категория</label>
-                <select
-                    value={selectedCategoryId}
-                    onChange={(e) =>
-                        handleInputChange('category', e.target.value)
-                    }
-                >
-                    <option value="">Выберите категорию</option>
+                <label>Категории</label>
+                <div className={styles.checkboxGroup}>
                     {categories.map((category) => (
-                        <option key={category.id} value={category.id}>
+                        <label key={category.id} className={styles.checkboxLabel}>
+                            <input
+                                type="checkbox"
+                                value={category.id}
+                                checked={selectedCategoryIds.includes(category.id)}
+                                onChange={handleCategoryChange}
+                                className={styles.checkboxInput}
+                            />
+                            <span className={styles.checkboxCustom}></span>
                             {category.name}
-                        </option>
+                        </label>
                     ))}
-                </select>
-                {errors.category && (
-                    <p className={styles.error}>{errors.category}</p>
+                </div>
+                {errors.categories && (
+                    <p className={styles.error}>{errors.categories}</p>
                 )}
 
                 <label>Ссылка на видео (YouTube или Rutube)</label>
@@ -326,7 +288,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                                 className={styles.deleteButton}
                                 onClick={() => handleDeleteMedia(index)}
                             >
-                                <FaDeleteLeft size={20} />
+                                <FaDeleteLeft size={20}/>
                             </button>
                         </div>
                     ))
@@ -353,6 +315,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                     + Добавить еще файлы
                 </button>
                 {errors.media && <p className={styles.error}>{errors.media}</p>}
+                {errors.submit && <p className={styles.error}>{errors.submit}</p>}
 
                 <div className={styles.buttons}>
                     <button
@@ -365,7 +328,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                     >
                         Сохранить
                     </button>
-                    <button className={styles.cancelButton} onClick={onCancel}>
+                    <button className={styles.cancelButton} onClick={handleCancel}>
                         Отмена
                     </button>
                 </div>

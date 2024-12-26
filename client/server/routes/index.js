@@ -8,15 +8,13 @@ router.use('/news', require('./news.routes'));
 
 router.use('/users', require('./users.routes'));
 
-router.use('/authors', require('./authors.routes'));
-
 router.use('/comments', require('./comments.routes'));
 
 router.use('/ratings', require('./ratings.routes'));
 
 router.use('/profile', require('./profiles.routes'));
 
-router.use('/broadcast', require('./broadcasts.routes'));
+router.use('/radio', require('./radio.routes'));
 
 router.use('/program', require('./tvPrograms.routes'));
 

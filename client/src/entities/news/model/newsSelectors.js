@@ -17,7 +17,7 @@ export const selectRandomizedNewsList = createSelector(
         const shuffledNews = [...newsList];
         for (let i = shuffledNews.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [shuffledNews[i], shuffledNews[j]] = [shuffledNews[j], shuffledNews[i]]; // Обмен элементов
+            [shuffledNews[i], shuffledNews[j]] = [shuffledNews[j], shuffledNews[i]];
         }
         return shuffledNews;
     }
@@ -121,9 +121,13 @@ export const selectError = createSelector(
     (newsState) => newsState.error,
 );
 
-export const selectArticlesNews = createSelector([selectNewsList], (newsList) =>
-    newsList.filter((news) => news.category?.name === 'Статьи'),
-);
+export const selectArticlesNews = createSelector([selectNewsList], (newsList) => {
+    const articles = newsList.filter((news) => {
+        const hasArticlesCategory = news.categories.some(category => category.name === 'Статьи');
+        return hasArticlesCategory;
+    });
+    return articles;
+});
 
 export const selectLoading = createSelector(
     [selectNewsState],

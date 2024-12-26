@@ -1,6 +1,6 @@
 .newsDetailPage {
     display: grid;
-
+    width: 100%;
     @media (max-width: 768px) {
         padding: 0 10px;
     }
@@ -256,8 +256,8 @@
         }
 
         .newsImage {
-            width: 100%;
-            height: auto;
+            width: 815px;
+            height: 500px;
             display: block;
         }
 
