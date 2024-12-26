@@ -47,17 +47,19 @@ module.exports = (sequelize) => {
             foreignKey: 'newsId',
             as: 'comments'
         });
-
         News.belongsToMany(models.Media, {
-            through: 'NewsMedia',
+            through: {
+                model: 'NewsMedia',
+                timestamps: false
+            },
             foreignKey: 'newsId',
             otherKey: 'mediaId',
             as: 'mediaFiles',
         });
-
         News.belongsToMany(models.Category, {
             through: {
                 model: 'newsCategory',
+
                 timestamps: false
             },
             foreignKey: 'newsId',

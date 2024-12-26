@@ -24,7 +24,7 @@ const NewsDetailPage = memo(() => {
     const { id } = useParams();
     const newsId = id;
 
-    const currentNews = useSelector((state) => selectNewsById(state, newsId), shallowEqual);
+    const currentNews = useSelector((state) => selectNewsById(state, newsId));
     const newsList = useSelector(selectNewsList, shallowEqual);
     const loadingNews = useSelector(selectNewsLoading, shallowEqual);
     const loadingNewsById = useSelector(selectNewsByIdLoading, shallowEqual);

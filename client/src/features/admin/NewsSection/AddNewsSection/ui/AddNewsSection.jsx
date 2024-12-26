@@ -159,7 +159,9 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         if (validCategoryIds.length === 0) {
             setErrors(prev => ({
                 ...prev,
+
                 categories: 'Необходимо создать хотя бы одну категорию'
+
             }));
             return;
         }

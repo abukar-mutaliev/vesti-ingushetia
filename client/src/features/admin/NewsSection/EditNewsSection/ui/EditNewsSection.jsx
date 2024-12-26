@@ -41,6 +41,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
         dispatch(fetchCategories());
     }, [news, dispatch]);
 
+
     const validateField = (fieldName, value) => {
         let error = '';
         switch (fieldName) {
@@ -60,6 +61,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                     error = 'Видео ссылка должна быть URL от Rutube или YouTube.';
                 }
                 break;
+
             default:
                 break;
         }
@@ -116,6 +118,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 break;
         }
         validateField(field, value);
+
     };
 
     const handleSave = () => {
@@ -127,7 +130,9 @@ export const EditNewsSection = ({ news, onCancel }) => {
         const formData = new FormData();
         formData.append('title', editTitle);
         formData.append('content', editContent);
+
         formData.append('categoryIds', JSON.stringify(selectedCategoryIds));
+
 
         if (videoUrl.trim()) formData.append('videoUrl', videoUrl.trim());
         if (publishDate) formData.append('publishDate', publishDate);
@@ -150,6 +155,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
         })
         .catch((error) => {
             console.error('Ошибка при обновлении новости:', error);
+
 
             if (error.errors) {
                 const newErrors = {};
@@ -230,6 +236,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 <label>Категории</label>
                 <div className={styles.checkboxGroup}>
                     {categories.map((category) => (
+
                         <label key={category.id} className={styles.checkboxLabel}>
                             <input
                                 type="checkbox"
@@ -256,9 +263,6 @@ export const EditNewsSection = ({ news, onCancel }) => {
                         handleInputChange('videoUrl', e.target.value)
                     }
                 />
-                {errors.videoUrl && (
-                    <p className={styles.error}>{errors.videoUrl}</p>
-                )}
 
                 <label>Дата публикации (опционально)</label>
                 <input
@@ -268,11 +272,8 @@ export const EditNewsSection = ({ news, onCancel }) => {
                         handleInputChange('publishDate', e.target.value)
                     }
                 />
-                {errors.publishDate && (
-                    <p className={styles.error}>{errors.publishDate}</p>
-                )}
 
-                <label>Изображения (обязательны)</label>
+                <label>Изображения</label>
                 {editMedia.length > 0 ? (
                     editMedia.map((media, index) => (
                         <div key={index} className={styles.mediaItem}>
@@ -314,6 +315,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 >
                     + Добавить еще файлы
                 </button>
+
                 {errors.media && <p className={styles.error}>{errors.media}</p>}
                 {errors.submit && <p className={styles.error}>{errors.submit}</p>}
 

@@ -9,6 +9,7 @@ import { selectRandomizedNewsList } from '@entities/news/model/newsSelectors.js'
 export const Sidebar = React.memo(({ categories }) => {
     const randomizedNewsList = useSelector(selectRandomizedNewsList);
 
+
     const memoizedGroupedNews = useMemo(() => {
         return randomizedNewsList.reduce((acc, newsItem) => {if (!newsItem.categories || newsItem.categories.length === 0) {
                 console.warn('No categories for news:', newsItem);

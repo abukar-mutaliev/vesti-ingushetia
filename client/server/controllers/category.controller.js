@@ -1,4 +1,4 @@
-const { Category, Author, News, User, Comment, Media } = require('../models');
+const { Category, News, User, Comment, Media } = require('../models');
 const baseUrl = process.env.BASE_URL;
 
 const formatMediaUrls = (newsItems) => {
@@ -59,7 +59,6 @@ exports.getNewsByCategory = async (req, res) => {
                 ],
             },
         });
-
         if (!category) {
             return res.status(404).json({ message: 'Категория не найдена' });
         }
