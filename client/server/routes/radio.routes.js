@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const broadcastController = require('../controllers/broadcast.controller');
+const radioController = require('../controllers/radio.controller');
 const {
     uploadAudio,
     handleMulterErrors,
@@ -8,11 +8,11 @@ const {
 const { authenticateAdmin } = require('../middlewares/auth.middleware');
 
 const {
-    createBroadcastValidation,
-    updateBroadcastValidation,
-    getBroadcastByIdValidation,
-    deleteBroadcastValidation,
-} = require('../validation/broadcastValidation');
+    createRadioValidation,
+    updateRadioValidation,
+    getRadioByIdValidation,
+    deleteRadioValidation,
+} = require('../validation/radioValidation');
 const { validate } = require('../middlewares/validation.middleware');
 const csrfProtection = require('../middlewares/csrfProtection.middleware');
 
@@ -22,18 +22,18 @@ router.post(
     csrfProtection,
     uploadAudio,
     handleMulterErrors,
-    createBroadcastValidation,
+    createRadioValidation,
     validate,
-    broadcastController.createBroadcast,
+    radioController.createRadio,
 );
 
-router.get('/all', broadcastController.getAllBroadcasts);
+router.get('/all', radioController.getAllRadios);
 
 router.get(
     '/:id',
-    getBroadcastByIdValidation,
+    getRadioByIdValidation,
     validate,
-    broadcastController.getBroadcastById,
+    radioController.getRadioById,
 );
 
 router.put(
@@ -42,18 +42,18 @@ router.put(
     csrfProtection,
     uploadAudio,
     handleMulterErrors,
-    updateBroadcastValidation,
+    updateRadioValidation,
     validate,
-    broadcastController.updateBroadcast,
+    radioController.updateRadio,
 );
 
 router.delete(
     '/delete/:id',
     authenticateAdmin,
     csrfProtection,
-    deleteBroadcastValidation,
+    deleteRadioValidation,
     validate,
-    broadcastController.deleteBroadcast,
+    radioController.deleteRadio,
 );
 
 module.exports = router;

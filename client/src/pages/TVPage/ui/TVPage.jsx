@@ -5,7 +5,7 @@ import {
     filterNewsByDate,
     setPage,
 } from '@entities/news/model/newsSlice';
-import { selectNewsWithVideos } from '@entities/news/model/newsSelectors';
+import { selectNewsLoading } from '@entities/news/model/newsSelectors';
 import { CustomCalendar } from '@widgets/Calendar';
 import styles from './TVPage.module.scss';
 import { NewsList } from '@features/newsList';
@@ -15,22 +15,33 @@ import { SlArrowRight } from 'react-icons/sl';
 import { FaTimes } from 'react-icons/fa';
 import { SideMenu } from '@widgets/SideMenu/index.js';
 import { Loader } from '@shared/ui/Loader/index.js';
+import { fetchCategories } from '@entities/categories/model/categorySlice.js';
 
 const TVPage = () => {
     const dispatch = useDispatch();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const selectedDate = useSelector((state) => state.news.selectedDate);
-    const newsList = useSelector(selectNewsWithVideos, shallowEqual);
 
-    const loading = useSelector((state) => state.news.newsLoading);
-    const categories = useSelector(selectCategories);
+    const newsList = useSelector((state) => {
+        const filteredNews = state.news.newsList.filter(news =>
+            news.mediaFiles?.some(media => media.type === 'video')
+        );
+        console.log('Новости с видео:', filteredNews);
+        return filteredNews;
+    }, shallowEqual);
+
+    const loading = useSelector(selectNewsLoading);
+    const categories = useSelector(selectCategories, shallowEqual);
 
     useEffect(() => {
-        if (newsList.length === 0 && !loading) {
+        if (newsList.length === 0) {
             dispatch(fetchAllNews());
         }
-    }, [dispatch, newsList.length, loading]);
+        if (categories.length === 0) {
+            dispatch(fetchCategories());
+        }
+    }, [dispatch, newsList.length]);
 
     const handleDateChange = (date) => {
         const dateString = date.toISOString();
@@ -81,11 +92,13 @@ const TVPage = () => {
                     </button>
                     <SideMenu onCategoryClick={closeMenu} />
                 </div>
-                <div>
+                <div className={styles.newsListContainer}>
                     <h1 className={styles.title}>ТВ</h1>
                     <NewsList
                         selectedDate={selectedDate}
+                        newsList={newsList}
                         onlyWithVideos={true}
+                        excludeLastNews={false}
                     />
                 </div>
                 <div className={styles.sidebarContainer}>
@@ -108,4 +121,5 @@ const TVPage = () => {
         </div>
     );
 };
+
 export default TVPage;

@@ -1,6 +1,6 @@
 const { body, param } = require('express-validator');
 
-exports.createBroadcastValidation = [
+exports.createRadioValidation = [
     body('title')
         .notEmpty()
         .withMessage('Название обязательно')
@@ -12,7 +12,7 @@ exports.createBroadcastValidation = [
         .withMessage('Описание не должно превышать 500 символов'),
 ];
 
-exports.updateBroadcastValidation = [
+exports.updateRadioValidation = [
     param('id')
         .isInt({ gt: 0 })
         .withMessage('ID должен быть положительным целым числом'),
@@ -26,13 +26,13 @@ exports.updateBroadcastValidation = [
         .withMessage('Описание не должно превышать 500 символов'),
 ];
 
-exports.getBroadcastByIdValidation = [
+exports.getRadioByIdValidation = [
     param('id')
         .isInt({ gt: 0 })
         .withMessage('ID должен быть положительным целым числом'),
 ];
 
-exports.deleteBroadcastValidation = [
+exports.deleteRadioValidation = [
     param('id')
         .isInt({ gt: 0 })
         .withMessage('ID должен быть положительным целым числом'),

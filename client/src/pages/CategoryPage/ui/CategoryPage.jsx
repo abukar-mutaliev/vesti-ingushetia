@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { fetchNewsByCategory } from '@entities/categories/model/categorySlice.js';
-import { Sidebar } from '../../../widgets/Sidebar';
+import { fetchCategories, fetchNewsByCategory } from '@entities/categories/model/categorySlice.js';
+import { Sidebar } from '@widgets/Sidebar';
 import styles from './CategoryPage.module.scss';
 import {
     selectNewsByCategory,
@@ -18,6 +18,7 @@ import ReactPaginate from 'react-paginate';
 import { SideMenu } from '@widgets/SideMenu/index.js';
 import { FaTimes } from 'react-icons/fa';
 import { SlArrowRight } from 'react-icons/sl';
+import { Loader } from '@shared/ui/Loader/index.js';
 
 const CategoryPage = () => {
     const { categoryId } = useParams();
@@ -28,6 +29,7 @@ const CategoryPage = () => {
         (state) => selectNewsByCategory(state, categoryId),
         shallowEqual,
     );
+
     const categories = useSelector(selectCategories, shallowEqual);
     const newsList = useSelector(selectNewsList, shallowEqual);
     const loading = useSelector(selectNewsLoading, shallowEqual);
@@ -62,6 +64,10 @@ const CategoryPage = () => {
         setCurrentPage(0);
     }, [categoryId]);
 
+    useEffect(() => {
+        dispatch(fetchCategories());
+    }, [dispatch]);
+
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
     };
@@ -70,7 +76,11 @@ const CategoryPage = () => {
         setIsMenuOpen(false);
     };
 
-    const isLoading = loading || !categories.length || !newsList.length;
+    const isLoading = loading || !categories || !newsList;
+
+    if (isLoading) {
+        return <Loader />;
+    }
 
     return (
         <div className={styles.categoryPage}>

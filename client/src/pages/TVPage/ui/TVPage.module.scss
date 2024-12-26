@@ -106,7 +106,10 @@
         }
     }
 }
-
+.newsListContainer {
+    max-width: 100%;
+    width: 100%;
+}
 .backdrop {
     position: fixed;
     top: 0;
@@ -119,7 +122,6 @@
 .newsContent {
     display: flex;
     justify-content: space-between;
-
     width: 100%;
 
     @media (max-width: 768px) {

@@ -1,4 +1,4 @@
-const { Category, Author, News, User, Comment, Media } = require('../models');
+const { Category, News, User, Comment, Media } = require('../models');
 const baseUrl = process.env.BASE_URL;
 
 const formatMediaUrls = (newsItems) => {
@@ -47,36 +47,24 @@ exports.getNewsByCategory = async (req, res) => {
     try {
         const { categoryId } = req.params;
 
-        const category = await Category.findByPk(categoryId);
+        const category = await Category.findByPk(categoryId, {
+            include: {
+                model: News,
+                as: 'news',
+                include: [
+                    { model: User, as: 'authorDetails' },
+                    { model: Category, as: 'categories' },
+                    { model: Comment, as: 'comments' },
+                    { model: Media, as: 'mediaFiles' },
+                ],
+            },
+        });
         if (!category) {
             return res.status(404).json({ message: 'Категория не найдена' });
         }
+        const formattedNews = formatMediaUrls(category.news);
 
-        const news = await News.findAll({
-            include: [
-                {
-                    model: Category,
-                    as: 'categories',
-                    where: { id: categoryId },
-                    attributes: [],
-                    through: { attributes: [] },
-                },
-                {
-                    model: User,
-                    as: 'authorDetails',
-                    attributes: ['id', 'username', 'email', 'avatarUrl', 'isAdmin'],
-                },
-                {
-                    model: Media,
-                    as: 'mediaFiles',
-                },
-            ],
-            order: [['createdAt', 'DESC']],
-        });
-
-        const modifiedNews = formatMediaUrls(news);
-
-        return res.status(200).json(modifiedNews);
+        return res.status(200).json(formattedNews);
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: `Ошибка сервера: ${error.message}` });

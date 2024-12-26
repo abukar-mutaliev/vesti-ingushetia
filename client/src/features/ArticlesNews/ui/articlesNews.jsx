@@ -23,8 +23,6 @@ export const ArticlesNewsList = () => {
         }
     }, [dispatch]);
 
-
-
     if (loading) {
         return <Loader />;
     }

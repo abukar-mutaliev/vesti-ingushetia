@@ -1,63 +1,58 @@
 import React, { useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import styles from './Sidebar.module.scss';
 import { ListedNews } from '../../ListedNews/';
 import { NewsCardSidebar } from '@widgets/NewsCardSidebar/index.js';
 import { VideoAdPlayer } from '@widgets/VideoAdPlayer/index.js';
+import { selectRandomizedNewsList } from '@entities/news/model/newsSelectors.js';
 
-export const Sidebar = React.memo(({ newsList, categories }) => {
-    const displayedNews = new Set();
+export const Sidebar = React.memo(({ categories }) => {
+    const randomizedNewsList = useSelector(selectRandomizedNewsList);
+
 
     const memoizedGroupedNews = useMemo(() => {
-        return newsList.reduce((acc, news) => {
-            news.categories.forEach((category) => {
+        return randomizedNewsList.reduce((acc, newsItem) => {if (!newsItem.categories || newsItem.categories.length === 0) {
+                console.warn('No categories for news:', newsItem);
+                return acc;
+            }
+            newsItem.categories.forEach((category) => {
                 if (!acc[category.id]) {
                     acc[category.id] = [];
                 }
-                if (!displayedNews.has(news.id)) {
-                    acc[category.id].push(news);
-                    displayedNews.add(news.id);
-                }
+                acc[category.id].push(newsItem);
             });
+
             return acc;
         }, {});
-    }, [newsList]);
+    }, [randomizedNewsList]);
+
 
     if (!categories || !categories.length) {
-        return null;
+        return <p>Нет доступных категорий для отображения</p>;
     }
-
-    const shuffleArray = (array) => {
-        const shuffledArray = [...array];
-        for (let i = shuffledArray.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffledArray[i], shuffledArray[j]] = [
-                shuffledArray[j],
-                shuffledArray[i],
-            ];
-        }
-        return shuffledArray;
-    };
 
     return (
         <div className={styles.sidebar}>
             <p>Рекламная служба ГТРК "Ингушетия" - 8928-793-47-86</p>
             <VideoAdPlayer />
+
             {categories.map((category) => {
                 const categoryNews = memoizedGroupedNews[category.id] || [];
-                const shuffledNews = shuffleArray(categoryNews).slice(0, 3);
+                if (categoryNews.length === 0) return null;
 
                 return (
                     <div key={category.id} className={styles.categorySection}>
                         <ul className={styles.newsList}>
-                            {shuffledNews.map((item) => (
+                            {categoryNews.slice(0, 3).map((item) => (
                                 <NewsCardSidebar key={item.id} item={item} />
                             ))}
                         </ul>
                     </div>
                 );
             })}
+
             <div className={styles.listedNewsContainer}>
-                <ListedNews newsList={newsList} />
+                <ListedNews newsList={randomizedNewsList} />
             </div>
         </div>
     );

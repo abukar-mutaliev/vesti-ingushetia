@@ -34,7 +34,7 @@ module.exports = (sequelize) => {
         {
             tableName: 'news',
             timestamps: true,
-        },
+        }
     );
 
     News.associate = (models) => {
@@ -42,6 +42,7 @@ module.exports = (sequelize) => {
             foreignKey: 'authorId',
             as: 'authorDetails',
         });
+
         News.hasMany(models.Comment, {
             foreignKey: 'newsId',
             as: 'comments'
@@ -57,7 +58,8 @@ module.exports = (sequelize) => {
         });
         News.belongsToMany(models.Category, {
             through: {
-                model: 'NewsCategory',
+                model: 'newsCategory',
+
                 timestamps: false
             },
             foreignKey: 'newsId',

@@ -3,10 +3,23 @@ import styles from '@pages/TvProgramsPage/ui/TvProgramsPage.module.scss';
 import { SlArrowRight } from 'react-icons/sl';
 import { FaTimes } from 'react-icons/fa';
 import { SideMenu } from '@widgets/SideMenu/index.js';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { fetchCategories } from '@entities/categories/model/categorySlice.js';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { selectCategories } from '@entities/categories/model/categorySelectors.js';
 
 const TvProgramsPage = () => {
+    const dispatch = useDispatch();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const categories = useSelector(selectCategories, shallowEqual);
+
+    useEffect(() => {
+
+        if (categories.length === 0) {
+            dispatch(fetchCategories());
+        }
+    }, [dispatch]);
+
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);

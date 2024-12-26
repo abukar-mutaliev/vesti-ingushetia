@@ -152,14 +152,16 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         formData.append('title', newsTitle);
         formData.append('content', newsContent);
 
-        const validCategoryIds = selectedCategoryIds
-        .map(id => Number(id))
-        .filter(id => Number.isInteger(id) && id > 0);
+        const validCategoryIds = selectedCategoryIds.length > 0
+            ? selectedCategoryIds.map(id => Number(id)).filter(id => Number.isInteger(id) && id > 0)
+            : categories.map(cat => cat.id).slice(0, 1);
 
         if (validCategoryIds.length === 0) {
             setErrors(prev => ({
                 ...prev,
-                categories: 'Необходимо выбрать хотя бы одну категорию'
+
+                categories: 'Необходимо создать хотя бы одну категорию'
+
             }));
             return;
         }

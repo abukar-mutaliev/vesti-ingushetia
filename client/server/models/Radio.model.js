@@ -1,8 +1,8 @@
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-    const Broadcast = sequelize.define(
-        'Broadcast',
+    const Radio = sequelize.define(
+        'Radio',
         {
             title: {
                 type: DataTypes.STRING,
@@ -18,10 +18,10 @@ module.exports = (sequelize) => {
             },
         },
         {
-            tableName: 'broadcasts',
+            tableName: 'radios',
             timestamps: true,
         },
     );
 
-    return Broadcast;
+    return Radio;
 };

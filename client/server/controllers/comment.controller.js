@@ -1,9 +1,7 @@
 const { User, Comment, News, CommentLike } = require('../models');
 const baseUrl = process.env.BASE_URL;
 
-/**
- * Вспомогательная функция для форматирования комментариев
- */
+
 const formatComment = (comment, currentUserId) => {
     const commentJson = comment.toJSON();
     const likesCount = commentJson.likedBy.length;
