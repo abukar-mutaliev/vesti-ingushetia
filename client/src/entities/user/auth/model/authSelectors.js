@@ -29,7 +29,7 @@ export const selectLoading = createSelector(
 
 export const selectAuthError = createSelector(
     [selectAuthState],
-    (authState) => authState.authError,
+    (authState) => authState.error,
 );
 
 export const selectAuthSuccess = createSelector(

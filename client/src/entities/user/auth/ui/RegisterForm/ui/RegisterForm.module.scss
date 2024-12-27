@@ -108,4 +108,33 @@
         background-color: color.adjust($primary-color, $lightness: 20%);
         cursor: not-allowed;
     }
+    .serverError {
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ff0000;
+        background-color: #ffe6e6;
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .errorBox {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .errorMessage {
+        color: #ff0000;
+        font-weight: bold;
+        margin: 0;
+    }
+
+    .closeButton {
+        background: none;
+        border: none;
+        color: #ff0000;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 0 5px;
+    }
 }

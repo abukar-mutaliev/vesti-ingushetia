@@ -1,6 +1,6 @@
 require('dotenv').config();
 const helmet = require('helmet');
-const https = require('https');
+const http = require('http');
 const logger = require('./logger');
 const express = require('express');
 const cookieParser = require('cookie-parser');
@@ -200,7 +200,7 @@ sequelize
     .sync()
     .then(() => {
         logger.info('Все модели были синхронизированы с базой данных.');
-        https.createServer(credentials, app).listen(PORT, () => {
+        http.createServer(credentials, app).listen(PORT, () => {
             logger.info(`HTTPS сервер запущен на порту ${PORT}`);
         });
     })
