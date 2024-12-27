@@ -135,6 +135,7 @@ export const RegisterForm = () => {
                     </button>
                 </form>
             )}
+
         </div>
     );
 };
