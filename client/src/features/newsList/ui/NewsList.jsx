@@ -1,16 +1,18 @@
 import React, { useEffect, useCallback, useRef } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
-import { setPage } from '@entities/news/model/newsSlice';
+import { filterNewsByDate, setPage } from '@entities/news/model/newsSlice';
 import {
     selectPaginatedNewsExcludingLast,
     selectPageCountExcludingLast,
     selectPaginatedNewsWithVideosExcludingLast,
     selectPageCountWithVideosExcludingLast,
-    selectLoading,
+    selectNewsLoading,
     selectNewsPerPage,
     selectPaginatedNewsWithVideos,
     selectPaginatedNews,
-    selectPageCountWithVideos, selectPageCount,
+    selectPageCountWithVideos,
+    selectPageCount,
+    selectSelectedDate,
 } from '@entities/news/model/newsSelectors';
 import { NewsCard } from '@widgets/NewsCard';
 import ReactPaginate from 'react-paginate';
@@ -22,10 +24,14 @@ export const NewsList = React.memo(
         const dispatch = useDispatch();
         const newsPerPage = useSelector(selectNewsPerPage);
         const currentPage = useSelector(state => state.news.currentPage);
-        const isLoading = useSelector(selectLoading);
+        const isLoading = useSelector(selectNewsLoading);
+        const stateSelectedDate = useSelector(selectSelectedDate);
         const newsListRef = useRef(null);
 
-        const paginatedNews = useSelector(
+        const effectiveDate = selectedDate || stateSelectedDate;
+
+        // Получаем данные из Redux только если не передан проп newsList
+        const reduxPaginatedNews = useSelector(
             (state) => {
                 if (!excludeLastNews) {
                     return onlyWithVideos
@@ -39,7 +45,7 @@ export const NewsList = React.memo(
             shallowEqual,
         );
 
-        const pageCount = useSelector(
+        const reduxPageCount = useSelector(
             (state) => {
                 if (!excludeLastNews) {
                     return onlyWithVideos
@@ -55,19 +61,20 @@ export const NewsList = React.memo(
 
         const getPaginatedNewsList = useCallback(() => {
             if (newsList) {
+                const sortedNewsList = [...newsList].sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
                 const startIndex = currentPage * newsPerPage;
                 const endIndex = startIndex + newsPerPage;
-                return newsList.slice(startIndex, endIndex);
+                return sortedNewsList.slice(startIndex, endIndex);
             }
-            return paginatedNews;
-        }, [newsList, currentPage, newsPerPage, paginatedNews]);
+            return reduxPaginatedNews;
+        }, [newsList, currentPage, newsPerPage, reduxPaginatedNews]);
 
         const getCustomPageCount = useCallback(() => {
             if (newsList) {
                 return Math.ceil(newsList.length / newsPerPage);
             }
-            return pageCount;
-        }, [newsList, newsPerPage, pageCount]);
+            return reduxPageCount;
+        }, [newsList, newsPerPage, reduxPageCount]);
 
         const handlePageClick = useCallback(
             ({ selected }) => {
@@ -80,11 +87,12 @@ export const NewsList = React.memo(
             [dispatch],
         );
 
+        // Фильтрация по дате только если используем Redux
         useEffect(() => {
-            if (selectedDate) {
-                dispatch(setPage(0));
+            if (effectiveDate && !newsList) {
+                dispatch(filterNewsByDate(effectiveDate));
             }
-        }, [selectedDate, dispatch]);
+        }, [effectiveDate, dispatch, newsList]);
 
         const formatDate = useCallback((dateString) => {
             if (!dateString) return 'ВСЕ НОВОСТИ';

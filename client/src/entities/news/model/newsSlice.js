@@ -1,13 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as newsApi from '@entities/news/api/newsApi';
 
-const hasVideo = (news) => {
-    return news.mediaFiles?.some(
-        (media) =>
-            media.type === 'video' && media.url && media.url.trim() !== '',
-    );
-};
-
 const initialState = {
     newsList: [],
     filteredNews: [],
@@ -20,6 +13,23 @@ const initialState = {
     selectedDate: null,
     currentPage: 0,
     newsPerPage: 8,
+};
+
+const hasVideo = (news) => {
+    return news.mediaFiles?.some(
+        (media) => media.type === 'video' && media.url && media.url.trim() !== ''
+    );
+};
+
+
+const isSameDate = (date1, date2) => {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    return (
+        d1.getFullYear() === d2.getFullYear() &&
+        d1.getMonth() === d2.getMonth() &&
+        d1.getDate() === d2.getDate()
+    );
 };
 
 export const fetchAllNews = createAsyncThunk(
@@ -107,36 +117,37 @@ const newsSlice = createSlice({
     initialState,
     reducers: {
         filterNewsByDate: (state, action) => {
-            const selectedDateString = action.payload;
-            state.selectedDate = selectedDateString;
-            if (selectedDateString) {
-                const selectedDate = new Date(
-                    selectedDateString,
-                ).toDateString();
-                state.filteredNews = state.newsList.filter((news) => {
-                    const effectiveDate = news.publishDate
-                        ? new Date(news.publishDate)
-                        : new Date(news.createdAt);
-                    return effectiveDate.toDateString() === selectedDate;
-                });
-                state.filteredNewsWithVideos = state.newsList.filter((news) => {
-                    const effectiveDate = news.publishDate
-                        ? new Date(news.publishDate)
-                        : new Date(news.createdAt);
-                    return (
-                        effectiveDate.toDateString() === selectedDate &&
-                        hasVideo(news)
-                    );
-                });
+            const selectedDate = action.payload;
+            state.selectedDate = selectedDate;
+
+            if (selectedDate) {
+                const selectedDateObj = new Date(selectedDate);
+
+                // Фильтруем используя publishDate
+                state.filteredNews = state.newsList
+                .filter(news => isSameDate(news.publishDate, selectedDateObj))
+                .sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
+
+                // Фильтруем новости с видео
+                state.filteredNewsWithVideos = state.filteredNews
+                .filter(news => news.mediaFiles?.some(media => media.type === 'video'));
             } else {
+                // Если дата не выбрана, показываем все новости
                 state.filteredNews = state.newsList;
-                state.filteredNewsWithVideos = state.newsList.filter((news) =>
-                    hasVideo(news),
-                );
+                state.filteredNewsWithVideos = state.newsList
+                .filter(news => news.mediaFiles?.some(media => media.type === 'video'));
             }
+
+            state.currentPage = 0;
         },
         setPage: (state, action) => {
             state.currentPage = action.payload;
+        },
+        setSelectedDate: (state, action) => {
+            state.selectedDate = action.payload;
+            if (action.payload) {
+                newsSlice.caseReducers.filterNewsByDate(state, action);
+            }
         },
     },
     extraReducers: (builder) => {
@@ -148,7 +159,7 @@ const newsSlice = createSlice({
             .addCase(fetchAllNews.fulfilled, (state, action) => {
                 state.newsLoading = false;
                 state.newsList = Array.isArray(action.payload)
-                    ? action.payload
+                    ? action.payload.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate))
                     : [];
                 state.filteredNews = state.newsList;
                 state.filteredNewsWithVideos = state.newsList.filter((news) =>
@@ -200,10 +211,14 @@ const newsSlice = createSlice({
             })
             .addCase(createNews.fulfilled, (state, action) => {
                 state.newsList.push(action.payload);
-                state.filteredNews.push(action.payload);
-                if (hasVideo(action.payload)) {
-                    state.filteredNewsWithVideos.push(action.payload);
-                }
+                state.newsList.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
+
+                state.filteredNews = state.selectedDate
+                    ? state.newsList.filter(news => isSameDate(news.publishDate, new Date(state.selectedDate)))
+                    : state.newsList;
+
+                state.filteredNewsWithVideos = state.filteredNews.filter(news => hasVideo(news));
+
                 state.loading = false;
             })
             .addCase(createNews.rejected, (state, action) => {
@@ -221,13 +236,13 @@ const newsSlice = createSlice({
                 if (index !== -1) {
                     state.newsList[index] = action.payload;
 
-                    state.filteredNews = state.filteredNews.map((news) =>
-                        news.id === action.payload.id ? action.payload : news,
-                    );
+                    state.newsList.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
 
-                    state.filteredNewsWithVideos = state.filteredNews.filter(
-                        (news) => hasVideo(news),
-                    );
+                    state.filteredNews = state.selectedDate
+                        ? state.newsList.filter(news => isSameDate(news.publishDate, new Date(state.selectedDate)))
+                        : state.newsList;
+
+                    state.filteredNewsWithVideos = state.filteredNews.filter(news => hasVideo(news));
                 }
                 state.loading = false;
             })

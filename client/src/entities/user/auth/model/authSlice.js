@@ -120,8 +120,12 @@ export const loginUser = createAsyncThunk(
                 );
             }
         } catch (err) {
+            const errorData = err.response?.data;
+            if (errorData?.errors) {
+                return rejectWithValue(errorData);
+            }
             const errorMessage =
-                err.response?.data?.error ||
+                errorData?.error ||
                 err.response?.data?.message ||
                 err.message ||
                 'Ошибка авторизации';
@@ -129,6 +133,7 @@ export const loginUser = createAsyncThunk(
         }
     },
 );
+
 
 export const logoutUser = createAsyncThunk(
     'auth/logoutUser',
@@ -221,6 +226,7 @@ const authSlice = createSlice({
             .addCase(restoreAuth.pending, (state) => {
                 state.loading = true;
                 state.error = null;
+                state.authError = null;
             })
             .addCase(restoreAuth.fulfilled, (state, action) => {
                 const { user, isAdmin } = action.payload;
@@ -235,6 +241,7 @@ const authSlice = createSlice({
                 state.isAdmin = false;
                 state.user = null;
                 state.error = action.payload;
+                state.authError = action.payload;
             })
 
             .addCase(refreshToken.pending, (state) => {
@@ -260,6 +267,7 @@ const authSlice = createSlice({
             .addCase(registerUser.pending, (state) => {
                 state.loading = true;
                 state.error = null;
+                state.authError = null;
                 state.success = false;
             })
             .addCase(registerUser.fulfilled, (state, action) => {
@@ -272,12 +280,14 @@ const authSlice = createSlice({
             .addCase(registerUser.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+                state.authError = action.payload;
                 state.success = false;
             })
 
             .addCase(updateUserRole.pending, (state) => {
                 state.loading = true;
                 state.error = null;
+                state.authError = null;
             })
             .addCase(updateUserRole.fulfilled, (state, action) => {
                 state.loading = false;
@@ -292,10 +302,12 @@ const authSlice = createSlice({
             .addCase(updateUserRole.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+                state.authError = action.payload;
             })
 
             .addCase(loginUser.pending, (state) => {
                 state.loading = true;
+                state.error = null;
                 state.authError = null;
                 state.success = false;
             })
@@ -305,17 +317,22 @@ const authSlice = createSlice({
                 state.isAuthenticated = true;
                 state.isAdmin = isAdmin;
                 state.loading = false;
+                state.error = null;
                 state.authError = null;
                 state.success = true;
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.loading = false;
-                state.authError = action.payload;
+                if (action.payload?.errors) {
+                    state.authError = action.payload.errors.map(error => error.msg).join(', ');
+                } else {
+                    state.authError = action.payload || 'Ошибка авторизации';
+                }
             })
-
             .addCase(logoutUser.pending, (state) => {
                 state.loading = true;
                 state.error = null;
+                state.authError = null;
             })
             .addCase(logoutUser.fulfilled, (state) => {
                 state.loading = false;
@@ -327,6 +344,7 @@ const authSlice = createSlice({
             .addCase(logoutUser.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+                state.authError = action.payload;
             })
 
             .addCase(fetchUserProfile.pending, (state) => {

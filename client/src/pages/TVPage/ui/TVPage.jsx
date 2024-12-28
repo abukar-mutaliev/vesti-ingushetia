@@ -5,7 +5,7 @@ import {
     filterNewsByDate,
     setPage,
 } from '@entities/news/model/newsSlice';
-import { selectNewsLoading } from '@entities/news/model/newsSelectors';
+import { selectNewsLoading, selectFilteredNewsWithVideos, selectAllNewsWithVideos, selectSelectedDate, } from '@entities/news/model/newsSelectors';
 import { CustomCalendar } from '@widgets/Calendar';
 import styles from './TVPage.module.scss';
 import { NewsList } from '@features/newsList';
@@ -21,47 +21,43 @@ const TVPage = () => {
     const dispatch = useDispatch();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    const selectedDate = useSelector((state) => state.news.selectedDate);
-
-    const newsList = useSelector((state) => {
-        const filteredNews = state.news.newsList.filter(news =>
-            news.mediaFiles?.some(media => media.type === 'video')
-        );
-        console.log('Новости с видео:', filteredNews);
-        return filteredNews;
-    }, shallowEqual);
+    const selectedDate = useSelector(selectSelectedDate);
+    const allNewsWithVideos = useSelector(selectAllNewsWithVideos, shallowEqual);
+    const filteredNewsWithVideos = useSelector(selectFilteredNewsWithVideos, shallowEqual);
 
     const loading = useSelector(selectNewsLoading);
     const categories = useSelector(selectCategories, shallowEqual);
 
     useEffect(() => {
-        if (newsList.length === 0) {
+        if (allNewsWithVideos.length === 0) {
             dispatch(fetchAllNews());
         }
         if (categories.length === 0) {
             dispatch(fetchCategories());
         }
-    }, [dispatch, newsList.length]);
+    }, [dispatch, allNewsWithVideos.length, categories.length]);
 
     const handleDateChange = (date) => {
         const dateString = date.toISOString();
+        console.log('Выбранная дата для фильтрации:', dateString);
         dispatch(filterNewsByDate(dateString));
         dispatch(setPage(0));
     };
 
     const handleResetDate = () => {
+        console.log('Сброс выбранной даты');
         dispatch(filterNewsByDate(null));
         dispatch(setPage(0));
     };
 
     const newsDates = useMemo(() => {
-        const dates = newsList.map((news) =>
+        const dates = allNewsWithVideos.map((news) =>
             news.publishDate
                 ? new Date(news.publishDate).toDateString()
                 : new Date(news.createdAt).toDateString(),
         );
         return Array.from(new Set(dates));
-    }, [newsList]);
+    }, [allNewsWithVideos]);
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -96,7 +92,7 @@ const TVPage = () => {
                     <h1 className={styles.title}>ТВ</h1>
                     <NewsList
                         selectedDate={selectedDate}
-                        newsList={newsList}
+                        newsList={filteredNewsWithVideos}
                         onlyWithVideos={true}
                         excludeLastNews={false}
                     />
@@ -115,7 +111,7 @@ const TVPage = () => {
                             Показать все новости
                         </button>
                     )}
-                    <Sidebar categories={categories} newsList={newsList} />
+                    <Sidebar categories={categories} newsList={filteredNewsWithVideos} />
                 </div>
             </div>
         </div>
