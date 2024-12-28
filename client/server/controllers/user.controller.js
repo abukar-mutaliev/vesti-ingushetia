@@ -10,6 +10,7 @@ require('dotenv').config();
 const JWT_SECRET = process.env.SECRET_KEY;
 const BASE_URL = process.env.BASE_URL;
 const logger = require('../logger');
+const { validationResult } = require('express-validator');
 
 exports.getAllUsers = async (req, res) => {
     try {
@@ -105,16 +106,23 @@ exports.registerAdmin = async (req, res) => {
 
 exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
+    const validationErrors = validationResult(req);
+
+    if (!validationErrors.isEmpty()) {
+        logger.info(validationErrors)
+        return res.status(400).json({ errors: validationErrors.array() });
+    }
+
     try {
         const user = await User.findOne({ where: { email } });
 
         if (!user) {
-            throw new Error('Неверное имя пользователя');
+            return res.status(401).json({ errors: [{ msg: 'Неверный email' }] });
         }
 
         const match = await bcrypt.compare(password, user.password);
-        if (!match) {
-            throw new Error('Неверный пароль');
+        if (!user) {
+            return res.status(401).json({ errors: [{ msg: 'Неверный email' }] });
         }
 
         const accessToken = jwt.sign(
@@ -165,6 +173,7 @@ exports.loginUser = async (req, res) => {
         res.status(500).json({ error: `${err.message}` });
     }
 };
+
 
 exports.refreshToken = async (req, res) => {
     const refreshToken = req.cookies.refresh_token;

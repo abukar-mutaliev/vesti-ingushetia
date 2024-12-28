@@ -19,6 +19,7 @@ const api = axios.create({
 let isCsrfTokenLoading = false;
 let csrfToken = null;
 let failedQueue = [];
+let isRefreshing = false;
 
 const getCsrfToken = async () => {
     if (csrfToken) {

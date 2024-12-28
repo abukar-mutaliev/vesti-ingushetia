@@ -2,10 +2,27 @@ import { createSelector } from 'reselect';
 
 export const selectNewsState = (state) => state.news;
 
+export const selectSelectedDate = (state) => state.news.selectedDate;
+
 export const selectNewsList = createSelector(
     [selectNewsState],
     (newsState) => newsState.newsList || [],
 );
+
+export const selectAllNewsWithVideos = createSelector(
+    [selectNewsList],
+    (newsList) => newsList.filter(news => news.mediaFiles?.some(media => media.type === 'video')),
+);
+
+const isSameDate = (date1, date2) => {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    return (
+        d1.getFullYear() === d2.getFullYear() &&
+        d1.getMonth() === d2.getMonth() &&
+        d1.getDate() === d2.getDate()
+    );
+};
 
 export const selectNewsById = (state, id) => {
     return state.news.newsList.find((news) => news.id === parseInt(id, 10));
@@ -23,16 +40,36 @@ export const selectRandomizedNewsList = createSelector(
     }
 );
 
+export const selectNewsListByDate = createSelector(
+    [selectNewsList, selectSelectedDate],
+    (newsList, selectedDate) => {
+        if (!selectedDate) return newsList;
+
+        const selectedDateObj = new Date(selectedDate);
+
+        return newsList
+        .filter(news => isSameDate(news.publishDate, selectedDateObj))
+        .sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
+    }
+);
+
+
+export const selectFilteredNews = createSelector(
+    [selectNewsListByDate],
+    (dateFilteredNews) => dateFilteredNews
+);
+
 export const selectNewsWithVideos = createSelector(
-    [selectNewsList],
+    [selectFilteredNews],
     (newsList) =>
         newsList.filter((news) =>
             news.mediaFiles?.some((media) => media.type === 'video'),
         ),
 );
 
-export const selectLatestNews = createSelector([selectNewsList], (newsList) =>
-    newsList.length > 0 ? newsList[0] : null,
+export const selectLatestNews = createSelector(
+    [selectFilteredNews],
+    (newsList) => (newsList.length > 0 ? newsList[0] : null)
 );
 
 export const selectNewsListExcludingLast = createSelector(
@@ -53,14 +90,13 @@ export const selectNewsPerPage = createSelector(
     (newsState) => newsState.newsPerPage,
 );
 
-export const selectFilteredNews = createSelector(
-    [selectNewsState],
-    (newsState) => newsState.filteredNews || newsState.newsList || [],
-);
 
 export const selectFilteredNewsWithVideos = createSelector(
-    [selectNewsState],
-    (newsState) => newsState.filteredNewsWithVideos || [],
+    [selectFilteredNews],
+    (filteredNews) =>
+        filteredNews.filter((news) =>
+            news.mediaFiles?.some((media) => media.type === 'video')
+        )
 );
 
 export const selectFilteredNewsExcludingLast = createSelector(
@@ -85,7 +121,7 @@ export const selectPaginatedNewsExcludingLast = createSelector(
         const start = currentPage * newsPerPage;
         const end = start + newsPerPage;
         return filteredNews.slice(start, end);
-    },
+    }
 );
 
 export const selectPageCountExcludingLast = createSelector(
@@ -111,11 +147,6 @@ export const selectPageCountWithVideosExcludingLast = createSelector(
     },
 );
 
-export const selectNewsLoading = createSelector(
-    [selectNewsState],
-    (newsState) => newsState.loading,
-);
-
 export const selectError = createSelector(
     [selectNewsState],
     (newsState) => newsState.error,
@@ -129,7 +160,7 @@ export const selectArticlesNews = createSelector([selectNewsList], (newsList) =>
     return articles;
 });
 
-export const selectLoading = createSelector(
+export const selectNewsLoading = createSelector(
     [selectNewsState],
     (newsState) => newsState.loading || newsState.newsLoading
 );
@@ -139,10 +170,6 @@ export const selectNewsByIdLoading = createSelector(
     (newsState) => newsState.newsByIdLoading,
 );
 
-export const selectNewsLoadingAll = createSelector(
-    [selectNewsState],
-    (newsState) => newsState.newsLoading
-);
 
 
 export const selectPaginatedNews = createSelector(
