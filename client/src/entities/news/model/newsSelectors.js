@@ -170,7 +170,10 @@ export const selectNewsByIdLoading = createSelector(
     (newsState) => newsState.newsByIdLoading,
 );
 
-
+export const selectInitialLoad = createSelector(
+    [selectNewsState],
+    (newsState) => newsState.initialLoad
+);
 
 export const selectPaginatedNews = createSelector(
     [selectFilteredNews, selectCurrentPage, selectNewsPerPage],

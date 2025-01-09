@@ -30,7 +30,6 @@ export const NewsList = React.memo(
 
         const effectiveDate = selectedDate || stateSelectedDate;
 
-        // Получаем данные из Redux только если не передан проп newsList
         const reduxPaginatedNews = useSelector(
             (state) => {
                 if (!excludeLastNews) {
@@ -87,7 +86,6 @@ export const NewsList = React.memo(
             [dispatch],
         );
 
-        // Фильтрация по дате только если используем Redux
         useEffect(() => {
             if (effectiveDate && !newsList) {
                 dispatch(filterNewsByDate(effectiveDate));

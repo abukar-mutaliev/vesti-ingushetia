@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import {
     selectArticlesNews,
     selectNewsLoading,
-    selectError,
+    selectError, selectInitialLoad,
 } from '@entities/news/model/newsSelectors';
 import { truncateHtmlToSentences } from '@shared/lib/TruncateHtml/truncateHtml.js';
 import styles from './ArticlesNewsList.module.scss';
@@ -16,13 +16,13 @@ export const ArticlesNewsList = () => {
     const articlesNews = useSelector(selectArticlesNews);
     const loading = useSelector(selectNewsLoading);
     const error = useSelector(selectError);
+    const initialLoad = useSelector(selectInitialLoad);
 
     useEffect(() => {
-        if (articlesNews.length === 0 && !loading && !error) {
+        if (!initialLoad && !loading && !error) {
             dispatch(fetchAllNews());
         }
-    }, [dispatch]);
-
+    }, [dispatch, initialLoad, loading, error]);
 
     if (loading) {
         return <Loader />;
@@ -33,7 +33,7 @@ export const ArticlesNewsList = () => {
     }
 
     if (articlesNews.length === 0) {
-        return <div></div>;
+        return <div> </div>;
     }
 
     return (

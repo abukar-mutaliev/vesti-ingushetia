@@ -13,6 +13,7 @@ const initialState = {
     selectedDate: null,
     currentPage: 0,
     newsPerPage: 8,
+    initialLoad: false,
 };
 
 const hasVideo = (news) => {
@@ -123,16 +124,13 @@ const newsSlice = createSlice({
             if (selectedDate) {
                 const selectedDateObj = new Date(selectedDate);
 
-                // Фильтруем используя publishDate
                 state.filteredNews = state.newsList
                 .filter(news => isSameDate(news.publishDate, selectedDateObj))
                 .sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
 
-                // Фильтруем новости с видео
                 state.filteredNewsWithVideos = state.filteredNews
                 .filter(news => news.mediaFiles?.some(media => media.type === 'video'));
             } else {
-                // Если дата не выбрана, показываем все новости
                 state.filteredNews = state.newsList;
                 state.filteredNewsWithVideos = state.newsList
                 .filter(news => news.mediaFiles?.some(media => media.type === 'video'));
@@ -165,6 +163,7 @@ const newsSlice = createSlice({
                 state.filteredNewsWithVideos = state.newsList.filter((news) =>
                     hasVideo(news),
                 );
+                state.initialLoad = true;
             })
             .addCase(fetchAllNews.rejected, (state, action) => {
                 state.newsLoading = false;
