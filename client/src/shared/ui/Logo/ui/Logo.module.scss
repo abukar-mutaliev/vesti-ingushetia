@@ -6,6 +6,14 @@
     height: 80px;
     line-height: 80px;
 
+    @media screen and (max-width: 1315px) {
+        font-size: 26px;
+
+        span {
+            font-size: 22px;
+            padding: 0 3px;
+        }
+    }
     a {
         text-decoration: none;
         color: $primary-color-header;
