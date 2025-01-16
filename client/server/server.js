@@ -1,6 +1,6 @@
 require('dotenv').config();
 const helmet = require('helmet');
-const http = require('http');
+const http = require('https');
 const logger = require('./logger');
 const express = require('express');
 const cookieParser = require('cookie-parser');

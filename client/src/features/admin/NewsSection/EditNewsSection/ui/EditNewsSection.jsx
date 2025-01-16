@@ -24,6 +24,9 @@ export const EditNewsSection = ({ news, onCancel }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
+    // Обновленное регулярное выражение
+    const videoUrlRegex = /^(https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|rutube\.ru\/video\/)[\w\d-]+(?:\/)?(?:\?.*)?)$/i;
+
     useEffect(() => {
         if (news) {
             setEditTitle(news.title || '');
@@ -41,6 +44,26 @@ export const EditNewsSection = ({ news, onCancel }) => {
         dispatch(fetchCategories());
     }, [news, dispatch]);
 
+    useEffect(() => {
+        const hasExistingMedia = editMedia.length > 0;
+        const hasNewMedia = newMedia.length > 0;
+        const hasVideoUrl = videoUrl.trim() !== '';
+        const isVideoUrlValid = videoUrl ? videoUrlRegex.test(videoUrl) : false;
+
+        const isMediaValid = hasExistingMedia || hasNewMedia || (hasVideoUrl && isVideoUrlValid);
+
+        if (!isMediaValid) {
+            setErrors(prevErrors => ({
+                ...prevErrors,
+                media: 'Необходимо добавить хотя бы одно изображение или ссылку на видео.'
+            }));
+        } else {
+            setErrors(prevErrors => ({
+                ...prevErrors,
+                media: undefined
+            }));
+        }
+    }, [editMedia, newMedia, videoUrl, videoUrlRegex]);
 
     const validateField = (fieldName, value) => {
         let error = '';
@@ -57,7 +80,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 if (value.length === 0) error = 'Выберите хотя бы одну категорию.';
                 break;
             case 'videoUrl':
-                if (value && !/^(https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|rutube\.ru\/video\/)[\w-]+)$/i.test(value)) {
+                if (value && !videoUrlRegex.test(value)) {
                     error = 'Видео ссылка должна быть URL от Rutube или YouTube.';
                 }
                 break;
@@ -65,7 +88,10 @@ export const EditNewsSection = ({ news, onCancel }) => {
             default:
                 break;
         }
-        setErrors((prevErrors) => ({ ...prevErrors, [fieldName]: error }));
+        setErrors((prevErrors) => ({
+            ...prevErrors,
+            [fieldName]: error || undefined,
+        }));
         return !error;
     };
 
@@ -79,7 +105,8 @@ export const EditNewsSection = ({ news, onCancel }) => {
         const hasNewMedia = newMedia.length > 0;
         const hasVideoUrl = videoUrl.trim() !== '';
 
-        const isMediaValid = hasExistingMedia || hasNewMedia || hasVideoUrl;
+        // Обновлено: учитываем валидность videoUrl
+        const isMediaValid = hasExistingMedia || hasNewMedia || (hasVideoUrl && isVideoUrlValid);
 
         if (!isMediaValid) {
             setErrors(prevErrors => ({
@@ -93,11 +120,22 @@ export const EditNewsSection = ({ news, onCancel }) => {
             }));
         }
 
-        return isTitleValid &&
+        console.log({
+            isTitleValid,
+            isContentValid,
+            isCategoriesValid,
+            isVideoUrlValid,
+            isMediaValid,
+            errors,
+        });
+
+        return (
+            isTitleValid &&
             isContentValid &&
             isCategoriesValid &&
             isVideoUrlValid &&
-            isMediaValid;
+            isMediaValid
+        );
     };
 
     const handleInputChange = (field, value) => {
@@ -118,21 +156,21 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 break;
         }
         validateField(field, value);
-
     };
 
     const handleSave = () => {
         setHasAttemptedSubmit(true);
-        setErrors({});
+        setErrors({}); // Очистка всех ошибок перед валидацией
 
-        if (!validateForm()) return;
+        if (!validateForm()) {
+            console.log('Форма не прошла валидацию:', errors);
+            return;
+        }
 
         const formData = new FormData();
         formData.append('title', editTitle);
         formData.append('content', editContent);
-
         formData.append('categoryIds', JSON.stringify(selectedCategoryIds));
-
 
         if (videoUrl.trim()) formData.append('videoUrl', videoUrl.trim());
         if (publishDate) formData.append('publishDate', publishDate);
@@ -143,37 +181,42 @@ export const EditNewsSection = ({ news, onCancel }) => {
         );
 
         newMedia.forEach((file) => {
-            if (file.type.startsWith('image')) formData.append('images', file);
+            if (file && file.type.startsWith('image')) formData.append('images', file);
+        });
+
+        console.log('Отправка данных:', {
+            id: news.id,
+            newsData: formData
         });
 
         dispatch(updateNews({ id: news.id, newsData: formData }))
-        .unwrap()
-        .then(() => {
-            dispatch(fetchAllNews());
-            setHasAttemptedSubmit(false);
-            onCancel();
-        })
-        .catch((error) => {
-            console.error('Ошибка при обновлении новости:', error);
+            .unwrap()
+            .then(() => {
+                console.log("Новость успешно обновлена");
+                dispatch(fetchAllNews());
+                setHasAttemptedSubmit(false);
+                onCancel();
+            })
+            .catch((error) => {
+                console.error('Ошибка при обновлении новости:', error);
 
-
-            if (error.errors) {
-                const newErrors = {};
-                error.errors.forEach(err => {
-                    newErrors[err.path] = err.msg;
-                });
-                setErrors(prev => ({
-                    ...prev,
-                    ...newErrors,
-                    submit: 'Пожалуйста, исправьте ошибки в форме.'
-                }));
-            } else {
-                setErrors(prev => ({
-                    ...prev,
-                    submit: error.error || 'Произошла ошибка при сохранении новости.'
-                }));
-            }
-        });
+                if (error.errors) {
+                    const newErrors = {};
+                    error.errors.forEach((err) => {
+                        newErrors[err.path] = err.msg; // Запись ошибки по полю
+                    });
+                    setErrors((prev) => ({
+                        ...prev,
+                        ...newErrors,
+                        submit: 'Пожалуйста, исправьте ошибки в форме.',
+                    }));
+                } else {
+                    setErrors((prev) => ({
+                        ...prev,
+                        submit: error.message || 'Произошла ошибка при сохранении новости.',
+                    }));
+                }
+            });
     };
 
     const handleCategoryChange = (e) => {
@@ -189,7 +232,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
     };
 
     const addNewMediaField = () => {
-        setNewMedia([...newMedia, []]);
+        setNewMedia([...newMedia, null]); // Исправлено: добавляем null вместо []
     };
 
     const handleDeleteMedia = (index) => {
@@ -263,6 +306,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                         handleInputChange('videoUrl', e.target.value)
                     }
                 />
+                {errors.videoUrl && <p className={styles.error}>{errors.videoUrl}</p>}
 
                 <label>Дата публикации (опционально)</label>
                 <input
@@ -298,13 +342,13 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 )}
 
                 <label>Новые изображения</label>
-                {newMedia.map((_, index) => (
+                {newMedia.map((file, index) => (
                     <input
                         key={index}
                         type="file"
                         multiple
                         accept="image/*"
-                        onChange={(e) => handleMediaChange(e, index)}
+                        onChange={handleMediaChange}
                         className={styles.fileInput}
                     />
                 ))}
@@ -315,7 +359,6 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 >
                     + Добавить еще файлы
                 </button>
-
                 {errors.media && <p className={styles.error}>{errors.media}</p>}
                 {errors.submit && <p className={styles.error}>{errors.submit}</p>}
 
@@ -324,8 +367,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                         className={styles.saveButton}
                         onClick={handleSave}
                         disabled={
-                            hasAttemptedSubmit &&
-                            Object.values(errors).some((error) => error)
+                            hasAttemptedSubmit && Object.values(errors).some((error) => error)
                         }
                     >
                         Сохранить
