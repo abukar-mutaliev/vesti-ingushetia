@@ -12,7 +12,7 @@
     @media (max-width: 568px) {
         padding: 0;
         width: 100%;
-        max-width: 100%;
+        max-width: 95%;
         margin-top: 20%;
     }
 }
@@ -225,6 +225,7 @@
     font-size: 1.2rem;
     line-height: 1.6;
     color: #333;
+
     @media (max-width: 768px) {
         display: flex;
         justify-content: center;
@@ -244,8 +245,8 @@
     @media (max-width: 768px) {
         font-size: 1rem;
         line-height: 1.4;
-        width: 100%;
-        display: flex;
+        width: 90%;
+        padding: 10px;
         justify-content: center;
     }
 }

@@ -39,7 +39,7 @@ export const fetchCategories = createAsyncThunk(
             if (categoriesLastFetched) {
                 const now = Date.now();
                 const diff = now - categoriesLastFetched;
-                if (diff < import.meta.env.CACHE_DURATION) {
+                if (diff < import.meta.env.VITE_CACHE_DURATION) {
                     return false;
                 }
             }
@@ -105,7 +105,7 @@ export const fetchNewsByCategory = createAsyncThunk(
             if (lastFetched) {
                 const now = Date.now();
                 const diff = now - lastFetched;
-                if (diff < import.meta.env.CACHE_DURATION) {
+                if (diff < import.meta.env.VITE_CACHE_DURATION) {
                     return false;
                 }
             }

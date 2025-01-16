@@ -11,11 +11,17 @@ export const ProjectDetail = ({ project }) => {
     const { title, categoryId, categoryName, createdAt, mediaFiles, content } =
         project;
 
-    const firstImage = mediaFiles?.find((media) => media.type === 'image');
-    const firstVideo = mediaFiles?.find((media) => media.type === 'video');
+    const sortedMediaFiles = useMemo(() => {
+        return [...(mediaFiles || [])].sort((a, b) =>
+            new Date(b.createdAt) - new Date(a.createdAt)
+        );
+    }, [mediaFiles]);
 
-    const otherMediaFiles = mediaFiles?.filter(
-        (media) => media.id !== firstImage?.id,
+    const firstImage = sortedMediaFiles?.find((media) => media.type === 'image');
+    const firstVideo = sortedMediaFiles?.find((media) => media.type === 'video');
+
+    const otherMediaFiles = sortedMediaFiles?.filter(
+        (media) => media.id !== firstImage?.id
     );
 
     const processedContent = useMemo(() => {

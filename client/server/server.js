@@ -106,7 +106,7 @@ app.use(
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10000,
+    max: 10000000,
     message: 'Слишком много запросов с этого IP, попробуйте позже.',
     handler: (req, res, next) => {
         res.status(429).json({

@@ -51,6 +51,10 @@
     width: 100%;
     max-width: 770px;
     height: 517px;
+
+    @media (max-width: 568px) {
+        height: 25%;
+    }
 }
 .newsImage {
     width: 100%;
