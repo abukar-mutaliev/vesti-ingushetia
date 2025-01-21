@@ -16,3 +16,20 @@
     cursor: pointer;
     text-transform: none;
 }
+
+.archiveButton {
+    text-align: center;
+    border: 1px solid $input-border-color;
+    padding: 5px;
+    &:hover {
+        background-color: $primary-color;
+        cursor: pointer;
+        transition:
+                0.3s ease,
+                transform,
+                0.3s ease;
+    }
+    .archiveLink:hover {
+        color: white;
+    }
+}

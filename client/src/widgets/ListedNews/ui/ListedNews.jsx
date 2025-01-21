@@ -32,7 +32,7 @@ export const ListedNews = React.memo(({ newsList }) => {
     }, [sortedByViewsNews]);
 
     const nextThreeNews = useMemo(() => {
-        return sortedByViewsNews.slice(3, 6).map((newsItem) => ({
+        return sortedByViewsNews.slice(1, 6).map((newsItem) => ({
             id: newsItem.id,
             title: newsItem.title,
         }));
