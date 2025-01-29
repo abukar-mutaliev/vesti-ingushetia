@@ -13,10 +13,11 @@ const csurf = require('csurf');
 require('./middlewares/cronJobs');
 const botBlocker = require('./middlewares/botBlocker');
 const fs = require('fs');
+const rssRouter = require("./routes/rss");
 
-const privateKey = fs.readFileSync('./cf/private-key.pem', 'utf8');
-const certificate = fs.readFileSync('./cf/certificate.pem', 'utf8');
-const ca = fs.readFileSync('./cf/csr.pem', 'utf8');
+const privateKey = fs.readFileSync(path.join(__dirname, 'cf', 'private-key.pem'), 'utf8');
+const certificate = fs.readFileSync(path.join(__dirname, 'cf', 'certificate.pem'), 'utf8');
+const ca = fs.readFileSync(path.join(__dirname, 'cf', 'csr.pem'), 'utf8');
 
 const credentials = {
     key: privateKey,
@@ -27,7 +28,8 @@ const credentials = {
 const uploadDir =
     process.env.UPLOAD_DIR || path.resolve(__dirname, '..', '../uploads');
 
-const corsOrigin = process.env.CORS_ORIGIN || 'https://5.35.92.185';
+const allowedOrigins = process.env.CORS_ORIGIN.split(',');
+
 const imagesDir = path.join(uploadDir, 'images');
 const videoAdDir = path.join(uploadDir, 'videoAd');
 const audioDir = path.join(uploadDir, 'audio');
@@ -42,7 +44,13 @@ app.use(express.json());
 app.use(cookieParser());
 
 const corsOptions = {
-    origin: corsOrigin,
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Blocked by CORS'));
+        }
+    },
     methods: ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: [
         'Authorization',
@@ -55,6 +63,8 @@ const corsOptions = {
     optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
+
+app.use("/rss", rssRouter);
 
 app.use(
     helmet({
