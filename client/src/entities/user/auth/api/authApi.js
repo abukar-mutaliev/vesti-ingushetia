@@ -8,8 +8,14 @@ export const registerUserApi = (userData) =>
 export const updateUserRoleApi = (userId, isAdmin) =>
     api.put(`${API_URL}/${userId}/role`, { isAdmin });
 
-export const loginUserApi = (credentials) =>
-    api.post(`${API_URL}/login`, credentials);
+export const loginUserApi = async (credentials) => {
+    try {
+        const response = await api.post(`${API_URL}/login`, credentials);
+        return response;
+    } catch (error) {
+        throw error;
+    }
+};
 
 export const fetchUserProfileApi = () => api.get(`${API_URL}/profile`);
 

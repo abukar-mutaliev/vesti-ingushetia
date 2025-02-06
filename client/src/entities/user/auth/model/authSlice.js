@@ -115,23 +115,28 @@ export const loginUser = createAsyncThunk(
                     isAdmin: response.data.user.isAdmin,
                 };
             } else {
-                return rejectWithValue(
-                    'Ошибка авторизации: данные пользователя отсутствуют',
-                );
+                return rejectWithValue('Ошибка авторизации: данные пользователя отсутствуют');
             }
         } catch (err) {
-            const errorData = err.response?.data;
-            if (errorData?.errors) {
-                return rejectWithValue(errorData);
+
+            if (err.errors) {
+                return rejectWithValue({ errors: err.errors });
             }
-            const errorMessage =
-                errorData?.error ||
-                err.response?.data?.message ||
-                err.message ||
-                'Ошибка авторизации';
-            return rejectWithValue(errorMessage);
+
+            if (err.response?.data) {
+                if (err.response.data.errors) {
+                    return rejectWithValue({ errors: err.response.data.errors });
+                }
+                if (err.response.data.message) {
+                    return rejectWithValue({ message: err.response.data.message });
+                }
+            }
+
+            return rejectWithValue({
+                message: err.message || 'Ошибка авторизации'
+            });
         }
-    },
+    }
 );
 
 
@@ -323,10 +328,15 @@ const authSlice = createSlice({
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.loading = false;
+
                 if (action.payload?.errors) {
-                    state.authError = action.payload.errors.map(error => error.msg).join(', ');
+                    state.authError = action.payload.errors
+                        .map(error => error.msg)
+                        .join(', ');
+                } else if (action.payload?.message) {
+                    state.authError = action.payload.message;
                 } else {
-                    state.authError = action.payload || 'Ошибка авторизации';
+                    state.authError = 'Ошибка авторизации';
                 }
             })
             .addCase(logoutUser.pending, (state) => {

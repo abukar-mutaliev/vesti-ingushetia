@@ -91,9 +91,8 @@ api.interceptors.response.use(
             const retryAfter =
                 error.response.data.retryAfter ||
                 error.response.headers['retry-after'] ||
-                60; // секунды
+                60;
             storeInstance.dispatch(setError(`${retryAfter} секунд.`));
-
             return Promise.reject(error);
         }
 
@@ -108,6 +107,7 @@ api.interceptors.response.use(
 
             originalRequest._retry = true;
             isRefreshing = true;
+
             try {
                 const store = (await import('./store')).default;
                 const actionResult = await store.dispatch(refreshToken());
@@ -119,7 +119,7 @@ api.interceptors.response.use(
                 } else {
                     isRefreshing = false;
                     processQueue(actionResult.payload);
-                    return Promise.reject(actionResult.payload);
+                    return Promise.reject(error.response?.data || error);
                 }
             } catch (refreshError) {
                 isRefreshing = false;
@@ -128,7 +128,7 @@ api.interceptors.response.use(
             }
         }
 
-        return Promise.reject(error);
+        return Promise.reject(error.response?.data || error);
     },
 );
 

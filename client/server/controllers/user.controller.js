@@ -109,7 +109,7 @@ exports.loginUser = async (req, res) => {
     const validationErrors = validationResult(req);
 
     if (!validationErrors.isEmpty()) {
-        logger.info(validationErrors)
+        logger.info(validationErrors);
         return res.status(400).json({ errors: validationErrors.array() });
     }
 
@@ -121,8 +121,8 @@ exports.loginUser = async (req, res) => {
         }
 
         const match = await bcrypt.compare(password, user.password);
-        if (!user) {
-            return res.status(401).json({ errors: [{ msg: 'Неверный email' }] });
+        if (!match) {
+            return res.status(401).json({ errors: [{ msg: 'Неверный пароль' }] });
         }
 
         const accessToken = jwt.sign(
@@ -132,7 +132,7 @@ exports.loginUser = async (req, res) => {
                 isAdmin: user.isAdmin,
             },
             JWT_SECRET,
-            { expiresIn: '30m' },
+            { expiresIn: '30m' }
         );
 
         const refreshToken = jwt.sign({ id: user.id }, JWT_SECRET, {
@@ -170,83 +170,67 @@ exports.loginUser = async (req, res) => {
         });
     } catch (err) {
         logger.error(err.message);
-        res.status(500).json({ error: `${err.message}` });
+        res.status(500).json({ error: err.message });
     }
 };
-
 
 exports.refreshToken = async (req, res) => {
-    const refreshToken = req.cookies.refresh_token;
-
-    if (!refreshToken) {
-        return res.status(403).json({ error: 'Refresh token отсутствует' });
-    }
-
     try {
-        jwt.verify(refreshToken, JWT_SECRET, async (err, user) => {
-            if (err)
-                return res
-                    .status(403)
-                    .json({ error: 'Недействительный refresh token' });
+        const refreshToken = req.cookies.refresh_token;
+        if (!refreshToken) {
+            return res.status(403).json({ error: 'Refresh token отсутствует' });
+        }
 
-            const dbUser = await User.findByPk(user.id);
+        const decoded = jwt.verify(refreshToken, JWT_SECRET);
+        const dbUser = await User.findByPk(decoded.id);
 
-            if (!dbUser) {
-                return res
-                    .status(404)
-                    .json({ error: 'Пользователь не найден' });
-            }
+        if (!dbUser) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
 
-            const newAccessToken = jwt.sign(
-                {
-                    id: dbUser.id,
-                    username: dbUser.username,
-                    isAdmin: dbUser.isAdmin,
-                },
-                JWT_SECRET,
-                { expiresIn: '30m' },
-            );
+        const newAccessToken = jwt.sign(
+            {
+                id: dbUser.id,
+                username: dbUser.username,
+                isAdmin: dbUser.isAdmin,
+            },
+            JWT_SECRET,
+            { expiresIn: '30m' }
+        );
 
-            const newRefreshToken = jwt.sign({ id: dbUser.id }, JWT_SECRET, {
-                expiresIn: '7d',
-            });
+        const newRefreshToken = jwt.sign({ id: dbUser.id }, JWT_SECRET, {
+            expiresIn: '7d',
+        });
 
-            res.cookie('auth_token', newAccessToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: 30 * 60 * 1000,
-            });
+        res.cookie('auth_token', newAccessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 30 * 60 * 1000,
+        });
 
-            res.cookie('refresh_token', newRefreshToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: 7 * 24 * 60 * 60 * 1000,
-            });
-            res.cookie('csrf-token', req.csrfToken(), {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-            });
+        res.cookie('refresh_token', newRefreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
 
-            res.json({
-                message: 'Токен обновлен',
-                accessToken: newAccessToken,
-                user: {
-                    id: dbUser.id,
-                    username: dbUser.username,
-                    email: dbUser.email,
-                    isAdmin: dbUser.isAdmin,
-                },
-            });
+        res.json({
+            message: 'Токен обновлен',
+            accessToken: newAccessToken,
+            user: {
+                id: dbUser.id,
+                username: dbUser.username,
+                email: dbUser.email,
+                isAdmin: dbUser.isAdmin,
+            },
         });
     } catch (err) {
-        return res
-            .status(500)
-            .json({ error: `Ошибка обновления токена: ${err.message}` });
+        return res.status(500).json({ error: `Ошибка обновления токена: ${err.message}` });
     }
 };
+
 
 exports.updateUser = async (req, res) => {
     const { id } = req.params;

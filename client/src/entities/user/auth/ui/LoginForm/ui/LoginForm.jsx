@@ -27,21 +27,19 @@ export const LoginForm = () => {
             password: Yup.string().required('Обязательное поле'),
         }),
         onSubmit: async (values) => {
-            const resultAction = await dispatch(loginUser(values));
+            try {
+                const resultAction = await dispatch(loginUser(values));
 
-            if (loginUser.fulfilled.match(resultAction)) {
-                const isAdmin = resultAction.payload.isAdmin;
-
-                if (isAdmin) {
-                    navigate('/admin/dashboard');
-                } else {
-                    navigate('/');
+                if (loginUser.fulfilled.match(resultAction)) {
+                    const isAdmin = resultAction.payload.isAdmin;
+                    if (isAdmin) {
+                        navigate('/admin/dashboard');
+                    } else {
+                        navigate('/');
+                    }
                 }
-            } else if (loginUser.rejected.match(resultAction)) {
-                console.error(
-                    'Ошибка авторизации:',
-                    resultAction.payload || resultAction.error.message,
-                );
+            } catch (error) {
+                console.error('Ошибка при отправке формы:', error);
             }
         },
     });
