@@ -1,7 +1,14 @@
-const { XMLBuilder } = require("fast-xml-parser");
+import { XMLBuilder } from "fast-xml-parser";
 
+const formatDate = (date) => {
+    const options = {
+        timeZoneName: "short",
+        hour12: false,
+    };
+    return new Date(date).toLocaleString("en-US", options);
+};
 
-const generateRssFeed = (newsItems) => {
+export const generateRssFeed = (newsItems) => {
     const feed = {
         rss: {
             "@_version": "2.0",
@@ -15,9 +22,9 @@ const generateRssFeed = (newsItems) => {
                 lastBuildDate: new Date().toUTCString(),
                 item: newsItems.map((news) => ({
                     title: news.title,
-                    link: `https://ingushetiatv.ru:5000/news/${news.id}`,
+                    link: `https://ingushetiatv.ru/news/${news.id}`,
                     description: news.description,
-                    pubDate: new Date(news.publishDate).toUTCString(),
+                    pubDate: formatDate(news.publishDate),
                     "dc:creator": news.author || "Редакция",
                     "yandex:full-text": news.content || "",
                 })),

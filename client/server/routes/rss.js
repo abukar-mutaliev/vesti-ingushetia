@@ -1,5 +1,5 @@
 const express = require("express");
-const { News } = require("../models"); // Используем модель News
+const { News } = require("../models");
 const { generateRssFeed } = require("../utils/rssGenerator");
 
 const router = express.Router();
