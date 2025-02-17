@@ -1,11 +1,19 @@
-import { XMLBuilder } from "fast-xml-parser";
+const { XMLBuilder } = require("fast-xml-parser");
 
-const formatDate = (date) => {
+
+const formatDateRFC822 = (date) => {
     const options = {
-        timeZoneName: "short",
-        hour12: false,
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZoneName: 'short',
+        timeZone: 'UTC',
     };
-    return new Date(date).toLocaleString("en-US", options);
+    return new Date(date).toLocaleString('en-US', options).replace(',', '');
 };
 
 export const generateRssFeed = (newsItems) => {
@@ -24,7 +32,7 @@ export const generateRssFeed = (newsItems) => {
                     title: news.title,
                     link: `https://ingushetiatv.ru/news/${news.id}`,
                     description: news.description,
-                    pubDate: formatDate(news.publishDate),
+                    pubDate: formatDateRFC822(news.publishDate),
                     "dc:creator": news.author || "Редакция",
                     "yandex:full-text": news.content || "",
                 })),
