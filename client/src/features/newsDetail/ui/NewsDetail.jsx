@@ -13,11 +13,14 @@ import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/hig
 import defaultImage from '@assets/default.jpg';
 import styles from './NewsDetail.module.scss';
 import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
+import {Helmet} from "react-helmet";
 
 export const NewsDetail = memo(
     ({ news, loading, newsId, userId, authorName }) => {
         const dispatch = useDispatch();
-        const comments = useSelector((state) => selectCommentsByNewsId(state, newsId));
+        const comments = useSelector((state) =>
+            selectCommentsByNewsId(state, newsId),
+        );
 
         useEffect(() => {
             if (!news) {
@@ -27,17 +30,25 @@ export const NewsDetail = memo(
         }, [dispatch, newsId, news]);
 
         const videoMedia = useMemo(() => {
-            return news?.mediaFiles?.find((media) => media.type === 'video') || null;
+            return (
+                news?.mediaFiles?.find((media) => media.type === 'video') ||
+                null
+            );
         }, [news?.mediaFiles]);
 
         const imageMedia = useMemo(() => {
-            return news?.mediaFiles?.find((media) => media.type === 'image') || null;
+            return (
+                news?.mediaFiles?.find((media) => media.type === 'image') ||
+                null
+            );
         }, [news?.mediaFiles]);
 
         const getVideoEmbedUrl = (videoUrl) => {
             if (!videoUrl) return null;
 
-            const isYouTube = videoUrl.includes('youtube.com/watch?v=') || videoUrl.includes('youtu.be/');
+            const isYouTube =
+                videoUrl.includes('youtube.com/watch?v=') ||
+                videoUrl.includes('youtu.be/');
             if (isYouTube) {
                 let videoId = '';
                 if (videoUrl.includes('watch?v=')) {
@@ -71,9 +82,11 @@ export const NewsDetail = memo(
         }, [news?.content]);
 
         const otherMediaFiles = useMemo(() => {
-            return news?.mediaFiles?.filter(
-                (m) => m.type === 'image' && m.id !== imageMedia?.id
-            ) || [];
+            return (
+                news?.mediaFiles?.filter(
+                    (m) => m.type === 'image' && m.id !== imageMedia?.id,
+                ) || []
+            );
         }, [news?.mediaFiles, imageMedia]);
 
         const displayDate = useMemo(() => {
@@ -94,90 +107,142 @@ export const NewsDetail = memo(
             });
         }, [displayDate]);
 
+        const cleanContent = useMemo(() => {
+            return DOMPurify.sanitize(news?.content || '');
+        }, [news?.content]);
+
         if (loading || !news) {
             return <Loader />;
         }
 
         return (
-            <div className={styles.newsDetail}>
-                <h1 className={styles.title}>{news.title}</h1>
-                <div className={styles.meta}>
-                    <span>
-                        Автор:{' '}
-                        {news.authorDetails ? (
-                            <Link to={`/author/${news.authorDetails.id}`}>
-                                {news.authorDetails.username}
-                            </Link>
-                        ) : (
-                            'Неизвестный'
-                        )}
-                    </span>
-                    <Link to={`/`}>Вести Ингушетия</Link>
-                    <span>{formattedDate}</span>
-                    <div className={styles.views}>
-                        <FaEye size={10} /> {news.views}
-                    </div>
-                </div>
+            <>
+                <Helmet>
+                    <meta name="yandex:full-text" content={cleanContent} />
+                    <meta
+                        property="article:published_time"
+                        content={news.publishDate || news.createdAt}
+                    />
+                    <meta
+                        property="article:author"
+                        content={news.authorDetails?.username || 'Редакция'}
+                    />
+                    <title>{news.title} - Вести Ингушетии</title>
+                    <meta property="og:title" content={news.title} />
+                    <meta
+                        property="og:description"
+                        content={cleanContent.slice(0, 200) + '...'}
+                    />
+                </Helmet>
+                <article
+                    className={styles.newsDetail}
+                    itemScope
+                    itemType="http://schema.org/NewsArticle"
+                >
+                    <meta
+                        itemProp="datePublished"
+                        content={news.publishDate || news.createdAt}
+                    />
+                    <meta
+                        itemProp="dateModified"
+                        content={
+                            news.updatedAt || news.publishDate || news.createdAt
+                        }
+                    />
+                    <meta
+                        itemProp="author"
+                        content={news.authorDetails?.username || 'Редакция'}
+                    />
 
-                <div className={styles.mediaSection}>
-                    {embedUrl ? (
-                        <div className={styles.videoWrapper}>
-                            <iframe
-                                width="560"
-                                height="315"
-                                src={embedUrl}
-                                className={styles.newsImage}
-                                frameBorder="0"
-                                allowFullScreen
-                                title="Видео"
-                            ></iframe>
-                        </div>
-                    ) : (
-                        <MediaElement
-                            imageUrl={imageMedia?.url}
-                            videoUrl={videoMedia?.url}
-                            alt={news.title}
-                            className={styles.newsImage}
-                            playIconSize={70}
-                            showPlayIcon={false}
-                        />
-                    )}
-                </div>
+                    <h1 className={styles.title} itemProp="headline">
+                        {news.title}
+                    </h1>
 
-                <div className={styles.newsContentWrapper}>
-                    <SocialIcons />
-                    <div className={styles.content}>
-                        <div
-                            className={styles.paragraph}
-                            dangerouslySetInnerHTML={{
-                                __html: processedContent,
-                            }}
-                        />
-
-                        {otherMediaFiles.length > 0 && (
-                            <div className={styles.otherMediaWrapper}>
-                                {otherMediaFiles.map((media) => (
-                                    <div key={media.id} className={styles.imageWrapper}>
-                                        <MediaElement
-                                            imageUrl={media.url}
-                                            alt={news.title}
-                                            className={styles.newsImage}
-                                            showPlayIcon={false}
-                                        />
-                                    </div>
-                                ))}
+                    <div className={styles.newsDetail}>
+                        <div className={styles.meta}>
+                            <span>
+                                Автор:{' '}
+                                {news.authorDetails ? (
+                                    <Link
+                                        to={`/author/${news.authorDetails.id}`}
+                                    >
+                                        {news.authorDetails.username}
+                                    </Link>
+                                ) : (
+                                    'Неизвестный'
+                                )}
+                            </span>
+                            <Link to={`/`}>Вести Ингушетия</Link>
+                            <span>{formattedDate}</span>
+                            <div className={styles.views}>
+                                <FaEye size={10} /> {news.views}
                             </div>
-                        )}
-                    </div>
-                </div>
+                        </div>
 
-                <CommentSection
-                    comments={comments}
-                    newsId={newsId}
-                    authorName={authorName}
-                    userId={userId}
-                />
-            </div>
+                        <div className={styles.mediaSection}>
+                            {embedUrl ? (
+                                <div className={styles.videoWrapper}>
+                                    <iframe
+                                        width="560"
+                                        height="315"
+                                        src={embedUrl}
+                                        className={styles.newsImage}
+                                        frameBorder="0"
+                                        allowFullScreen
+                                        title="Видео"
+                                    ></iframe>
+                                </div>
+                            ) : (
+                                <MediaElement
+                                    imageUrl={imageMedia?.url}
+                                    videoUrl={videoMedia?.url}
+                                    alt={news.title}
+                                    className={styles.newsImage}
+                                    playIconSize={70}
+                                    showPlayIcon={false}
+                                />
+                            )}
+                        </div>
+
+                        <div className={styles.newsContentWrapper}>
+                            <SocialIcons />
+                            <div className={styles.content}>
+                                <div
+                                    className={styles.paragraph}
+                                    dangerouslySetInnerHTML={{
+                                        __html: processedContent,
+                                    }}
+                                />
+
+                                {otherMediaFiles.length > 0 && (
+                                    <div className={styles.otherMediaWrapper}>
+                                        {otherMediaFiles.map((media) => (
+                                            <div
+                                                key={media.id}
+                                                className={styles.imageWrapper}
+                                            >
+                                                <MediaElement
+                                                    imageUrl={media.url}
+                                                    alt={news.title}
+                                                    className={styles.newsImage}
+                                                    showPlayIcon={false}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <CommentSection
+                            comments={comments}
+                            newsId={newsId}
+                            authorName={authorName}
+                            userId={userId}
+                        />
+                    </div>
+                </article>
+            </>
         );
     },
 );

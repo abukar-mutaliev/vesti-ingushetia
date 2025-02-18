@@ -51,7 +51,6 @@ const CategoryPage = () => {
         .sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate))
         .slice(currentPage * newsPerPage, (currentPage + 1) * newsPerPage);
 
-
     useEffect(() => {
         if (newsList.length === 0) {
             dispatch(fetchAllNews());
@@ -77,6 +76,8 @@ const CategoryPage = () => {
     };
 
     const isLoading = loading || !categories || !newsList;
+
+    const noNewsMessage = !isLoading && newsByCategory.length === 0;
 
     if (isLoading) {
         return <Loader />;
@@ -106,12 +107,12 @@ const CategoryPage = () => {
                         : 'Новости категории'}
                 </h1>
                 <div className={styles.newsList}>
-                    {currentNews.length > 0 ? (
+                    {noNewsMessage ? (
+                        <div>Новостей в этой категории пока нет.</div>
+                    ) : (
                         currentNews.map((news) => (
                             <NewsCard key={news.id} news={news} />
                         ))
-                    ) : (
-                        <div>Новостей в этой категории пока нет.</div>
                     )}
                 </div>
                 {pageCount > 1 && (

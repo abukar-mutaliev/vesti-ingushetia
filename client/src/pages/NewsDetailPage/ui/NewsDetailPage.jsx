@@ -6,7 +6,6 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { fetchNewsById, fetchAllNews } from '@entities/news/model/newsSlice';
 import { fetchCategories } from '@entities/categories/model/categorySlice';
 import { useParams } from 'react-router-dom';
-
 import {
     selectNewsList,
     selectNewsByIdLoading,
@@ -77,4 +76,5 @@ const NewsDetailPage = memo(() => {
         </div>
     );
 });
+
 export default NewsDetailPage;
