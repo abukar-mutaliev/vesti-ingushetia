@@ -1,52 +1,66 @@
-const { XMLBuilder } = require('fast-xml-parser');
+const { XMLBuilder } = require("fast-xml-parser");
 
-const formatDateWithTimezone = (date) => {
-    const d = new Date(date);
+const generateRssFeed = (newsItems) => {
+    const formatDateRFC822 = (date) => {
+        const d = new Date(date);
 
-    const timezoneOffset = -d.getTimezoneOffset();
-    const sign = timezoneOffset >= 0 ? '+' : '-';
-    const hours = String(Math.floor(Math.abs(timezoneOffset) / 60)).padStart(2, '0');
-    const minutes = String(Math.abs(timezoneOffset) % 60).padStart(2, '0');
-    const timezoneString = `${sign}${hours}${minutes}`;
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const dayName = days[d.getUTCDay()];
 
-    const weekday = d.toLocaleString('en-US', { weekday: 'short' });
-    const month = d.toLocaleString('en-US', { month: 'short' });
-    const day = String(d.getDate()).padStart(2, '0');
-    const year = d.getFullYear();
-    const hoursFormatted = String(d.getHours()).padStart(2, '0');
-    const minutesFormatted = String(d.getMinutes()).padStart(2, '0');
-    const secondsFormatted = String(d.getSeconds()).padStart(2, '0');
+        const months = [
+            'Jan',
+            'Feb',
+            'Mar',
+            'Apr',
+            'May',
+            'Jun',
+            'Jul',
+            'Aug',
+            'Sep',
+            'Oct',
+            'Nov',
+            'Dec'
+        ];
+        const monthName = months[d.getUTCMonth()];
 
-    const formattedDate = `${weekday}, ${day} ${month} ${year} ${hoursFormatted}:${minutesFormatted}:${secondsFormatted} ${timezoneString}`;
+        const day = d.getUTCDate().toString().padStart(2, '0');
+        const year = d.getUTCFullYear();
+        const hours = d.getUTCHours().toString().padStart(2, '0');
+        const minutes = d.getUTCMinutes().toString().padStart(2, '0');
+        const seconds = d.getUTCSeconds().toString().padStart(2, '0');
 
-    return formattedDate;
-};
+        return `${dayName}, ${day} ${monthName} ${year} ${hours}:${minutes}:${seconds} +0300`;
+    };
 
-export const generateRssFeed = (newsItems) => {
     const feed = {
         rss: {
-            '@_version': '2.0',
-            '@_xmlns:dc': 'http://purl.org/dc/elements/1.1/',
-            '@_xmlns:yandex': 'http://news.yandex.ru',
+            "@_version": "2.0",
+            "@_xmlns:dc": "http://purl.org/dc/elements/1.1/",
+            "@_xmlns:yandex": "http://news.yandex.ru",
             channel: {
-                title: 'Новости ГТРК Ингушетия',
-                link: 'https://ingushetiatv.ru/',
-                description: 'Последние новости с сайта ВЕСТИ ИНГУШЕТИИ',
-                language: 'ru',
-                lastBuildDate: new Date().toUTCString(),
+                title: "Новости ГТРК Ингушетия",
+                link: "https://ingushetiatv.ru/",
+                description: "Последние новости с сайта ВЕСТИ ИНГУШЕТИИ",
+                language: "ru",
+                lastBuildDate: formatDateRFC822(new Date()),
                 item: newsItems.map((news) => ({
                     title: news.title,
                     link: `https://ingushetiatv.ru/news/${news.id}`,
                     description: news.description,
-                    pubDate: formatDateWithTimezone(news.publishDate),
-                    'dc:creator': news.author || 'Редакция',
-                    'yandex:full-text': news.content || '',
+                    pubDate: formatDateRFC822(news.publishDate),
+                    "dc:creator": news.author || "Редакция",
+                    "yandex:full-text": news.content || "",
                 })),
             },
         },
     };
 
-    const builder = new XMLBuilder({ format: true });
+    const builder = new XMLBuilder({
+        format: true,
+        ignoreAttributes: false,
+        suppressEmptyNode: true
+    });
+
     return builder.build(feed);
 };
 
