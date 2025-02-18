@@ -5,28 +5,19 @@ const formatDateWithTimezone = (date) => {
 
     const timezoneOffset = -d.getTimezoneOffset();
     const sign = timezoneOffset >= 0 ? '+' : '-';
-    const hours = String(Math.floor(Math.abs(timezoneOffset) / 60)).padStart(
-        2,
-        '0',
-    );
+    const hours = String(Math.floor(Math.abs(timezoneOffset) / 60)).padStart(2, '0');
     const minutes = String(Math.abs(timezoneOffset) % 60).padStart(2, '0');
     const timezoneString = `${sign}${hours}${minutes}`;
 
-    const options = {
-        weekday: 'short',
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        timeZone: 'UTC',
-    };
+    const weekday = d.toLocaleString('en-US', { weekday: 'short' });
+    const month = d.toLocaleString('en-US', { month: 'short' });
+    const day = String(d.getDate()).padStart(2, '0');
+    const year = d.getFullYear();
+    const hoursFormatted = String(d.getHours()).padStart(2, '0');
+    const minutesFormatted = String(d.getMinutes()).padStart(2, '0');
+    const secondsFormatted = String(d.getSeconds()).padStart(2, '0');
 
-    let formattedDate = new Date(date)
-        .toLocaleString('en-US', options)
-        .replace(',', '');
-    formattedDate = `${formattedDate} ${timezoneString}`;
+    const formattedDate = `${weekday}, ${day} ${month} ${year} ${hoursFormatted}:${minutesFormatted}:${secondsFormatted} ${timezoneString}`;
 
     return formattedDate;
 };
@@ -58,4 +49,5 @@ export const generateRssFeed = (newsItems) => {
     const builder = new XMLBuilder({ format: true });
     return builder.build(feed);
 };
+
 module.exports = { generateRssFeed };
