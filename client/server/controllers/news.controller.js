@@ -77,6 +77,20 @@ exports.getAllNews = async (req, res) => {
 exports.getNewsById = async (req, res) => {
     try {
         const { id } = req.params;
+        const news = await News.findByPk(id, {
+            include: [
+                { model: Category, as: 'categories' },
+                { model: User, as: 'authorDetails' },
+                { model: Comment, as: 'comments' },
+                { model: Media, as: 'mediaFiles' },
+            ],
+        });
+
+        if (!news) {
+            return res.status(404).json({ message: 'Новость не найдена' });
+        }
+
+        await news.increment('views');
 
         const userAgent = req.headers['user-agent'] || '';
         const isYandexBot = userAgent.includes('YandexBot');
@@ -88,23 +102,36 @@ exports.getNewsById = async (req, res) => {
             const mainImage = modifiedNews.mediaFiles?.find(media => media.type === 'image')?.url || `${baseUrl}/logo.jpg`;
             const formattedDate = new Date(modifiedNews.publishDate || modifiedNews.createdAt).toISOString();
 
+            const cleanContent = modifiedNews.content
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+
+            const cleanTitle = modifiedNews.title
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+
             let html = indexHtml
-                .replace('</head>', `
-                    <style>
-                        .seo-content {
-                            display: block !important;
-                        }
-                    </style>
-                    </head>
-                `)
-                .replace(/<title>Вести Ингушетии<\/title>/, `<title>${modifiedNews.title} - Вести Ингушетии</title>`)
-                .replace('%TITLE%', modifiedNews.title)
-                .replace(/%CONTENT%/g, modifiedNews.content)
+                .replace(/%TITLE%/g, cleanTitle)
+                .replace(/%CONTENT%/g, cleanContent)
                 .replace(/%PUBLISH_DATE%/g, formattedDate)
                 .replace(/%AUTHOR%/g, modifiedNews.authorDetails?.username || 'Редакция')
                 .replace(/%NEWS_ID%/g, modifiedNews.id)
-                .replace(/%IMAGE_URL%/g, mainImage)
-                .replace(/content="Последние новости Ингушетии"/, `content="${modifiedNews.content.slice(0, 200)}..."`);
+                .replace(/%IMAGE_URL%/g, mainImage);
+
+            html = html.replace('</head>', `
+                <style>
+                    .seo-content {
+                        display: block !important;
+                    }
+                </style>
+                </head>
+            `);
 
             return res.send(html);
         }

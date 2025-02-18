@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article#">
 <head>
   <meta charset="UTF-8" />
   <meta name="yandex-verification" content="f9781982306034d1" />
@@ -10,8 +10,6 @@
   <meta name="keywords" content="новости, Ингушетия, ГТРК" />
 
   <meta name="yandex:full-text" content="%CONTENT%" />
-  <meta property="article:published_time" content="%PUBLISH_DATE%" />
-  <meta property="article:author" content="%AUTHOR%" />
 
   <meta property="og:site_name" content="Вести Ингушетии" />
   <meta property="og:type" content="article" />
@@ -21,7 +19,10 @@
   <meta property="og:image" content="%IMAGE_URL%" />
   <meta property="og:locale" content="ru_RU" />
 
-  <title>Вести Ингушетии</title>
+  <meta property="article:published_time" content="%PUBLISH_DATE%" />
+  <meta property="article:author" content="%AUTHOR%" />
+
+  <title>%TITLE% - Вести Ингушетии</title>
 
   <style>
     .seo-content {
@@ -37,13 +38,21 @@
 <body>
 <div id="root">
   <div class="seo-content">
-    <article itemscope itemtype="http://schema.org/NewsArticle">
+    <article
+            itemscope
+            itemtype="http://schema.org/NewsArticle"
+            prefix="schema: http://schema.org/ article: http://ogp.me/ns/article#"
+    >
       <meta itemprop="datePublished" content="%PUBLISH_DATE%" />
       <meta itemprop="dateModified" content="%PUBLISH_DATE%" />
       <meta itemprop="author" content="%AUTHOR%" />
+      <meta itemprop="publisher" content="Вести Ингушетии" />
 
       <h1 itemprop="headline">%TITLE%</h1>
       <div itemprop="articleBody">%CONTENT%</div>
+
+      <meta itemprop="image" content="%IMAGE_URL%" />
+      <meta itemprop="mainEntityOfPage" content="https://ingushetiatv.ru/news/%NEWS_ID%" />
     </article>
   </div>
 </div>
