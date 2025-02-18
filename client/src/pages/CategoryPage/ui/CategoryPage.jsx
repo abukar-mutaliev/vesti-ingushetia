@@ -47,10 +47,10 @@ const CategoryPage = () => {
         window.scrollTo(0, 0);
     }, []);
 
-    const currentNews = newsByCategory.slice(
-        currentPage * newsPerPage,
-        (currentPage + 1) * newsPerPage,
-    );
+    const currentNews = [...newsByCategory]
+        .sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate))
+        .slice(currentPage * newsPerPage, (currentPage + 1) * newsPerPage);
+
 
     useEffect(() => {
         if (newsList.length === 0) {
