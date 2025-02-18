@@ -5,6 +5,7 @@ import styles from './App.module.scss';
 import { Loader } from '@shared/ui/Loader/index.js';
 import { Footer } from '@shared/ui/Footer/ui/Footer.jsx';
 import TooManyRequests from '@shared/ui/TooManyRequests/ui/TooManyRequests.jsx';
+import { HelmetProvider } from 'react-helmet-async';
 
 function App() {
     return (
@@ -16,11 +17,12 @@ function App() {
                     </div>
                 }
             >
-                <TooManyRequests />
-                <Header />
-                <AppRouter />
+                <HelmetProvider>
+                    <TooManyRequests />
+                    <Header />
+                    <AppRouter />
+                </HelmetProvider>
             </Suspense>
-
             <Footer />
         </div>
     );

@@ -10,10 +10,10 @@ import { fetchCommentsForNews } from '@entities/comments/model/commentsSlice.js'
 import DOMPurify from 'dompurify';
 import { Loader } from '@shared/ui/Loader/index.js';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
-import defaultImage from '@assets/default.jpg';
 import styles from './NewsDetail.module.scss';
 import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
-import {Helmet} from "react-helmet";
+import { Helmet } from 'react-helmet-async';
+import defaultOgImage from '@assets/default.jpg';
 
 export const NewsDetail = memo(
     ({ news, loading, newsId, userId, authorName }) => {
@@ -111,6 +111,13 @@ export const NewsDetail = memo(
             return DOMPurify.sanitize(news?.content || '');
         }, [news?.content]);
 
+        const ogImage = useMemo(() => {
+            if (imageMedia?.url) {
+                return new URL(imageMedia.url, window.location.origin).toString();
+            }
+            return new URL(defaultOgImage, window.location.origin).toString();
+        }, [imageMedia]);
+
         if (loading || !news) {
             return <Loader />;
         }
@@ -133,6 +140,18 @@ export const NewsDetail = memo(
                         property="og:description"
                         content={cleanContent.slice(0, 200) + '...'}
                     />
+                    <meta property="og:title" content={news.title} />
+                    <meta
+                        property="og:description"
+                        content={cleanContent.slice(0, 200) + '...'}
+                    />
+                    <meta property="og:type" content="article" />
+                    <meta property="og:url" content={window.location.href} />
+                    <meta property="og:image" content={ogImage} />
+                    <meta property="og:image:width" content="1200" />
+                    <meta property="og:image:height" content="630" />
+                    <meta property="og:site_name" content="Вести Ингушетии" />
+                    <meta property="og:locale" content="ru_RU" />
                 </Helmet>
                 <article
                     className={styles.newsDetail}
