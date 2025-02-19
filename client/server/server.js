@@ -42,15 +42,20 @@ app.use(botBlocker);
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
+
 app.use(cookieParser());
+const decode = (str) => {
+    return str.replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&amp;/g, '&')
+        .replace(/&#039;/g, "'");
+};
 
 app.get('/news/:id', async (req, res) => {
     try {
         const userAgent = req.headers['user-agent'] || '';
         const isYandexBot = userAgent.includes('YandexBot');
-
-        console.log('Processing request for news:', req.params.id);
-        console.log('Is Yandex Bot:', isYandexBot);
 
         if (!isYandexBot) {
             return res.sendFile(path.join(__dirname, '../dist/index.html'));
@@ -74,36 +79,20 @@ app.get('/news/:id', async (req, res) => {
         });
 
         if (!news) {
-            console.log('News not found:', id);
             return res.status(404).send('Новость не найдена');
         }
 
-        console.log('Found news:', {
-            id: news.id,
-            title: news.title,
-            hasContent: !!news.content,
-            publishDate: news.publishDate
-        });
+
 
         const indexHtml = fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf-8');
 
         const mainImage = news.mediaFiles?.find(media => media.type === 'image')?.url
             || `${process.env.BASE_URL}/logo.jpg`;
+
         const formattedDate = new Date(news.publishDate || news.createdAt).toISOString();
 
-        const safeContent = news.content
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-
-        const safeTitle = news.title
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+        const safeContent = decode(news.content);
+        const safeTitle = news.title;
 
         let html = indexHtml
             .replace(/%TITLE%/g, safeTitle)
@@ -118,7 +107,6 @@ app.get('/news/:id', async (req, res) => {
             '.seo-content { display: block; }'
         );
 
-        console.log('Successfully processed news for Yandex Bot');
         res.send(html);
     } catch (error) {
         console.error('Error processing news:', error.message);
