@@ -15,6 +15,7 @@ const botBlocker = require('./middlewares/botBlocker');
 const fs = require('fs');
 const rssRouter = require("./routes/rss");
 const { News, User, Media } = require('./models');
+const {cache} = require("express/lib/application");
 
 const privateKey = fs.readFileSync(path.join(__dirname, 'cf', 'private-key.pem'), 'utf8');
 const certificate = fs.readFileSync(path.join(__dirname, 'cf', 'certificate.pem'), 'utf8');
@@ -45,6 +46,8 @@ app.use(express.json());
 
 app.use(cookieParser());
 
+const indexHtmlTemplate = fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf-8');
+
 const decode = (str) => {
     return str.replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
@@ -70,20 +73,26 @@ app.get('/news/:id', async (req, res) => {
 
         const { id } = req.params;
 
-        const news = await News.findByPk(id, {
-            include: [
-                {
-                    model: User,
-                    as: 'authorDetails',
-                    attributes: ['username']
-                },
-                {
-                    model: Media,
-                    as: 'mediaFiles',
-                    attributes: ['type', 'url']
-                }
-            ]
-        });
+        const cacheKey = `news_${req.params.id}`;
+        let news = await cache.get(cacheKey);
+
+        if (!news) {
+            news = await News.findByPk(req.params.id, {
+                include: [
+                    {
+                        model: User,
+                        as: 'authorDetails',
+                        attributes: ['username']
+                    },
+                    {
+                        model: Media,
+                        as: 'mediaFiles',
+                        attributes: ['type', 'url']
+                    }
+                ]
+            });
+            await cache.set(cacheKey, news, 300);
+        }
 
         if (!news) {
             return res.status(404).send('Новость не найдена');
@@ -104,7 +113,7 @@ app.get('/news/:id', async (req, res) => {
             : `${process.env.BASE_URL}/logo.jpg`;
 
         let html = indexHtml
-            .replace(/<title>[^<]*<\/title>/, `<title>${safeTitle} - Вести Ингушетии</title>`)  // явная замена title
+            .replace(/<title>[^<]*<\/title>/, `<title>${safeTitle} - Вести Ингушетии</title>`)
             .replace(/%TITLE%/g, safeTitle)
             .replace(/<meta name="description" content="[^"]*"/, `<meta name="description" content="${plainContent.substring(0, 200)}..."`)
             .replace(/<meta name="yandex:full-text" content="[^"]*"/, `<meta name="yandex:full-text" content="${plainContent}"`)
