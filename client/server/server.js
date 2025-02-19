@@ -64,6 +64,48 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+app.use('/news/:id', async (req, res, next) => {
+    const userAgent = req.headers['user-agent'] || '';
+    const isYandexBot = userAgent.includes('YandexBot');
+
+    if (isYandexBot) {
+        const indexHtml = fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf-8');
+
+        try {
+            const newsId = req.params.id;
+            const news = await require('./models').News.findByPk(newsId, {
+                include: [
+                    { model: require('./models').User, as: 'authorDetails' },
+                    { model: require('./models').Media, as: 'mediaFiles' }
+                ]
+            });
+
+            if (!news) {
+                return res.status(404).send('Новость не найдена');
+            }
+
+            const formattedNews = require('./controllers/news.controller').formatMediaUrls([news])[0];
+            const mainImage = formattedNews.mediaFiles?.find(media => media.type === 'image')?.url || `${process.env.BASE_URL}/logo.jpg`;
+            const formattedDate = new Date(formattedNews.publishDate || formattedNews.createdAt).toISOString();
+
+            let html = indexHtml
+                .replace(/%TITLE%/g, formattedNews.title)
+                .replace(/%CONTENT%/g, formattedNews.content)
+                .replace(/%PUBLISH_DATE%/g, formattedDate)
+                .replace(/%AUTHOR%/g, formattedNews.authorDetails?.username || 'Редакция')
+                .replace(/%NEWS_ID%/g, newsId)
+                .replace(/%IMAGE_URL%/g, mainImage)
+                .replace('display: none;', 'display: block;');
+
+            return res.send(html);
+        } catch (error) {
+            console.error('Error processing news for Yandex:', error);
+            next();
+        }
+    }
+
+    next();
+});
 app.use("/rss", rssRouter);
 
 app.use(
