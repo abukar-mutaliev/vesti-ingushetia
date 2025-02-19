@@ -104,6 +104,7 @@ app.get('/news/:id', async (req, res) => {
             : `${process.env.BASE_URL}/logo.jpg`;
 
         let html = indexHtml
+            .replace(/<title>[^<]*<\/title>/, `<title>${safeTitle} - Вести Ингушетии</title>`)  // явная замена title
             .replace(/%TITLE%/g, safeTitle)
             .replace(/<meta name="description" content="[^"]*"/, `<meta name="description" content="${plainContent.substring(0, 200)}..."`)
             .replace(/<meta name="yandex:full-text" content="[^"]*"/, `<meta name="yandex:full-text" content="${plainContent}"`)
