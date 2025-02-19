@@ -44,12 +44,13 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 app.use(cookieParser());
 
-
-
 app.get('/news/:id', async (req, res) => {
     try {
         const userAgent = req.headers['user-agent'] || '';
         const isYandexBot = userAgent.includes('YandexBot');
+
+        console.log('Processing request for news:', req.params.id);
+        console.log('Is Yandex Bot:', isYandexBot);
 
         if (!isYandexBot) {
             return res.sendFile(path.join(__dirname, '../dist/index.html'));
@@ -59,14 +60,30 @@ app.get('/news/:id', async (req, res) => {
 
         const news = await News.findByPk(id, {
             include: [
-                { model: User, as: 'authorDetails' },
-                { model: Media, as: 'mediaFiles' }
+                {
+                    model: User,
+                    as: 'authorDetails',
+                    attributes: ['username']
+                },
+                {
+                    model: Media,
+                    as: 'mediaFiles',
+                    attributes: ['type', 'url']
+                }
             ]
         });
 
         if (!news) {
+            console.log('News not found:', id);
             return res.status(404).send('Новость не найдена');
         }
+
+        console.log('Found news:', {
+            id: news.id,
+            title: news.title,
+            hasContent: !!news.content,
+            publishDate: news.publishDate
+        });
 
         const indexHtml = fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf-8');
 
@@ -88,19 +105,24 @@ app.get('/news/:id', async (req, res) => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
 
-        const html = indexHtml
-            .replace(/<title>Вести Ингушетии<\/title>/, `<title>${safeTitle} - Вести Ингушетии</title>`)
+        let html = indexHtml
             .replace(/%TITLE%/g, safeTitle)
             .replace(/%CONTENT%/g, safeContent)
             .replace(/%PUBLISH_DATE%/g, formattedDate)
             .replace(/%AUTHOR%/g, news.authorDetails?.username || 'Редакция')
             .replace(/%NEWS_ID%/g, id)
-            .replace(/%IMAGE_URL%/g, mainImage)
-            .replace(/display:\s*none;/, 'display: block;');
+            .replace(/%IMAGE_URL%/g, mainImage);
 
+        html = html.replace(
+            /\.seo-content\s*{\s*display:\s*none;\s*}/,
+            '.seo-content { display: block; }'
+        );
+
+        console.log('Successfully processed news for Yandex Bot');
         res.send(html);
     } catch (error) {
-        console.error('Error processing news for Yandex:', error, error.stack);
+        console.error('Error processing news:', error.message);
+        console.error(error.stack);
         res.status(500).send('Внутренняя ошибка сервера');
     }
 });
