@@ -14,6 +14,7 @@ require('./middlewares/cronJobs');
 const botBlocker = require('./middlewares/botBlocker');
 const fs = require('fs');
 const rssRouter = require("./routes/rss");
+const { News, User, Media } = require('./models');
 
 const privateKey = fs.readFileSync(path.join(__dirname, 'cf', 'private-key.pem'), 'utf8');
 const certificate = fs.readFileSync(path.join(__dirname, 'cf', 'certificate.pem'), 'utf8');
@@ -43,6 +44,67 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 app.use(cookieParser());
 
+
+
+app.get('/news/:id', async (req, res) => {
+    try {
+        const userAgent = req.headers['user-agent'] || '';
+        const isYandexBot = userAgent.includes('YandexBot');
+
+        if (!isYandexBot) {
+            return res.sendFile(path.join(__dirname, '../dist/index.html'));
+        }
+
+        const { id } = req.params;
+
+        const news = await News.findByPk(id, {
+            include: [
+                { model: User, as: 'authorDetails' },
+                { model: Media, as: 'mediaFiles' }
+            ]
+        });
+
+        if (!news) {
+            return res.status(404).send('Новость не найдена');
+        }
+
+        const indexHtml = fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf-8');
+
+        const mainImage = news.mediaFiles?.find(media => media.type === 'image')?.url
+            || `${process.env.BASE_URL}/logo.jpg`;
+        const formattedDate = new Date(news.publishDate || news.createdAt).toISOString();
+
+        const safeContent = news.content
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+
+        const safeTitle = news.title
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+
+        const html = indexHtml
+            .replace(/<title>Вести Ингушетии<\/title>/, `<title>${safeTitle} - Вести Ингушетии</title>`)
+            .replace(/%TITLE%/g, safeTitle)
+            .replace(/%CONTENT%/g, safeContent)
+            .replace(/%PUBLISH_DATE%/g, formattedDate)
+            .replace(/%AUTHOR%/g, news.authorDetails?.username || 'Редакция')
+            .replace(/%NEWS_ID%/g, id)
+            .replace(/%IMAGE_URL%/g, mainImage)
+            .replace(/display:\s*none;/, 'display: block;');
+
+        res.send(html);
+    } catch (error) {
+        console.error('Error processing news for Yandex:', error, error.stack);
+        res.status(500).send('Внутренняя ошибка сервера');
+    }
+});
+
 const corsOptions = {
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
@@ -63,66 +125,6 @@ const corsOptions = {
     optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
-
-const pathToIndex = path.join(__dirname, '../dist/index.html');
-
-app.get('/news/:id', async (req, res) => {
-    const userAgent = req.headers['user-agent'] || '';
-    const isYandexBot = userAgent.includes('YandexBot');
-
-    if (!isYandexBot) {
-        return res.sendFile(pathToIndex);
-    }
-
-    try {
-        const { id } = req.params;
-        const news = await News.findByPk(id, {
-            include: [
-                { model: User, as: 'authorDetails' },
-                { model: Media, as: 'mediaFiles' }
-            ]
-        });
-
-        if (!news) {
-            return res.status(404).send('Новость не найдена');
-        }
-
-        let html = fs.readFileSync(pathToIndex, 'utf-8');
-        const modifiedNews = formatMediaUrls([news])[0];
-        const mainImage = modifiedNews.mediaFiles?.find(media => media.type === 'image')?.url
-            || `${process.env.BASE_URL}/logo.jpg`;
-        const formattedDate = new Date(modifiedNews.publishDate || modifiedNews.createdAt)
-            .toISOString();
-
-        const safeContent = modifiedNews.content
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-
-        const safeTitle = modifiedNews.title
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-
-        html = html
-            .replace(/%TITLE%/g, safeTitle)
-            .replace(/%CONTENT%/g, safeContent)
-            .replace(/%PUBLISH_DATE%/g, formattedDate)
-            .replace(/%AUTHOR%/g, modifiedNews.authorDetails?.username || 'Редакция')
-            .replace(/%NEWS_ID%/g, id)
-            .replace(/%IMAGE_URL%/g, mainImage)
-            .replace(/display:\s*none;/, 'display: block;');
-
-        res.send(html);
-    } catch (error) {
-        console.error('Error processing news for Yandex:', error);
-        res.status(500).send('Внутренняя ошибка сервера');
-    }
-});
 
 app.use("/rss", rssRouter);
 
