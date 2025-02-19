@@ -44,12 +44,19 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 
 app.use(cookieParser());
+
 const decode = (str) => {
     return str.replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
         .replace(/&quot;/g, '"')
         .replace(/&amp;/g, '&')
         .replace(/&#039;/g, "'");
+};
+
+const stripHtml = (html) => {
+    return html.replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
 };
 
 app.get('/news/:id', async (req, res) => {
@@ -86,16 +93,21 @@ app.get('/news/:id', async (req, res) => {
 
         const indexHtml = fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf-8');
 
-        const mainImage = news.mediaFiles?.find(media => media.type === 'image')?.url
-            || `${process.env.BASE_URL}/logo.jpg`;
-
         const formattedDate = new Date(news.publishDate || news.createdAt).toISOString();
 
         const safeContent = decode(news.content);
         const safeTitle = news.title;
+        const plainContent = stripHtml(safeContent);
+
+        const mainImage = news.mediaFiles?.find(media => media.type === 'image')?.url
+            ? `https://ingushetiatv.ru/${news.mediaFiles.find(media => media.type === 'image').url}`
+            : `${process.env.BASE_URL}/logo.jpg`;
 
         let html = indexHtml
             .replace(/%TITLE%/g, safeTitle)
+            .replace(/<meta name="description" content="[^"]*"/, `<meta name="description" content="${plainContent.substring(0, 200)}..."`)
+            .replace(/<meta name="yandex:full-text" content="[^"]*"/, `<meta name="yandex:full-text" content="${plainContent}"`)
+            .replace(/<meta property="og:description" content="[^"]*"/, `<meta property="og:description" content="${plainContent.substring(0, 200)}..."`)
             .replace(/%CONTENT%/g, safeContent)
             .replace(/%PUBLISH_DATE%/g, formattedDate)
             .replace(/%AUTHOR%/g, news.authorDetails?.username || 'Редакция')
