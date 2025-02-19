@@ -92,54 +92,54 @@ exports.getNewsById = async (req, res) => {
 
         await news.increment('views');
 
+        const modifiedNews = formatMediaUrls([news])[0];
+        const mainImage = modifiedNews.mediaFiles?.find(media => media.type === 'image')?.url || `${baseUrl}/logo.jpg`;
+        const formattedDate = new Date(modifiedNews.publishDate || modifiedNews.createdAt).toISOString();
+
         const userAgent = req.headers['user-agent'] || '';
         const isYandexBot = userAgent.includes('YandexBot');
 
-        if (isYandexBot) {
+        if (isYandexBot || req.headers['view-source']) {
             const indexHtml = fs.readFileSync(path.join(__dirname, '../../../index.html'), 'utf-8');
 
-            const modifiedNews = formatMediaUrls([news])[0];
-            const mainImage = modifiedNews.mediaFiles?.find(media => media.type === 'image')?.url || `${baseUrl}/logo.jpg`;
-            const formattedDate = new Date(modifiedNews.publishDate || modifiedNews.createdAt).toISOString();
-
-            const cleanContent = modifiedNews.content
-                .replace(/&/g, '&amp;')
+            const safeContent = modifiedNews.content
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+                .replace(/'/g, '&#39;');
 
-            const cleanTitle = modifiedNews.title
-                .replace(/&/g, '&amp;')
+            const safeTitle = modifiedNews.title
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+                .replace(/'/g, '&#39;');
 
-            let html = indexHtml
-                .replace(/%TITLE%/g, cleanTitle)
-                .replace(/%CONTENT%/g, cleanContent)
-                .replace(/%PUBLISH_DATE%/g, formattedDate)
-                .replace(/%AUTHOR%/g, modifiedNews.authorDetails?.username || 'Редакция')
-                .replace(/%NEWS_ID%/g, modifiedNews.id)
-                .replace(/%IMAGE_URL%/g, mainImage);
+            const replacements = {
+                '%TITLE%': safeTitle,
+                '%CONTENT%': safeContent,
+                '%NEWS_ID%': id,
+                '%PUBLISH_DATE%': formattedDate,
+                '%AUTHOR%': modifiedNews.authorDetails?.username || 'Редакция',
+                '%IMAGE_URL%': mainImage,
+                'Вести Ингушетии</title>': `${safeTitle} - Вести Ингушетии</title>`
+            };
 
-            html = html.replace('</head>', `
-                <style>
-                    .seo-content {
-                        display: block !important;
-                    }
-                </style>
-                </head>
-            `);
+            let html = indexHtml;
+            Object.entries(replacements).forEach(([placeholder, value]) => {
+                html = html.replace(new RegExp(placeholder, 'g'), value);
+            });
+
+            if (isYandexBot) {
+                html = html.replace('display: none;', 'display: block;');
+            }
 
             return res.send(html);
         }
 
-        const modifiedNews = formatMediaUrls([news])[0];
         res.json(modifiedNews);
 
     } catch (err) {
+        console.error('Error in getNewsById:', err);
         res.status(500).json({
             error: `Ошибка получения новости: ${err.message}`,
         });
