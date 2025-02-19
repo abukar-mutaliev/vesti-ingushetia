@@ -64,48 +64,66 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-app.use('/news/:id', async (req, res, next) => {
+const pathToIndex = path.join(__dirname, '../dist/index.html');
+
+app.get('/news/:id', async (req, res) => {
     const userAgent = req.headers['user-agent'] || '';
     const isYandexBot = userAgent.includes('YandexBot');
 
-    if (isYandexBot) {
-        const indexHtml = fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf-8');
-
-        try {
-            const newsId = req.params.id;
-            const news = await require('./models').News.findByPk(newsId, {
-                include: [
-                    { model: require('./models').User, as: 'authorDetails' },
-                    { model: require('./models').Media, as: 'mediaFiles' }
-                ]
-            });
-
-            if (!news) {
-                return res.status(404).send('Новость не найдена');
-            }
-
-            const formattedNews = require('./controllers/news.controller').formatMediaUrls([news])[0];
-            const mainImage = formattedNews.mediaFiles?.find(media => media.type === 'image')?.url || `${process.env.BASE_URL}/logo.jpg`;
-            const formattedDate = new Date(formattedNews.publishDate || formattedNews.createdAt).toISOString();
-
-            let html = indexHtml
-                .replace(/%TITLE%/g, formattedNews.title)
-                .replace(/%CONTENT%/g, formattedNews.content)
-                .replace(/%PUBLISH_DATE%/g, formattedDate)
-                .replace(/%AUTHOR%/g, formattedNews.authorDetails?.username || 'Редакция')
-                .replace(/%NEWS_ID%/g, newsId)
-                .replace(/%IMAGE_URL%/g, mainImage)
-                .replace('display: none;', 'display: block;');
-
-            return res.send(html);
-        } catch (error) {
-            console.error('Error processing news for Yandex:', error);
-            next();
-        }
+    if (!isYandexBot) {
+        return res.sendFile(pathToIndex);
     }
 
-    next();
+    try {
+        const { id } = req.params;
+        const news = await News.findByPk(id, {
+            include: [
+                { model: User, as: 'authorDetails' },
+                { model: Media, as: 'mediaFiles' }
+            ]
+        });
+
+        if (!news) {
+            return res.status(404).send('Новость не найдена');
+        }
+
+        let html = fs.readFileSync(pathToIndex, 'utf-8');
+        const modifiedNews = formatMediaUrls([news])[0];
+        const mainImage = modifiedNews.mediaFiles?.find(media => media.type === 'image')?.url
+            || `${process.env.BASE_URL}/logo.jpg`;
+        const formattedDate = new Date(modifiedNews.publishDate || modifiedNews.createdAt)
+            .toISOString();
+
+        const safeContent = modifiedNews.content
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+
+        const safeTitle = modifiedNews.title
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+
+        html = html
+            .replace(/%TITLE%/g, safeTitle)
+            .replace(/%CONTENT%/g, safeContent)
+            .replace(/%PUBLISH_DATE%/g, formattedDate)
+            .replace(/%AUTHOR%/g, modifiedNews.authorDetails?.username || 'Редакция')
+            .replace(/%NEWS_ID%/g, id)
+            .replace(/%IMAGE_URL%/g, mainImage)
+            .replace(/display:\s*none;/, 'display: block;');
+
+        res.send(html);
+    } catch (error) {
+        console.error('Error processing news for Yandex:', error);
+        res.status(500).send('Внутренняя ошибка сервера');
+    }
 });
+
 app.use("/rss", rssRouter);
 
 app.use(
