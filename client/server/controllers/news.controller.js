@@ -90,6 +90,12 @@ const formatHtml = (html) => {
         .replace(/&nbsp;/g, ' ')
         .trim();
 };
+const shortenDescription = (text) => {
+    const cleanText = stripHtml(text).trim();
+    const sentences = cleanText.split(/[.!?]/).filter(Boolean);
+    const shortened = sentences.slice(0, 2).join('. ');
+    return shortened.endsWith('.') ? shortened : shortened + '.';
+};
 
 exports.getNewsById = async (req, res) => {
     const userAgent = req.headers['user-agent'] || '';
@@ -115,6 +121,7 @@ exports.getNewsById = async (req, res) => {
         const cleanedContent = formatHtml(news.content);
         const plainContent = stripHtml(cleanedContent);
         const safeTitle = stripHtml(news.title);
+        const shortDescription = shortenDescription(news.content);
 
         const imageUrl = news.mediaFiles?.find(media => media.type === 'image')?.url || '/logo.jpg';
         const mainImage = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}/${imageUrl.replace(/^\//, '')}`;
@@ -137,7 +144,7 @@ exports.getNewsById = async (req, res) => {
         let html = template
             .replace(/%TITLE%/g, safeTitle)
             .replace(/%CONTENT%/g, cleanedContent)
-            .replace(/%DESCRIPTION%/g, plainContent)
+            .replace(/%DESCRIPTION%/g, shortDescription)
             .replace(/%PUBLISH_DATE%/g, formattedDate)
             .replace(/%AUTHOR%/g, author)
             .replace(/%NEWS_ID%/g, id)
@@ -158,6 +165,7 @@ exports.getNewsById = async (req, res) => {
         });
     }
 };
+
 
 
 exports.getNewsByDate = async (req, res) => {
