@@ -95,6 +95,7 @@ exports.getNewsById = async (req, res) => {
     const userAgent = req.headers['user-agent'] || '';
     const isYandexBot = userAgent.includes('YandexBot');
 
+
     try {
         const { id } = req.params;
         const news = await News.findByPk(id, {
@@ -128,8 +129,8 @@ exports.getNewsById = async (req, res) => {
 
         const formattedDate = new Date(news.publishDate || news.createdAt).toISOString();
 
-        const template = formatHtml(fs.readFileSync(path.join(__dirname, '../../dist/index.html'), 'utf-8'));
-
+        const template = formatHtml(fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf-8'));
+        console.log("template", template)
         let html = template
             .replace(/%TITLE%/g, safeTitle)
             .replace(/%CONTENT%/g, cleanedContent)
@@ -142,20 +143,22 @@ exports.getNewsById = async (req, res) => {
             .replace(/%PUBLISHER_MARKUP%/g, publisherMarkup)
             .replace(/\${baseUrl}/g, baseUrl)
 
+
         html = formatHtml(html);
+        console.log("html", html)
 
         if (isYandexBot) {
             return res.send(html);
         } else {
-            return res.sendFile(path.join(__dirname, '../../dist/index.html'));
+            return res.sendFile(path.join(__dirname, '../../index.html'));
         }
+
 
     } catch (error) {
         console.error('Ошибка при обработке новости:', error.message);
-        res.status(500).send('Внутренняя ошибка сервера');
+        res.status(500).send('Внутренняя ошибка сервера', error);
     }
 };
-
 
 
 exports.getNewsByDate = async (req, res) => {
