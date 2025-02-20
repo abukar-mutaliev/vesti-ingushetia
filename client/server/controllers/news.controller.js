@@ -11,7 +11,6 @@ const {
 const fs = require('fs');
 const baseUrl = process.env.BASE_URL;
 const he = require('he');
-
 const path = require('path');
 
 const formatMediaUrls = (newsItems) => {
@@ -129,7 +128,7 @@ exports.getNewsById = async (req, res) => {
 
         const formattedDate = new Date(news.publishDate || news.createdAt).toISOString();
 
-        const template = formatHtml(fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf-8'));
+        const template = formatHtml(fs.readFileSync(path.join(__dirname, '../../dist/index.html'), 'utf-8'));
 
         let html = template
             .replace(/%TITLE%/g, safeTitle)
@@ -148,7 +147,7 @@ exports.getNewsById = async (req, res) => {
         if (isYandexBot) {
             return res.send(html);
         } else {
-            return res.sendFile(path.join(__dirname, '../../index.html'));
+            return res.sendFile(path.join(__dirname, '../../dist/index.html'));
         }
 
     } catch (error) {
@@ -156,6 +155,7 @@ exports.getNewsById = async (req, res) => {
         res.status(500).send('Внутренняя ошибка сервера');
     }
 };
+
 
 
 exports.getNewsByDate = async (req, res) => {
