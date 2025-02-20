@@ -145,21 +145,17 @@ exports.getNewsById = async (req, res) => {
 
 
         html = formatHtml(html);
-        console.log("html", html)
-
         if (isYandexBot) {
             return res.send(html);
         } else {
             return res.sendFile(path.join(__dirname, '../../index.html'));
         }
 
-
     } catch (error) {
         console.error('Ошибка при обработке новости:', error.message);
         res.status(500).send('Внутренняя ошибка сервера', error);
     }
 };
-
 
 exports.getNewsByDate = async (req, res) => {
     try {
