@@ -120,15 +120,6 @@ export const EditNewsSection = ({ news, onCancel }) => {
             }));
         }
 
-        console.log({
-            isTitleValid,
-            isContentValid,
-            isCategoriesValid,
-            isVideoUrlValid,
-            isMediaValid,
-            errors,
-        });
-
         return (
             isTitleValid &&
             isContentValid &&
@@ -160,7 +151,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
 
     const handleSave = () => {
         setHasAttemptedSubmit(true);
-        setErrors({}); // Очистка всех ошибок перед валидацией
+        setErrors({});
 
         if (!validateForm()) {
             console.log('Форма не прошла валидацию:', errors);
@@ -184,15 +175,10 @@ export const EditNewsSection = ({ news, onCancel }) => {
             if (file && file.type.startsWith('image')) formData.append('images', file);
         });
 
-        console.log('Отправка данных:', {
-            id: news.id,
-            newsData: formData
-        });
 
         dispatch(updateNews({ id: news.id, newsData: formData }))
             .unwrap()
             .then(() => {
-                console.log("Новость успешно обновлена");
                 dispatch(fetchAllNews());
                 setHasAttemptedSubmit(false);
                 onCancel();

@@ -39,13 +39,11 @@ const TVPage = () => {
 
     const handleDateChange = (date) => {
         const dateString = date.toISOString();
-        console.log('Выбранная дата для фильтрации:', dateString);
         dispatch(filterNewsByDate(dateString));
         dispatch(setPage(0));
     };
 
     const handleResetDate = () => {
-        console.log('Сброс выбранной даты');
         dispatch(filterNewsByDate(null));
         dispatch(setPage(0));
     };

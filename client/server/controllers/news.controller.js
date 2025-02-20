@@ -130,7 +130,6 @@ exports.getNewsById = async (req, res) => {
         const formattedDate = new Date(news.publishDate || news.createdAt).toISOString();
 
         const template = formatHtml(fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf-8'));
-        console.log("template", template)
         let html = template
             .replace(/%TITLE%/g, safeTitle)
             .replace(/%CONTENT%/g, cleanedContent)
@@ -142,7 +141,6 @@ exports.getNewsById = async (req, res) => {
             .replace(/%MAIN_ENTITY_PAGE%/g, `${baseUrl}/news/${id}`)
             .replace(/%PUBLISHER_MARKUP%/g, publisherMarkup)
             .replace(/\${baseUrl}/g, baseUrl)
-
 
         html = formatHtml(html);
         if (isYandexBot) {
