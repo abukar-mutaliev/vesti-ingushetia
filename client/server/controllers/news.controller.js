@@ -10,6 +10,7 @@ const {
 } = require('../models');
 const fs = require('fs');
 const baseUrl = process.env.BASE_URL;
+const he = require('he');
 
 const path = require('path');
 
@@ -74,15 +75,33 @@ exports.getAllNews = async (req, res) => {
     }
 };
 
+const stripHtml = (html) => {
+    return he.decode(html)
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+};
+
+const formatHtml = (html) => {
+    return html
+        .replace(/\r?\n/g, '')
+        .replace(/\s+/g, ' ')
+        .replace(/> </g, '>\n<')
+        .replace(/&nbsp;/g, ' ')
+        .trim();
+};
+
 exports.getNewsById = async (req, res) => {
+    const userAgent = req.headers['user-agent'] || '';
+    const isYandexBot = userAgent.includes('YandexBot');
+
     try {
         const { id } = req.params;
         const news = await News.findByPk(id, {
             include: [
-                { model: Category, as: 'categories' },
-                { model: User, as: 'authorDetails' },
-                { model: Comment, as: 'comments' },
-                { model: Media, as: 'mediaFiles' },
+                { model: User, as: 'authorDetails', attributes: ['username'] },
+                { model: Media, as: 'mediaFiles', attributes: ['type', 'url'] },
             ],
         });
 
@@ -90,61 +109,54 @@ exports.getNewsById = async (req, res) => {
             return res.status(404).json({ message: 'Новость не найдена' });
         }
 
-        await news.increment('views');
+        const cleanedContent = formatHtml(news.content);
+        const plainContent = stripHtml(cleanedContent);
+        const safeTitle = stripHtml(news.title);
 
-        const modifiedNews = formatMediaUrls([news])[0];
-        const mainImage = modifiedNews.mediaFiles?.find(media => media.type === 'image')?.url || `${baseUrl}/logo.jpg`;
-        const formattedDate = new Date(modifiedNews.publishDate || modifiedNews.createdAt).toISOString();
+        const imageUrl = news.mediaFiles?.find(media => media.type === 'image')?.url || '/logo.jpg';
+        const mainImage = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}/${imageUrl.replace(/^\//, '')}`;
 
-        const userAgent = req.headers['user-agent'] || '';
-        const isYandexBot = userAgent.includes('YandexBot');
+        const author = news.authorDetails?.username || 'Редакция';
 
-        if (isYandexBot || req.headers['view-source']) {
-            const indexHtml = fs.readFileSync(path.join(__dirname, '../../../index.html'), 'utf-8');
+        const publisherMarkup = `
+            <div itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+                <meta itemprop="name" content="Вести Ингушетии" />
+                <div itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+                    <meta itemprop="url" content="${baseUrl}/logo.jpg" />
+                </div>
+            </div>
+        `;
 
-            const safeContent = modifiedNews.content
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
+        const formattedDate = new Date(news.publishDate || news.createdAt).toISOString();
 
-            const safeTitle = modifiedNews.title
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
+        const template = formatHtml(fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf-8'));
 
-            const replacements = {
-                '%TITLE%': safeTitle,
-                '%CONTENT%': safeContent,
-                '%NEWS_ID%': id,
-                '%PUBLISH_DATE%': formattedDate,
-                '%AUTHOR%': modifiedNews.authorDetails?.username || 'Редакция',
-                '%IMAGE_URL%': mainImage,
-                'Вести Ингушетии</title>': `${safeTitle} - Вести Ингушетии</title>`
-            };
+        let html = template
+            .replace(/%TITLE%/g, safeTitle)
+            .replace(/%CONTENT%/g, cleanedContent)
+            .replace(/%DESCRIPTION%/g, plainContent)
+            .replace(/%PUBLISH_DATE%/g, formattedDate)
+            .replace(/%AUTHOR%/g, author)
+            .replace(/%NEWS_ID%/g, id)
+            .replace(/%IMAGE_URL%/g, mainImage)
+            .replace(/%MAIN_ENTITY_PAGE%/g, `${baseUrl}/news/${id}`)
+            .replace(/%PUBLISHER_MARKUP%/g, publisherMarkup)
+            .replace(/\${baseUrl}/g, baseUrl)
 
-            let html = indexHtml;
-            Object.entries(replacements).forEach(([placeholder, value]) => {
-                html = html.replace(new RegExp(placeholder, 'g'), value);
-            });
+        html = formatHtml(html);
 
-            if (isYandexBot) {
-                html = html.replace('display: none;', 'display: block;');
-            }
-
+        if (isYandexBot) {
             return res.send(html);
+        } else {
+            return res.sendFile(path.join(__dirname, '../../index.html'));
         }
 
-        res.json(modifiedNews);
-
-    } catch (err) {
-        console.error('Error in getNewsById:', err);
-        res.status(500).json({
-            error: `Ошибка получения новости: ${err.message}`,
-        });
+    } catch (error) {
+        console.error('Ошибка при обработке новости:', error.message);
+        res.status(500).send('Внутренняя ошибка сервера');
     }
 };
+
 
 exports.getNewsByDate = async (req, res) => {
     try {
@@ -182,6 +194,7 @@ exports.getNewsByDate = async (req, res) => {
         });
     }
 };
+
 
 exports.createNews = async (req, res) => {
     const { title, content, categoryIds, videoUrl, publishDate } = req.body;

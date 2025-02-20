@@ -8,18 +8,7 @@ const generateRssFeed = (newsItems) => {
         const dayName = days[d.getUTCDay()];
 
         const months = [
-            'Jan',
-            'Feb',
-            'Mar',
-            'Apr',
-            'May',
-            'Jun',
-            'Jul',
-            'Aug',
-            'Sep',
-            'Oct',
-            'Nov',
-            'Dec'
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
         ];
         const monthName = months[d.getUTCMonth()];
 
@@ -46,9 +35,9 @@ const generateRssFeed = (newsItems) => {
                 item: newsItems.map((news) => ({
                     title: news.title,
                     link: `https://ingushetiatv.ru/news/${news.id}`,
-                    description: news.description,
-                    pubDate: formatDateRFC822(news.publishDate),
-                    "dc:creator": news.author || "Редакция",
+                    description: news.description || stripHtml(news.content),
+                    pubDate: formatDateRFC822(news.publishDate || new Date()),
+                    "dc:creator": news.authorDetails?.username || "Редакция",
                     "yandex:full-text": news.content || "",
                 })),
             },

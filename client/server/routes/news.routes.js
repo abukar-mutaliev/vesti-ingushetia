@@ -62,14 +62,4 @@ router.delete(
     deleteNews,
 );
 
-router.get('/news/:id', async (req, res, next) => {
-    const userAgent = req.headers['user-agent'] || '';
-    const isYandexBot = userAgent.includes('YandexBot');
-
-    if (isYandexBot) {
-        return getNewsById(req, res);
-    }
-
-    res.sendFile(path.join(__dirname, '../../dist/index.html'));
-});
 module.exports = router;

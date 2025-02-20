@@ -14,8 +14,6 @@ require('./middlewares/cronJobs');
 const botBlocker = require('./middlewares/botBlocker');
 const fs = require('fs');
 const rssRouter = require("./routes/rss");
-const { News, User, Media } = require('./models');
-const {cache} = require("express/lib/application");
 
 const privateKey = fs.readFileSync(path.join(__dirname, 'cf', 'private-key.pem'), 'utf8');
 const certificate = fs.readFileSync(path.join(__dirname, 'cf', 'certificate.pem'), 'utf8');
@@ -46,96 +44,7 @@ app.use(express.json());
 
 app.use(cookieParser());
 
-const indexHtmlTemplate = fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf-8');
 
-const decode = (str) => {
-    return str.replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&amp;/g, '&')
-        .replace(/&#039;/g, "'");
-};
-
-const stripHtml = (html) => {
-    return html.replace(/<[^>]*>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-};
-
-app.get('/news/:id', async (req, res) => {
-    try {
-        const userAgent = req.headers['user-agent'] || '';
-        const isYandexBot = userAgent.includes('YandexBot');
-
-        if (!isYandexBot) {
-            return res.sendFile(path.join(__dirname, '../dist/index.html'));
-        }
-
-        const { id } = req.params;
-
-        const cacheKey = `news_${req.params.id}`;
-        let news = await cache.get(cacheKey);
-
-        if (!news) {
-            news = await News.findByPk(req.params.id, {
-                include: [
-                    {
-                        model: User,
-                        as: 'authorDetails',
-                        attributes: ['username']
-                    },
-                    {
-                        model: Media,
-                        as: 'mediaFiles',
-                        attributes: ['type', 'url']
-                    }
-                ]
-            });
-            await cache.set(cacheKey, news, 300);
-        }
-
-        if (!news) {
-            return res.status(404).send('Новость не найдена');
-        }
-
-
-
-        const indexHtml = fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf-8');
-
-        const formattedDate = new Date(news.publishDate || news.createdAt).toISOString();
-
-        const safeContent = decode(news.content);
-        const safeTitle = news.title;
-        const plainContent = stripHtml(safeContent);
-
-        const mainImage = news.mediaFiles?.find(media => media.type === 'image')?.url
-            ? `https://ingushetiatv.ru/${news.mediaFiles.find(media => media.type === 'image').url}`
-            : `${process.env.BASE_URL}/logo.jpg`;
-
-        let html = indexHtml
-            .replace(/<title>[^<]*<\/title>/, `<title>${safeTitle} - Вести Ингушетии</title>`)
-            .replace(/%TITLE%/g, safeTitle)
-            .replace(/<meta name="description" content="[^"]*"/, `<meta name="description" content="${plainContent.substring(0, 200)}..."`)
-            .replace(/<meta name="yandex:full-text" content="[^"]*"/, `<meta name="yandex:full-text" content="${plainContent}"`)
-            .replace(/<meta property="og:description" content="[^"]*"/, `<meta property="og:description" content="${plainContent.substring(0, 200)}..."`)
-            .replace(/%CONTENT%/g, safeContent)
-            .replace(/%PUBLISH_DATE%/g, formattedDate)
-            .replace(/%AUTHOR%/g, news.authorDetails?.username || 'Редакция')
-            .replace(/%NEWS_ID%/g, id)
-            .replace(/%IMAGE_URL%/g, mainImage);
-
-        html = html.replace(
-            /\.seo-content\s*{\s*display:\s*none;\s*}/,
-            '.seo-content { display: block; }'
-        );
-
-        res.send(html);
-    } catch (error) {
-        console.error('Error processing news:', error.message);
-        console.error(error.stack);
-        res.status(500).send('Внутренняя ошибка сервера');
-    }
-});
 
 const corsOptions = {
     origin: function (origin, callback) {

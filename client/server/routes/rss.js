@@ -1,13 +1,18 @@
-const express = require("express");
-const { News } = require("../models");
-const { generateRssFeed } = require("../utils/rssGenerator");
+const router = require('express').Router();
+const { News, User } = require('../models');
+const { generateRssFeed } = require('../utils/rssGenerator');
 
-const router = express.Router();
-
-router.get("/", async (req, res) => {
+router.get("/rss", async (req, res) => {
     try {
         const newsItems = await News.findAll({
-            order: [["published_at", "DESC"]],
+            include: [
+                {
+                    model: User,
+                    as: 'authorDetails',
+                    attributes: ['username'],
+                }
+            ],
+            order: [['publishDate', 'DESC']],
             limit: 20,
         });
 

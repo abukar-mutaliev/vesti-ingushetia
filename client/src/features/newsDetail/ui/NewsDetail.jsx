@@ -107,10 +107,6 @@ export const NewsDetail = memo(
             });
         }, [displayDate]);
 
-        const cleanContent = useMemo(() => {
-            return DOMPurify.sanitize(news?.content || '');
-        }, [news?.content]);
-
         const ogImage = useMemo(() => {
             if (imageMedia?.url) {
                 return new URL(imageMedia.url, window.location.origin).toString();
@@ -125,33 +121,10 @@ export const NewsDetail = memo(
         return (
             <>
                 <Helmet>
-                    <meta name="yandex:full-text" content={cleanContent} />
-                    <meta
-                        property="article:published_time"
-                        content={news.publishDate || news.createdAt}
-                    />
-                    <meta
-                        property="article:author"
-                        content={news.authorDetails?.username || 'Редакция'}
-                    />
-                    <title>{news.title} - Вести Ингушетии</title>
-                    <meta property="og:title" content={news.title} />
-                    <meta
-                        property="og:description"
-                        content={cleanContent.slice(0, 200) + '...'}
-                    />
-                    <meta property="og:title" content={news.title} />
-                    <meta
-                        property="og:description"
-                        content={cleanContent.slice(0, 200) + '...'}
-                    />
-                    <meta property="og:type" content="article" />
-                    <meta property="og:url" content={window.location.href} />
-                    <meta property="og:image" content={ogImage} />
+                    {/* Оставляем только уникальные метатеги */}
                     <meta property="og:image:width" content="1200" />
                     <meta property="og:image:height" content="630" />
-                    <meta property="og:site_name" content="Вести Ингушетии" />
-                    <meta property="og:locale" content="ru_RU" />
+                    <title>{news.title} - Вести Ингушетии</title>
                 </Helmet>
                 <article
                     className={styles.newsDetail}
@@ -191,7 +164,7 @@ export const NewsDetail = memo(
                                     'Неизвестный'
                                 )}
                             </span>
-                            <Link to={`/`}>Вести Ингушетия</Link>
+                            <Link to={`/`}>Вести Ингушетии</Link>
                             <span>{formattedDate}</span>
                             <div className={styles.views}>
                                 <FaEye size={10} /> {news.views}
