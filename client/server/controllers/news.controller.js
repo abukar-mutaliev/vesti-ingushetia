@@ -93,8 +93,7 @@ const formatHtml = (html) => {
 
 exports.getNewsById = async (req, res) => {
     const userAgent = req.headers['user-agent'] || '';
-    const isYandexBot = userAgent.includes('YandexBot');
-
+    const isBot = userAgent.includes('YandexBot') || userAgent.includes('bot');
 
     try {
         const { id } = req.params;
@@ -107,6 +106,10 @@ exports.getNewsById = async (req, res) => {
 
         if (!news) {
             return res.status(404).json({ message: 'Новость не найдена' });
+        }
+
+        if (!isBot) {
+            return res.sendFile(path.join(__dirname, '../../index.html'));
         }
 
         const cleanedContent = formatHtml(news.content);
@@ -129,7 +132,8 @@ exports.getNewsById = async (req, res) => {
 
         const formattedDate = new Date(news.publishDate || news.createdAt).toISOString();
 
-        const template = formatHtml(fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf-8'));
+        const template = formatHtml(fs.readFileSync(path.join(__dirname, '../../seo.html'), 'utf-8'));
+
         let html = template
             .replace(/%TITLE%/g, safeTitle)
             .replace(/%CONTENT%/g, cleanedContent)
@@ -140,20 +144,21 @@ exports.getNewsById = async (req, res) => {
             .replace(/%IMAGE_URL%/g, mainImage)
             .replace(/%MAIN_ENTITY_PAGE%/g, `${baseUrl}/news/${id}`)
             .replace(/%PUBLISHER_MARKUP%/g, publisherMarkup)
-            .replace(/\${baseUrl}/g, baseUrl)
+            .replace(/\${baseUrl}/g, baseUrl);
 
         html = formatHtml(html);
-        if (isYandexBot) {
-            return res.send(html);
-        } else {
-            return res.sendFile(path.join(__dirname, '../../index.html'));
-        }
+
+        return res.send(html);
 
     } catch (error) {
         console.error('Ошибка при обработке новости:', error.message);
-        res.status(500).send('Внутренняя ошибка сервера', error);
+        res.status(500).json({
+            message: 'Внутренняя ошибка сервера',
+            error: error.message
+        });
     }
 };
+
 
 exports.getNewsByDate = async (req, res) => {
     try {
