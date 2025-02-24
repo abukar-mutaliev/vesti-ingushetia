@@ -13,7 +13,6 @@ const csurf = require('csurf');
 require('./middlewares/cronJobs');
 const botBlocker = require('./middlewares/botBlocker');
 const fs = require('fs');
-const rssRouter = require("./routes/rss");
 
 const privateKey = fs.readFileSync(path.join(__dirname, 'cf', 'private-key.pem'), 'utf8');
 const certificate = fs.readFileSync(path.join(__dirname, 'cf', 'certificate.pem'), 'utf8');
@@ -45,7 +44,6 @@ app.use(express.json());
 app.use(cookieParser());
 
 
-
 const corsOptions = {
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
@@ -67,7 +65,6 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-app.use("/rss", rssRouter);
 
 app.use(
     helmet({
@@ -138,6 +135,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/api', router);
+router.use('/rss', require('./routes/rss'));
 
 const safePath = path.normalize(path.join(__dirname, '../uploads'));
 

@@ -1,5 +1,9 @@
 const { XMLBuilder } = require("fast-xml-parser");
 
+const stripHtml = (html = "") => {
+    return html.replace(/<[^>]*>/g, '');
+}
+
 const generateRssFeed = (newsItems) => {
     const formatDateRFC822 = (date) => {
         const d = new Date(date);

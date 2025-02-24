@@ -119,7 +119,6 @@ exports.getNewsById = async (req, res) => {
         }
 
         const cleanedContent = formatHtml(news.content);
-        const plainContent = stripHtml(cleanedContent);
         const safeTitle = stripHtml(news.title);
         const shortDescription = shortenDescription(news.content);
 
@@ -165,8 +164,6 @@ exports.getNewsById = async (req, res) => {
         });
     }
 };
-
-
 
 exports.getNewsByDate = async (req, res) => {
     try {

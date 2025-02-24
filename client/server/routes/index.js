@@ -24,7 +24,5 @@ router.use('/projects', require('./projects.routes'));
 
 router.use('/media', require('./media.routes'));
 
-router.use('/rss', require('./rss'));
-
 
 module.exports = router;
