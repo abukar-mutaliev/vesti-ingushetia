@@ -135,7 +135,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/api', router);
-router.use('/rss', require('./routes/rss'));
+app.use('/rss', require('./routes/rss'));
 
 const safePath = path.normalize(path.join(__dirname, '../uploads'));
 
