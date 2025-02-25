@@ -12,7 +12,6 @@ const rateLimit = require('express-rate-limit');
 const csurf = require('csurf');
 require('./middlewares/cronJobs');
 const botHandler = require('./middlewares/botHandler.middleware');
-
 const fs = require('fs');
 
 const privateKey = fs.readFileSync(path.join(__dirname, 'cf', 'private-key.pem'), 'utf8');
@@ -36,15 +35,19 @@ const audioDir = path.join(uploadDir, 'audio');
 const avatarDir = path.join(uploadDir, 'avatars');
 
 const app = express();
-app.use(botHandler);
-
 const PORT = process.env.PORT || 5000;
 
+// Базовые middleware для обработки запросов
 app.use(express.json());
-
 app.use(cookieParser());
 
+// Логирование запросов
+app.use((req, res, next) => {
+    logger.info(`Получен запрос: ${req.method} ${req.url}`);
+    next();
+});
 
+// Настройка CORS
 const corsOptions = {
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
@@ -66,7 +69,19 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+// Функция для определения ботов
+const isBot = (req) => {
+    const userAgent = req.headers['user-agent']?.toLowerCase() || '';
+    return userAgent.includes('bot') ||
+        userAgent.includes('spider') ||
+        userAgent.includes('crawler') ||
+        userAgent.includes('yandex') ||
+        userAgent.includes('googlebot');
+};
 
+// Защитные middleware
+
+// Helmet для безопасности заголовков
 app.use(
     helmet({
         crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -104,27 +119,7 @@ app.use(
     }),
 );
 
-app.use((req, res, next) => {
-    const userAgent = req.headers['user-agent']?.toLowerCase() || '';
-    const isBot = userAgent.includes('bot') ||
-        userAgent.includes('spider') ||
-        userAgent.includes('crawler') ||
-        userAgent.includes('yandex') ||
-        userAgent.includes('googlebot');
-
-    if (isBot) {
-        return next();
-    }
-    csurf({
-        cookie: {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Strict',
-            name: 'csrf-token',
-        },
-    })(req, res, next);
-});
-
+// Лимитер запросов
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10000000,
@@ -137,23 +132,39 @@ const limiter = rateLimit({
         });
     },
     skip: (req, res) => {
-        const userAgent = req.headers['user-agent']?.toLowerCase() || '';
-        const isBot = userAgent.includes('bot') ||
-            userAgent.includes('spider') ||
-            userAgent.includes('crawler') ||
-            userAgent.includes('yandex') ||
-            userAgent.includes('googlebot');
-
-        return isBot || req.path === '/api/users/csrf-token';
+        return isBot(req) || req.path === '/api/users/csrf-token' ||
+            req.path.includes('/rss') || req.path === '/robots.txt' ||
+            req.path === '/sitemap.xml';
     },
 });
 app.use(limiter);
 
+// CSRF защита (только не для ботов, RSS и определенных путей)
+app.use((req, res, next) => {
+    if (isBot(req) || req.path.includes('/rss') || req.path === '/robots.txt' ||
+        req.path === '/sitemap.xml') {
+        return next();
+    }
+
+    csurf({
+        cookie: {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Strict',
+            name: 'csrf-token',
+        },
+    })(req, res, next);
+});
+
+
+// Маршруты для роботов и SEO
 app.get('/robots.txt', (req, res) => {
     const robotsTxt = `User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/
+Allow: /api/rss
+Allow: /rss
 Disallow: /login
 Disallow: /register
 
@@ -161,6 +172,8 @@ User-agent: Yandex
 Allow: /
 Disallow: /admin/
 Disallow: /api/
+Allow: /api/rss
+Allow: /rss
 Disallow: /login
 Disallow: /register
 Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content
@@ -224,18 +237,16 @@ app.get('/sitemap.xml', async (req, res) => {
     }
 });
 
-
-app.use((req, res, next) => {
-    logger.info(`Получен запрос: ${req.method} ${req.url}`);
-    next();
-});
-
-app.use('/api', router);
-app.use('/rss', require('./routes/rss'));
+// Настройка RSS маршрутов
 app.use('/api/rss', require('./routes/rss'));
-app.get('/rss', (req, res) => {
+app.use('/rss', (req, res) => {
     res.redirect('/api/rss');
 });
+
+// API маршруты
+app.use('/api', router);
+
+// Обработка загрузок/статических файлов
 const safePath = path.normalize(path.join(__dirname, '../uploads'));
 
 app.use('../uploads', (req, res, next) => {
@@ -247,6 +258,7 @@ app.use('../uploads', (req, res, next) => {
     return res.status(400).send('Invalid path');
 });
 
+// Статические файлы для загрузок
 app.use(
     '/uploads/images',
     express.static(imagesDir, {
@@ -280,16 +292,25 @@ app.use(
     }),
 );
 
+// Middleware для проверки, был ли уже отправлен ответ
+app.use((req, res, next) => {
+    if (res.headersSent) {
+        return;
+    }
+    next();
+});
+
+// Статические файлы для клиентского приложения
+const distDir = path.join(__dirname, '../dist');
+app.use(express.static(distDir));
+
+// Обработчик ботов должен быть ПЕРЕД catch-all маршрутом
+app.use(botHandler);
+
+// Обработка ошибок
 app.use((err, req, res, next) => {
     if (err.code === 'EBADCSRFTOKEN') {
-        const userAgent = req.headers['user-agent']?.toLowerCase() || '';
-        const isBot = userAgent.includes('bot') ||
-            userAgent.includes('spider') ||
-            userAgent.includes('crawler') ||
-            userAgent.includes('yandex') ||
-            userAgent.includes('googlebot');
-
-        if (isBot) {
+        if (isBot(req) || req.path.includes('/rss')) {
             return next();
         }
 
@@ -310,13 +331,14 @@ app.use((err, req, res, next) => {
     logger.error(`Ошибка: ${err.message}`);
     res.status(500).json({ error: 'Внутренняя ошибка сервера' });
 });
-const distDir = path.join(__dirname, '../dist');
-
-app.use(express.static(distDir));
 
 app.get('*', (req, res) => {
-    res.sendFile(path.join(distDir, 'index.html'));
+    if (!res.headersSent) {
+        res.sendFile(path.join(distDir, 'index.html'));
+    }
 });
+
+// Запуск сервера
 sequelize
     .sync()
     .then(() => {

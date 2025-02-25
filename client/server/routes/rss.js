@@ -6,6 +6,10 @@ const logger = require('../logger');
 
 router.get("/", async (req, res) => {
     try {
+        logger.info("Запрос RSS-фида");
+
+        logger.info(`Заголовки: User-Agent=${req.headers['user-agent']}`);
+
         const newsItems = await News.findAll({
             include: [
                 {
@@ -31,18 +35,23 @@ router.get("/", async (req, res) => {
 
         res.set({
             'Content-Type': 'application/rss+xml; charset=utf-8',
-            'Cache-Control': 'public, max-age=1800' // кэширование на 30 минут
+            'Cache-Control': 'public, max-age=1800'
         });
 
         res.send(rssFeed);
+
         logger.info('RSS-фид успешно сгенерирован');
+
     } catch (error) {
         logger.error(`Ошибка генерации RSS: ${error.message}`);
-        res.status(500).send("Ошибка сервера");
+
+        if (!res.headersSent) {
+            res.status(500).send("Ошибка сервера при генерации RSS");
+        }
     }
 });
 
-router.get("/", (req, res) => {
+router.get("/*", (req, res) => {
     res.redirect('/api/rss');
 });
 
