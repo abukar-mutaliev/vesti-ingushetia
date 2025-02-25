@@ -11,7 +11,8 @@ const path = require('path');
 const rateLimit = require('express-rate-limit');
 const csurf = require('csurf');
 require('./middlewares/cronJobs');
-const botBlocker = require('./middlewares/botBlocker');
+const botHandler = require('./middlewares/botHandler.middleware');
+
 const fs = require('fs');
 
 const privateKey = fs.readFileSync(path.join(__dirname, 'cf', 'private-key.pem'), 'utf8');
@@ -35,7 +36,7 @@ const audioDir = path.join(uploadDir, 'audio');
 const avatarDir = path.join(uploadDir, 'avatars');
 
 const app = express();
-app.use(botBlocker);
+app.use(botHandler);
 
 const PORT = process.env.PORT || 5000;
 
@@ -103,7 +104,17 @@ app.use(
     }),
 );
 
-app.use(
+app.use((req, res, next) => {
+    const userAgent = req.headers['user-agent']?.toLowerCase() || '';
+    const isBot = userAgent.includes('bot') ||
+        userAgent.includes('spider') ||
+        userAgent.includes('crawler') ||
+        userAgent.includes('yandex') ||
+        userAgent.includes('googlebot');
+
+    if (isBot) {
+        return next();
+    }
     csurf({
         cookie: {
             httpOnly: true,
@@ -111,8 +122,8 @@ app.use(
             sameSite: 'Strict',
             name: 'csrf-token',
         },
-    }),
-);
+    })(req, res, next);
+});
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -125,9 +136,94 @@ const limiter = rateLimit({
             retryAfter: Math.ceil(limiter.windowMs / 1000),
         });
     },
-    skip: (req, res) => req.path === '/api/users/csrf-token',
+    skip: (req, res) => {
+        const userAgent = req.headers['user-agent']?.toLowerCase() || '';
+        const isBot = userAgent.includes('bot') ||
+            userAgent.includes('spider') ||
+            userAgent.includes('crawler') ||
+            userAgent.includes('yandex') ||
+            userAgent.includes('googlebot');
+
+        return isBot || req.path === '/api/users/csrf-token';
+    },
 });
 app.use(limiter);
+
+app.get('/robots.txt', (req, res) => {
+    const robotsTxt = `User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+
+User-agent: Yandex
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content
+Host: ${req.get('host')}
+
+Sitemap: https://${req.get('host')}/sitemap.xml
+`;
+    res.type('text/plain');
+    res.send(robotsTxt);
+});
+
+app.get('/sitemap.xml', async (req, res) => {
+    try {
+        const News = require('./models').News;
+        const Category = require('./models').Category;
+
+        const news = await News.findAll({
+            attributes: ['id', 'createdAt', 'updatedAt', 'publishDate']
+        });
+
+        const categories = await Category.findAll({
+            attributes: ['id']
+        });
+
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+
+        xml += '  <url>\n';
+        xml += `    <loc>https://${req.get('host')}/</loc>\n`;
+        xml += '    <changefreq>daily</changefreq>\n';
+        xml += '    <priority>1.0</priority>\n';
+        xml += '  </url>\n';
+
+        news.forEach(item => {
+            const pubDate = item.publishDate || item.createdAt;
+            const lastMod = item.updatedAt || pubDate;
+
+            xml += '  <url>\n';
+            xml += `    <loc>https://${req.get('host')}/news/${item.id}</loc>\n`;
+            xml += `    <lastmod>${new Date(lastMod).toISOString().split('T')[0]}</lastmod>\n`;
+            xml += '    <changefreq>monthly</changefreq>\n';
+            xml += '    <priority>0.8</priority>\n';
+            xml += '  </url>\n';
+        });
+
+        categories.forEach(category => {
+            xml += '  <url>\n';
+            xml += `    <loc>https://${req.get('host')}/category/${category.id}</loc>\n`;
+            xml += '    <changefreq>weekly</changefreq>\n';
+            xml += '    <priority>0.7</priority>\n';
+            xml += '  </url>\n';
+        });
+
+        xml += '</urlset>';
+
+        res.type('application/xml');
+        res.send(xml);
+    } catch (error) {
+        logger.error(`Ошибка при генерации sitemap: ${error.message}`);
+        res.status(500).send('Ошибка генерации sitemap');
+    }
+});
+
 
 app.use((req, res, next) => {
     logger.info(`Получен запрос: ${req.method} ${req.url}`);
@@ -183,6 +279,17 @@ app.use(
 
 app.use((err, req, res, next) => {
     if (err.code === 'EBADCSRFTOKEN') {
+        const userAgent = req.headers['user-agent']?.toLowerCase() || '';
+        const isBot = userAgent.includes('bot') ||
+            userAgent.includes('spider') ||
+            userAgent.includes('crawler') ||
+            userAgent.includes('yandex') ||
+            userAgent.includes('googlebot');
+
+        if (isBot) {
+            return next();
+        }
+
         return res.status(403).json({ error: 'Недействительный CSRF токен' });
     }
     next(err);

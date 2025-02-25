@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { News, User } = require('../models');
 const { generateRssFeed } = require('../utils/rssGenerator');
 
-router.get("/", async (req, res) => {
+router.get("/rss", async (req, res) => {
     try {
         const newsItems = await News.findAll({
             include: [
@@ -15,6 +15,7 @@ router.get("/", async (req, res) => {
             order: [['publishDate', 'DESC']],
             limit: 20,
         });
+
         const rssFeed = generateRssFeed(newsItems);
         res.set("Content-Type", "application/xml");
         res.send(rssFeed);
