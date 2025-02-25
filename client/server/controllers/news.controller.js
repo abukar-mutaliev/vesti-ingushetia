@@ -142,7 +142,7 @@ exports.getNewsById = async (req, res) => {
 
         let html = template
             .replace(/%TITLE%/g, safeTitle)
-            .replace(/%CONTENT%/g, cleanedContent)
+            .replace(/%FULLTEXT%/g, cleanedContent)
             .replace(/%DESCRIPTION%/g, shortDescription)
             .replace(/%PUBLISH_DATE%/g, formattedDate)
             .replace(/%AUTHOR%/g, author)

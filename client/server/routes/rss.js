@@ -15,7 +15,6 @@ router.get("/", async (req, res) => {
             order: [['publishDate', 'DESC']],
             limit: 20,
         });
-        console.log("rss")
         const rssFeed = generateRssFeed(newsItems);
         res.set("Content-Type", "application/xml");
         res.send(rssFeed);
