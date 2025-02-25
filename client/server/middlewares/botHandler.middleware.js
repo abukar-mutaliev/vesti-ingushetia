@@ -40,7 +40,7 @@ const botHandler = async (req, res, next) => {
         const publishDate = news.publishDate || news.createdAt;
         const plainContent = news.content?.replace(/<[^>]*>?/gm, '') || '';
 
-        const seoHtmlPath = path.join(__dirname, '../../client/dist/seo.html');
+        const seoHtmlPath = path.join(__dirname, '../../dist/seo.html');
         logger.info(`Ищу SEO-шаблон по пути: ${seoHtmlPath}`);
         logger.info(`Шаблон существует: ${fs.existsSync(seoHtmlPath)}`);
 
