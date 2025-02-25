@@ -1,11 +1,12 @@
 const path = require('path');
 const fs = require('fs');
 const logger = require('../logger');
-const { News, Category } = require('../models'); // Импортируем модели
+const { News } = require('../models');
 
 const botHandler = async (req, res, next) => {
     const userAgent = req.headers['user-agent']?.toLowerCase() || '';
     logger.info(`User-Agent запроса: ${userAgent}`);
+
     const isBot = userAgent.includes('bot') ||
         userAgent.includes('spider') ||
         userAgent.includes('crawler') ||
@@ -13,25 +14,23 @@ const botHandler = async (req, res, next) => {
         userAgent.includes('googlebot');
 
     if (!isBot) {
+        logger.info(`Не бот, пропускаю: ${req.path}`);
         return next();
     }
-    logger.info(`Обнаружен бот: ${userAgent}`);
 
     const newsMatch = req.path.match(/^\/news\/(\d+)$/);
     if (!newsMatch) {
-        logger.info(`Путь ${req.path} не соответствует /news/:id, пропускаю`);
+        logger.info(`Путь ${req.path} не /news/:id, пропускаю`);
         return next();
     }
+
     const newsId = newsMatch[1];
-    logger.info(`Бот запрашивает страницу новости ${newsId}, UA: ${userAgent}`);
+    logger.info(`Бот запрашивает /news/${newsId}`);
 
     try {
-        const news = await News.findByPk(newsId, {
-            include: [{ model: Category, attributes: ['name'] }],
-        });
-
+        const news = await News.findByPk(newsId);
         if (!news) {
-            logger.warn(`Новость ${newsId} не найдена для бота ${userAgent}`);
+            logger.warn(`Новость ${newsId} не найдена`);
             return next();
         }
 
@@ -41,13 +40,17 @@ const botHandler = async (req, res, next) => {
         const publishDate = news.publishDate || news.createdAt;
         const plainContent = news.content?.replace(/<[^>]*>?/gm, '') || '';
 
-        const seoHtmlPath = path.join(__dirname, '../../dist/seo.html');
+        const seoHtmlPath = path.join(__dirname, '../../client/dist/seo.html');
+        logger.info(`Ищу SEO-шаблон по пути: ${seoHtmlPath}`);
+        logger.info(`Шаблон существует: ${fs.existsSync(seoHtmlPath)}`);
+
         if (!fs.existsSync(seoHtmlPath)) {
-            logger.error(`SEO шаблон не найден по пути: ${seoHtmlPath}`);
+            logger.error(`SEO-шаблон не найден: ${seoHtmlPath}`);
             return next();
         }
 
         let htmlTemplate = fs.readFileSync(seoHtmlPath, 'utf8');
+        logger.info(`SEO-шаблон успешно прочитан`);
 
         htmlTemplate = htmlTemplate
             .replace(/%TITLE%/g, news.title)
@@ -69,10 +72,10 @@ const botHandler = async (req, res, next) => {
             `)
             .replace(/%[A-Z_]+%/g, '');
 
-        logger.info(`Отправляю SEO HTML для бота ${userAgent}, новость ${newsId}`);
+        logger.info(`Отправляю SEO-HTML для бота, новость ${newsId}`);
         return res.send(htmlTemplate);
     } catch (error) {
-        logger.error(`Ошибка при обработке запроса бота: ${error.message}`);
+        logger.error(`Ошибка в botHandler: ${error.message}`);
         return next();
     }
 };

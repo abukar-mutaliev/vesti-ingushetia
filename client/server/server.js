@@ -334,6 +334,7 @@ app.use((err, req, res, next) => {
 
 app.get('*', (req, res) => {
     if (!res.headersSent) {
+        logger.info(`Отправляю index.html для ${req.path}`);
         res.sendFile(path.join(distDir, 'index.html'));
     }
 });

@@ -40,15 +40,7 @@ router.get('/all', getAllNews);
 
 router.get('/date', validate, getNewsByDateValidator, getNewsByDate);
 
-router.get('/:id', (req, res, next) => {
-    const userAgent = req.headers['user-agent'] || '';
-    if (userAgent.includes('YandexBot') || userAgent.includes('bot')) {
-        console.log('Обнаружен бот для API-запроса новости:', req.params.id);
-
-        req.isBot = true;
-    }
-    next();
-}, getNewsByIdValidator, validate, getNewsById);
+router.get('/:id', getNewsByIdValidator, validate, getNewsById);
 
 router.put(
     '/update/:id',
