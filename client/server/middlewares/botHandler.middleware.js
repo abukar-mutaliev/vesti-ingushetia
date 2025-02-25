@@ -5,6 +5,7 @@ const { News, Category } = require('../models'); // Импортируем мо�
 
 const botHandler = async (req, res, next) => {
     const userAgent = req.headers['user-agent']?.toLowerCase() || '';
+    logger.info(`User-Agent запроса: ${userAgent}`);
     const isBot = userAgent.includes('bot') ||
         userAgent.includes('spider') ||
         userAgent.includes('crawler') ||
@@ -14,12 +15,13 @@ const botHandler = async (req, res, next) => {
     if (!isBot) {
         return next();
     }
+    logger.info(`Обнаружен бот: ${userAgent}`);
 
     const newsMatch = req.path.match(/^\/news\/(\d+)$/);
     if (!newsMatch) {
+        logger.info(`Путь ${req.path} не соответствует /news/:id, пропускаю`);
         return next();
     }
-
     const newsId = newsMatch[1];
     logger.info(`Бот запрашивает страницу новости ${newsId}, UA: ${userAgent}`);
 
