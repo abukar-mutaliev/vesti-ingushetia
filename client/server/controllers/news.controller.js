@@ -10,7 +10,7 @@ const {
 } = require('../models');
 const fs = require('fs');
 const baseUrl = process.env.BASE_URL;
-const he = require('he');
+
 const path = require('path');
 
 const formatMediaUrls = (newsItems) => {
@@ -74,96 +74,128 @@ exports.getAllNews = async (req, res) => {
     }
 };
 
-const stripHtml = (html) => {
-    return he.decode(html)
-        .replace(/<[^>]*>/g, ' ')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-};
+exports.generateSchemaForYandex = (news) => {
+    const baseUrl = process.env.BASE_URL || 'https://ingushetiatv.ru';
 
-const formatHtml = (html) => {
-    return html
-        .replace(/\r?\n/g, '')
-        .replace(/\s+/g, ' ')
-        .replace(/> </g, '>\n<')
-        .replace(/&nbsp;/g, ' ')
-        .trim();
-};
-const shortenDescription = (text) => {
-    const cleanText = stripHtml(text).trim();
-    const sentences = cleanText.split(/[.!?]/).filter(Boolean);
-    const shortened = sentences.slice(0, 2).join('. ');
-    return shortened.endsWith('.') ? shortened : shortened + '.';
+    const articleSchema = {
+        "@context": "http://schema.org",
+        "@type": "NewsArticle",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": `${baseUrl}/news/${news.id}`
+        },
+        "headline": news.title,
+        "description": news.description || news.title.substring(0, 150),
+        "image": [],
+        "author": {
+            "@type": "Person",
+            "name": news.authorDetails?.username || "Редакция"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Вести Ингушетии",
+            "logo": {
+                "@type": "ImageObject",
+                "url": `${baseUrl}/logo.png`,
+                "width": 600,
+                "height": 60
+            }
+        },
+        "datePublished": news.publishDate || news.createdAt,
+        "dateModified": news.updatedAt || news.publishDate || news.createdAt,
+        "keywords": news.categories?.map(cat => cat.name).join(', ') || "новости, Ингушетия, ГТРК"
+    };
+
+    if (news.mediaFiles && news.mediaFiles.length > 0) {
+        const imageMedia = news.mediaFiles.filter(media => media.type === 'image');
+        if (imageMedia.length > 0) {
+            articleSchema.image = imageMedia.map(media => {
+                const imageUrl = media.url.startsWith('http')
+                    ? media.url
+                    : `${baseUrl}${media.url}`;
+
+                return imageUrl;
+            });
+        } else {
+            articleSchema.image = [`${baseUrl}/default.jpg`];
+        }
+    }
+
+    if (news.content) {
+        const plainText = news.content.replace(/<[^>]*>?/gm, '');
+        articleSchema.articleBody = plainText;
+    }
+
+    return JSON.stringify(articleSchema);
 };
 
 exports.getNewsById = async (req, res) => {
-    const userAgent = req.headers['user-agent'] || '';
-    const isBot = userAgent.includes('YandexBot') || userAgent.includes('bot');
-
     try {
         const { id } = req.params;
         const news = await News.findByPk(id, {
             include: [
-                { model: User, as: 'authorDetails', attributes: ['username'] },
-                { model: Media, as: 'mediaFiles', attributes: ['type', 'url'] },
+                {
+                    model: Category,
+                    as: 'categories',
+                    through: { attributes: [] },
+                },
+                { model: User, as: 'authorDetails' },
+                { model: Comment, as: 'comments' },
+                {
+                    model: Media,
+                    as: 'mediaFiles',
+                },
             ],
         });
-
-        if (!news) {
+        if (!news)
             return res.status(404).json({ message: 'Новость не найдена' });
-        }
 
-        if (!isBot) {
-            return res.sendFile(path.join(__dirname, '../../index.html'));
-        }
+        await news.increment('views');
 
-        const cleanedContent = formatHtml(news.content);
-        const safeTitle = stripHtml(news.title);
-        const shortDescription = shortenDescription(news.content);
+        const modifiedNews = formatMediaUrls([news])[0];
 
-        const imageUrl = news.mediaFiles?.find(media => media.type === 'image')?.url || '/logo.jpg';
-        const mainImage = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}/${imageUrl.replace(/^\//, '')}`;
+        // Добавляем схему для Яндекса
+        modifiedNews.schemaYandex = exports.generateSchemaForYandex(modifiedNews);
 
-        const author = news.authorDetails?.username || 'Редакция';
-
-        const publisherMarkup = `
-            <div itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-                <meta itemprop="name" content="Вести Ингушетии" />
-                <div itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-                    <meta itemprop="url" content="${baseUrl}/logo.jpg" />
-                </div>
-            </div>
-        `;
-
-        const formattedDate = new Date(news.publishDate || news.createdAt).toISOString();
-
-        const template = formatHtml(fs.readFileSync(path.join(__dirname, '../../seo.html'), 'utf-8'));
-
-        let html = template
-            .replace(/%TITLE%/g, safeTitle)
-            .replace(/%FULLTEXT%/g, cleanedContent)
-            .replace(/%DESCRIPTION%/g, shortDescription)
-            .replace(/%PUBLISH_DATE%/g, formattedDate)
-            .replace(/%AUTHOR%/g, author)
-            .replace(/%NEWS_ID%/g, id)
-            .replace(/%IMAGE_URL%/g, mainImage)
-            .replace(/%MAIN_ENTITY_PAGE%/g, `${baseUrl}/news/${id}`)
-            .replace(/%PUBLISHER_MARKUP%/g, publisherMarkup)
-            .replace(/\${baseUrl}/g, baseUrl);
-
-        html = formatHtml(html);
-
-        return res.send(html);
-
-    } catch (error) {
-        console.error('Ошибка при обработке новости:', error.message);
+        res.json(modifiedNews);
+    } catch (err) {
         res.status(500).json({
-            message: 'Внутренняя ошибка сервера',
-            error: error.message
+            error: `Ошибка получения новости: ${err.message}`,
         });
     }
 };
+// exports.getNewsById = async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const news = await News.findByPk(id, {
+//             include: [
+//                 {
+//                     model: Category,
+//                     as: 'categories',
+//                     through: { attributes: [] },
+//                 },
+//                 { model: User, as: 'authorDetails' },
+//                 { model: Comment, as: 'comments' },
+//                 {
+//                     model: Media,
+//                     as: 'mediaFiles',
+//                 },
+//             ],
+//         });
+//         if (!news)
+//             return res.status(404).json({ message: 'Новость не найдена' });
+//
+//         await news.increment('views');
+//
+//         const modifiedNews = formatMediaUrls([news])[0];
+//
+//         res.json(modifiedNews);
+//     } catch (err) {
+//         res.status(500).json({
+//             error: `Ошибка получения новости: ${err.message}`,
+//         });
+//     }
+// };
 
 exports.getNewsByDate = async (req, res) => {
     try {
@@ -201,7 +233,6 @@ exports.getNewsByDate = async (req, res) => {
         });
     }
 };
-
 
 exports.createNews = async (req, res) => {
     const { title, content, categoryIds, videoUrl, publishDate } = req.body;

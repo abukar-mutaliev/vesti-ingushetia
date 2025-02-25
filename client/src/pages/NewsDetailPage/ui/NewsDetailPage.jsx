@@ -49,6 +49,28 @@ const NewsDetailPage = memo(() => {
         window.scrollTo(0, 0);
     }, [id]);
 
+    useEffect(() => {
+        if (currentNews?.schemaYandex) {
+            const existingSchema = document.getElementById('news-schema-yandex');
+            if (existingSchema) {
+                existingSchema.remove();
+            }
+
+            const schemaScript = document.createElement('script');
+            schemaScript.id = 'news-schema-yandex';
+            schemaScript.type = 'application/ld+json';
+            schemaScript.textContent = currentNews.schemaYandex;
+            document.head.appendChild(schemaScript);
+        }
+
+        return () => {
+            const existingSchema = document.getElementById('news-schema-yandex');
+            if (existingSchema) {
+                existingSchema.remove();
+            }
+        };
+    }, [currentNews]);
+
     if (!currentNews || loadingNewsById || loadingNews) {
         return <Loader />;
     }
@@ -61,6 +83,8 @@ const NewsDetailPage = memo(() => {
                     news={currentNews}
                     loading={loadingNewsById}
                     comments={comments}
+                    userId={currentNews.authorDetails?.id}
+                    authorName={currentNews.authorDetails?.username}
                 />
                 <div className={styles.sidebarContainer}>
                     <Sidebar

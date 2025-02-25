@@ -114,6 +114,11 @@ export const NewsDetail = memo(
             return new URL(defaultOgImage, window.location.origin).toString();
         }, [imageMedia]);
 
+        // Определить категории для schema.org
+        const schemaCategories = useMemo(() => {
+            return news?.categories?.map(cat => cat.name).join(', ') || 'Новости';
+        }, [news?.categories]);
+
         if (loading || !news) {
             return <Loader />;
         }
@@ -121,11 +126,59 @@ export const NewsDetail = memo(
         return (
             <>
                 <Helmet>
-                    {/* Оставляем только уникальные метатеги */}
                     <meta property="og:image:width" content="1200" />
                     <meta property="og:image:height" content="630" />
+                    <meta name="description" content={news.description || news.title} />
+                    <meta name="keywords" content={`новости, Ингушетия, ГТРК, ${schemaCategories}`} />
+                    <meta property="og:title" content={news.title} />
+                    <meta property="og:description" content={news.description || news.title} />
+                    <meta property="og:image" content={ogImage} />
+                    <meta property="og:type" content="article" />
+                    <meta property="og:locale" content="ru_RU" />
+                    <meta property="article:published_time" content={news.publishDate || news.createdAt} />
+                    <meta property="article:author" content={news.authorDetails?.username || 'Редакция'} />
                     <title>{news.title} - Вести Ингушетии</title>
+
+                    {/* Yandex-specific meta tags */}
+                    <meta name="yandex-verification" content="ваш-код-верификации" />
+                    <link rel="canonical" href={`${window.location.origin}/news/${newsId}`} />
                 </Helmet>
+
+                {/* Расширенный Schema.org разметка для Яндекс */}
+                <script type="application/ld+json">
+                    {JSON.stringify({
+                        "@context": "http://schema.org",
+                        "@type": "NewsArticle",
+                        "mainEntityOfPage": {
+                            "@type": "WebPage",
+                            "@id": `${window.location.origin}/news/${newsId}`
+                        },
+                        "headline": news.title,
+                        "description": news.description || news.title,
+                        "image": imageMedia?.url ? [new URL(imageMedia.url, window.location.origin).toString()] :
+                            [new URL(defaultOgImage, window.location.origin).toString()],
+                        "author": {
+                            "@type": "Person",
+                            "name": news.authorDetails?.username || "Редакция"
+                        },
+                        "publisher": {
+                            "@type": "Organization",
+                            "name": "Вести Ингушетии",
+                            "logo": {
+                                "@type": "ImageObject",
+                                "url": `${window.location.origin}/logo.png`,
+                                "width": 600,
+                                "height": 60
+                            }
+                        },
+                        "datePublished": news.publishDate || news.createdAt,
+                        "dateModified": news.updatedAt || news.publishDate || news.createdAt,
+                        "articleBody": news.content?.replace(/<[^>]*>?/gm, '') || "",
+                        "articleSection": schemaCategories,
+                        "keywords": `новости, Ингушетия, ГТРК, ${schemaCategories}`
+                    })}
+                </script>
+
                 <article
                     className={styles.newsDetail}
                     itemScope
@@ -137,13 +190,27 @@ export const NewsDetail = memo(
                     />
                     <meta
                         itemProp="dateModified"
-                        content={
-                            news.updatedAt || news.publishDate || news.createdAt
-                        }
+                        content={news.updatedAt || news.publishDate || news.createdAt}
                     />
                     <meta
                         itemProp="author"
                         content={news.authorDetails?.username || 'Редакция'}
+                    />
+                    <meta
+                        itemProp="publisher"
+                        content="Вести Ингушетии"
+                    />
+                    <meta
+                        itemProp="articleSection"
+                        content={schemaCategories}
+                    />
+                    <meta
+                        itemProp="keywords"
+                        content={`новости, Ингушетия, ГТРК, ${schemaCategories}`}
+                    />
+                    <link
+                        itemProp="mainEntityOfPage"
+                        href={`${window.location.origin}/news/${newsId}`}
                     />
 
                     <h1 className={styles.title} itemProp="headline">
@@ -155,19 +222,19 @@ export const NewsDetail = memo(
                             <span>
                                 Автор:{' '}
                                 {news.authorDetails ? (
-                                    <Link
-                                        to={`/author/${news.authorDetails.id}`}
-                                    >
-                                        {news.authorDetails.username}
+                                    <Link to={`/author/${news.authorDetails.id}`}>
+                                        <span itemProp="author">{news.authorDetails.username}</span>
                                     </Link>
                                 ) : (
-                                    'Неизвестный'
+                                    <span itemProp="author">Редакция</span>
                                 )}
                             </span>
-                            <Link to={`/`}>Вести Ингушетии</Link>
-                            <span>{formattedDate}</span>
+                            <Link to={`/`}><span itemProp="publisher">Вести Ингушетии</span></Link>
+                            <span itemProp="datePublished" content={news.publishDate || news.createdAt}>
+                                {formattedDate}
+                            </span>
                             <div className={styles.views}>
-                                <FaEye size={10} /> {news.views}
+                                <FaEye size={10} /> <span itemProp="interactionCount" content={`UserPageVisits:${news.views}`}>{news.views}</span>
                             </div>
                         </div>
 
@@ -182,17 +249,25 @@ export const NewsDetail = memo(
                                         frameBorder="0"
                                         allowFullScreen
                                         title="Видео"
+                                        itemProp="video"
                                     ></iframe>
                                 </div>
                             ) : (
-                                <MediaElement
-                                    imageUrl={imageMedia?.url}
-                                    videoUrl={videoMedia?.url}
-                                    alt={news.title}
-                                    className={styles.newsImage}
-                                    playIconSize={70}
-                                    showPlayIcon={false}
-                                />
+                                imageMedia?.url && (
+                                    <div itemProp="image" itemScope itemType="https://schema.org/ImageObject">
+                                        <link itemProp="url" href={new URL(imageMedia.url, window.location.origin).toString()} />
+                                        <meta itemProp="width" content="1200" />
+                                        <meta itemProp="height" content="630" />
+                                        <MediaElement
+                                            imageUrl={imageMedia.url}
+                                            videoUrl={videoMedia?.url}
+                                            alt={news.title}
+                                            className={styles.newsImage}
+                                            playIconSize={70}
+                                            showPlayIcon={false}
+                                        />
+                                    </div>
+                                )
                             )}
                         </div>
 
@@ -204,6 +279,7 @@ export const NewsDetail = memo(
                                     dangerouslySetInnerHTML={{
                                         __html: processedContent,
                                     }}
+                                    itemProp="articleBody"
                                 />
 
                                 {otherMediaFiles.length > 0 && (
@@ -212,7 +288,11 @@ export const NewsDetail = memo(
                                             <div
                                                 key={media.id}
                                                 className={styles.imageWrapper}
+                                                itemProp="image"
+                                                itemScope
+                                                itemType="https://schema.org/ImageObject"
                                             >
+                                                <link itemProp="url" href={new URL(media.url, window.location.origin).toString()} />
                                                 <MediaElement
                                                     imageUrl={media.url}
                                                     alt={news.title}
@@ -226,15 +306,17 @@ export const NewsDetail = memo(
                             </div>
                         </div>
 
-                        <CommentSection
-                            comments={comments}
-                            newsId={newsId}
-                            authorName={authorName}
-                            userId={userId}
-                        />
+                        <div itemProp="comment">
+                            <CommentSection
+                                comments={comments}
+                                newsId={newsId}
+                                authorName={authorName}
+                                userId={userId}
+                            />
+                        </div>
                     </div>
                 </article>
             </>
         );
-    },
+    }
 );
