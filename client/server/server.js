@@ -248,30 +248,84 @@ app.use('/api', router);
 
 app.get('/news/:id', async (req, res, next) => {
     const userAgent = req.headers['user-agent'] || '';
-    const isBot = userAgent.includes('bot') ||
-        userAgent.includes('spider') ||
-        userAgent.includes('crawler') ||
-        userAgent.includes('yandex');
+    const isBot = userAgent.toLowerCase().includes('bot') ||
+        userAgent.toLowerCase().includes('spider') ||
+        userAgent.toLowerCase().includes('crawler') ||
+        userAgent.toLowerCase().includes('yandex');
 
     if (isBot) {
-        console.log(`Бот запрашивает страницу новости /news/${req.params.id}`);
+        console.log(`Бот запрашивает страницу: ${req.originalUrl}, User-Agent: ${userAgent}`);
+
         try {
-            const apiResponse = await axios.get(`http://localhost:${process.env.PORT}/api/news/${req.params.id}`, {
-                headers: {
-                    'User-Agent': userAgent
-                }
+            const newsId = req.params.id;
+
+            const News = require('./models').News;
+            const User = require('./models').User;
+            const Category = require('./models').Category;
+            const Media = require('./models').Media;
+
+            const news = await News.findByPk(newsId, {
+                include: [
+                    { model: Category, as: 'categories', through: { attributes: [] } },
+                    { model: User, as: 'authorDetails' },
+                    { model: Media, as: 'mediaFiles' }
+                ]
             });
 
-            if (typeof apiResponse.data === 'string' && apiResponse.data.includes('<!DOCTYPE html>')) {
-                console.log('Отправляем боту SEO-HTML из API');
-                return res.send(apiResponse.data);
+            if (!news) {
+                return next();
+            }
+
+            const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
+
+            const imageMedia = news.mediaFiles?.find(media => media.type === 'image');
+            const imageUrl = imageMedia
+                ? (imageMedia.url.startsWith('http') ? imageMedia.url : `${baseUrl}${imageMedia.url}`)
+                : `${baseUrl}/default.jpg`;
+
+            const author = news.authorDetails?.username || 'Редакция';
+            const publishDate = news.publishDate || news.createdAt;
+            const plainContent = news.content?.replace(/<[^>]*>?/gm, '') || '';
+
+            const seoHtmlPath = path.join(__dirname, '../client/dist/seo.html');
+            console.log(`Ищу SEO-шаблон для URL запроса: ${seoHtmlPath}`);
+            console.log(`Шаблон существует: ${fs.existsSync(seoHtmlPath)}`);
+
+            if (fs.existsSync(seoHtmlPath)) {
+                let html = fs.readFileSync(seoHtmlPath, 'utf8');
+
+                html = html
+                    .replace(/%TITLE%/g, news.title)
+                    .replace(/%DESCRIPTION%/g, news.description || news.title.substring(0, 150))
+                    .replace(/%FULLTEXT%/g, plainContent)
+                    .replace(/%NEWS_ID%/g, newsId)
+                    .replace(/%IMAGE_URL%/g, imageUrl)
+                    .replace(/%PUBLISH_DATE%/g, publishDate)
+                    .replace(/%AUTHOR%/g, author)
+                    .replace(/%CONTENT%/g, news.content || '')
+                    .replace(/\${baseUrl}/g, baseUrl);
+
+                // Добавляем publisher markup
+                const publisherMarkup = `
+                    <div itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+                        <meta itemprop="name" content="Вести Ингушетии" />
+                        <div itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+                            <meta itemprop="url" content="${baseUrl}/logo.png" />
+                        </div>
+                    </div>
+                `;
+                html = html.replace(/%PUBLISHER_MARKUP%/g, publisherMarkup);
+
+                console.log(`Отправляю SEO-шаблон для бота - URL: ${req.originalUrl}`);
+                return res.send(html);
             } else {
-                console.log('API вернул данные не в HTML формате, используем стандартный обработчик');
+                console.log('SEO-шаблон не найден, продолжаю обычную обработку');
             }
         } catch (error) {
-            console.error('Ошибка при запросе к API:', error.message);
+            console.error('Ошибка при обработке запроса от бота:', error);
         }
     }
+
     next();
 });
 
