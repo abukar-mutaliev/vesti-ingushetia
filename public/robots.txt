@@ -603,3 +603,24 @@ Disallow: /
 
 User-agent: Grabber
 Disallow
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Allow: /api/rss
+Disallow: /login
+Disallow: /register
+
+User-agent: Yandex
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Allow: /api/rss
+Allow: /rss
+Disallow: /login
+Disallow: /register
+Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content
+Host: ingushetiatv.ru
+
+Sitemap: https://ingushetiatv.ru/sitemap.xml
