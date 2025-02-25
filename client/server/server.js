@@ -244,7 +244,6 @@ app.use('/rss', (req, res) => {
 });
 
 // API маршруты
-app.use('/api', router);
 app.get('/news/:id', (req, res, next) => {
     const userAgent = req.headers['user-agent'] || '';
     if (userAgent.includes('YandexBot')) {
@@ -267,6 +266,9 @@ app.get('/news/:id', (req, res, next) => {
     }
     next();
 });
+
+app.use('/api', router);
+
 // Обработка загрузок/статических файлов
 const safePath = path.normalize(path.join(__dirname, '../uploads'));
 
