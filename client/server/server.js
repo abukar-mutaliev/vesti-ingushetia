@@ -303,8 +303,8 @@ app.use((req, res, next) => {
 
 // Статические файлы для клиентского приложения
 const distDir = path.join(__dirname, '../dist');
-app.use(express.static(distDir));
 app.use(botHandler);
+app.use(express.static(distDir));
 
 
 // Обработка ошибок
