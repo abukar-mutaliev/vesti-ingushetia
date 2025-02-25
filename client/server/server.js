@@ -245,7 +245,28 @@ app.use('/rss', (req, res) => {
 
 // API маршруты
 app.use('/api', router);
-
+app.get('/news/:id', (req, res, next) => {
+    const userAgent = req.headers['user-agent'] || '';
+    if (userAgent.includes('YandexBot')) {
+        console.log('Обнаружен Яндекс бот, возвращаем SEO-шаблон');
+        try {
+            const seoHtmlPath = path.join(__dirname, '../dist/seo.html');
+            if (fs.existsSync(seoHtmlPath)) {
+                let html = fs.readFileSync(seoHtmlPath, 'utf8');
+                html = html.replace(/%TITLE%/g, 'Тестовая новость')
+                    .replace(/%NEWS_ID%/g, req.params.id)
+                    .replace(/%BASE_URL%/g, 'https://ingushetiatv.ru');
+                res.send(html);
+                return;
+            } else {
+                console.log('SEO шаблон не найден:', seoHtmlPath);
+            }
+        } catch (error) {
+            console.error('Ошибка при чтении SEO шаблона:', error);
+        }
+    }
+    next();
+});
 // Обработка загрузок/статических файлов
 const safePath = path.normalize(path.join(__dirname, '../uploads'));
 

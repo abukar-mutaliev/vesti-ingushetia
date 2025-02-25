@@ -7,7 +7,6 @@ const logger = require('../logger');
  * Middleware для специальной обработки поисковых ботов
  */
 const botHandler = async (req, res, next) => {
-    // Определяем, является ли запрос от бота
     const userAgent = req.headers['user-agent']?.toLowerCase() || '';
     const isBot = userAgent.includes('bot') ||
         userAgent.includes('spider') ||
@@ -15,17 +14,14 @@ const botHandler = async (req, res, next) => {
         userAgent.includes('yandex') ||
         userAgent.includes('googlebot');
 
-    // Если это не бот, просто пропускаем запрос дальше
     if (!isBot) {
         return next();
     }
 
     logger.info(`Запрос от бота: ${userAgent} - ${req.method} ${req.originalUrl}`);
 
-    // Проверяем, является ли это запросом к странице новости
     const newsMatch = req.originalUrl.match(/\/news\/(\d+)/);
     if (!newsMatch) {
-        // Если это не страница новости, просто пропускаем запрос дальше
         return next();
     }
 
@@ -33,7 +29,6 @@ const botHandler = async (req, res, next) => {
         const newsId = newsMatch[1];
         logger.info(`Бот запрашивает страницу новости ${newsId}`);
 
-        // Получаем данные новости из API
         const response = await axios.get(`http://localhost:${process.env.PORT}/api/news/${newsId}`);
         const news = response.data;
 
@@ -42,22 +37,17 @@ const botHandler = async (req, res, next) => {
             return next();
         }
 
-        // Определяем базовый URL сайта
         const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
 
-        // Определяем главное изображение
         const imageMedia = news.mediaFiles?.find(media => media.type === 'image');
         const imageUrl = imageMedia
             ? (imageMedia.url.startsWith('http') ? imageMedia.url : `${baseUrl}${imageMedia.url}`)
             : `${baseUrl}/default.jpg`;
 
-        // Формируем категории
         const categories = news.categories?.map(cat => cat.name).join(', ') || 'Новости';
 
-        // Формируем автора
         const author = news.authorDetails?.username || 'Редакция';
 
-        // Формируем дату публикации
         const publishDate = news.publishDate || news.createdAt;
         const formattedDate = new Date(publishDate).toLocaleDateString('ru-RU', {
             day: 'numeric',
@@ -65,14 +55,13 @@ const botHandler = async (req, res, next) => {
             year: 'numeric'
         });
 
-        // Очищаем контент от HTML-тегов для полнотекстового поиска
         const plainContent = news.content?.replace(/<[^>]*>?/gm, '') || '';
 
-        // Читаем SEO HTML-шаблон вместо обычного
         const distDir = path.join(__dirname, '../../dist');
         const seoHtmlPath = path.join(distDir, 'seo.html');
+        console.log(`Проверка существования файла: ${seoHtmlPath}, результат: ${fs.existsSync(seoHtmlPath)}`);
 
-        // Если SEO шаблон не найден, пробуем использовать обычный шаблон
+
         if (!fs.existsSync(seoHtmlPath)) {
             logger.warn(`Файл SEO шаблона не найден, использую обычный index.html`);
             const indexHtmlPath = path.join(distDir, 'index.html');
@@ -83,11 +72,9 @@ const botHandler = async (req, res, next) => {
             }
         }
 
-        // Читаем SEO шаблон или обычный, если SEO не найден
         const htmlTemplatePath = fs.existsSync(seoHtmlPath) ? seoHtmlPath : path.join(distDir, 'index.html');
         let htmlTemplate = fs.readFileSync(htmlTemplatePath, 'utf8');
 
-        // Если используем SEO шаблон, заменяем все плейсхолдеры
         if (fs.existsSync(seoHtmlPath)) {
             htmlTemplate = htmlTemplate
                 .replace(/%TITLE%/g, news.title)
@@ -107,13 +94,10 @@ const botHandler = async (req, res, next) => {
           </div>
         `);
 
-            // Если в шаблоне остались какие-то незамененные плейсхолдеры, заменяем их пустыми строками
             htmlTemplate = htmlTemplate
                 .replace(/%[A-Z_]+%/g, '');
         }
-        // Если используем обычный шаблон, то добавляем все SEO-метки и преренделинг
         else {
-            // Добавляем мета-теги и схему Schema.org для поисковых ботов
             const metaTags = `
         <meta name="description" content="${news.description || news.title.substring(0, 150)}">
         <meta name="keywords" content="новости, Ингушетия, ГТРК, ${categories}">
@@ -161,10 +145,8 @@ const botHandler = async (req, res, next) => {
         </script>
       `;
 
-            // Вставляем мета-теги и Schema.org в HTML
             htmlTemplate = htmlTemplate.replace('</head>', `${metaTags}${schemaOrgScript}</head>`);
 
-            // Добавляем предварительный HTML-контент для ботов
             const prerenderedContent = `
         <div id="prerendered-content">
           <article itemscope itemtype="http://schema.org/NewsArticle">
@@ -195,19 +177,15 @@ const botHandler = async (req, res, next) => {
         </div>
       `;
 
-            // Вставляем предварительный контент в HTML для ботов
             htmlTemplate = htmlTemplate.replace('<div id="root"></div>', `<div id="root">${prerenderedContent}</div>`);
             htmlTemplate = htmlTemplate.replace('<div id="root">', `<div id="root">`);
         }
 
-        // Логируем успешную обработку
         logger.info(`Отправка HTML для бота (${userAgent}) - новость ${newsId} - использован ${fs.existsSync(seoHtmlPath) ? 'SEO' : 'обычный'} шаблон`);
 
-        // Отправляем HTML боту
         res.send(htmlTemplate);
     } catch (error) {
         logger.error(`Ошибка при обработке бота: ${error.message}`);
-        // В случае ошибки просто продолжаем обычный процесс
         next();
     }
 };
