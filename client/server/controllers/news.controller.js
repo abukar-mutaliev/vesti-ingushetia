@@ -158,9 +158,13 @@ exports.getNewsById = async (req, res) => {
         if (req.isBot) {
             try {
                 const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
-                const seoHtmlPath = path.join(__dirname, '../dist/seo.html');
+                const seoHtmlPath = path.join(__dirname, '../../dist/seo.html');
+                console.log(`Ищу SEO-шаблон по пути: ${seoHtmlPath}`);
+                console.log(`Шаблон существует: ${fs.existsSync(seoHtmlPath)}`);
 
                 if (fs.existsSync(seoHtmlPath)) {
+                    console.log('SEO-шаблон успешно прочитан');
+
                     let html = fs.readFileSync(seoHtmlPath, 'utf8');
 
                     const imageMedia = modifiedNews.mediaFiles?.find(media => media.type === 'image');
@@ -195,7 +199,10 @@ exports.getNewsById = async (req, res) => {
 
                     return res.send(html);
                 }
+                console.error('Полный путь к файлу:', path.resolve(seoHtmlPath));
+
             } catch (error) {
+                console.error('Ошибка при чтении SEO-шаблона:', error);
                 console.error('Ошибка при генерации SEO HTML:', error);
             }
         }
