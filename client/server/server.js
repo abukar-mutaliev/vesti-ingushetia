@@ -244,30 +244,36 @@ app.use('/rss', (req, res) => {
 });
 
 // API маршруты
-app.get('/news/:id', (req, res, next) => {
+app.use('/api', router);
+
+app.get('/news/:id', async (req, res, next) => {
     const userAgent = req.headers['user-agent'] || '';
-    if (userAgent.includes('YandexBot')) {
-        console.log('Обнаружен Яндекс бот, возвращаем SEO-шаблон');
+    const isBot = userAgent.includes('bot') ||
+        userAgent.includes('spider') ||
+        userAgent.includes('crawler') ||
+        userAgent.includes('yandex');
+
+    if (isBot) {
+        console.log(`Бот запрашивает страницу новости /news/${req.params.id}`);
         try {
-            const seoHtmlPath = path.join(__dirname, '../dist/seo.html');
-            if (fs.existsSync(seoHtmlPath)) {
-                let html = fs.readFileSync(seoHtmlPath, 'utf8');
-                html = html.replace(/%TITLE%/g, 'Тестовая новость')
-                    .replace(/%NEWS_ID%/g, req.params.id)
-                    .replace(/%BASE_URL%/g, 'https://ingushetiatv.ru');
-                res.send(html);
-                return;
+            const apiResponse = await axios.get(`http://localhost:${process.env.PORT}/api/news/${req.params.id}`, {
+                headers: {
+                    'User-Agent': userAgent
+                }
+            });
+
+            if (typeof apiResponse.data === 'string' && apiResponse.data.includes('<!DOCTYPE html>')) {
+                console.log('Отправляем боту SEO-HTML из API');
+                return res.send(apiResponse.data);
             } else {
-                console.log('SEO шаблон не найден:', seoHtmlPath);
+                console.log('API вернул данные не в HTML формате, используем стандартный обработчик');
             }
         } catch (error) {
-            console.error('Ошибка при чтении SEO шаблона:', error);
+            console.error('Ошибка при запросе к API:', error.message);
         }
     }
     next();
 });
-
-app.use('/api', router);
 
 // Обработка загрузок/статических файлов
 const safePath = path.normalize(path.join(__dirname, '../uploads'));
