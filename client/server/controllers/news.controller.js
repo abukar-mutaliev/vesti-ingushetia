@@ -129,6 +129,7 @@ exports.generateSchemaForYandex = (news) => {
     return JSON.stringify(articleSchema);
 };
 
+// В вашем news.controller.js, модифицируйте функцию getNewsById
 exports.getNewsById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -154,8 +155,50 @@ exports.getNewsById = async (req, res) => {
 
         const modifiedNews = formatMediaUrls([news])[0];
 
-        // Добавляем схему для Яндекса
-        modifiedNews.schemaYandex = exports.generateSchemaForYandex(modifiedNews);
+        if (req.isBot) {
+            try {
+                const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
+                const seoHtmlPath = path.join(__dirname, '../dist/seo.html');
+
+                if (fs.existsSync(seoHtmlPath)) {
+                    let html = fs.readFileSync(seoHtmlPath, 'utf8');
+
+                    const imageMedia = modifiedNews.mediaFiles?.find(media => media.type === 'image');
+                    const imageUrl = imageMedia
+                        ? (imageMedia.url.startsWith('http') ? imageMedia.url : `${baseUrl}${imageMedia.url}`)
+                        : `${baseUrl}/default.jpg`;
+
+                    const author = modifiedNews.authorDetails?.username || 'Редакция';
+                    const publishDate = modifiedNews.publishDate || modifiedNews.createdAt;
+                    const plainContent = modifiedNews.content?.replace(/<[^>]*>?/gm, '') || '';
+
+                    html = html
+                        .replace(/%TITLE%/g, modifiedNews.title)
+                        .replace(/%DESCRIPTION%/g, modifiedNews.description || modifiedNews.title.substring(0, 150))
+                        .replace(/%FULLTEXT%/g, plainContent)
+                        .replace(/%NEWS_ID%/g, id)
+                        .replace(/%IMAGE_URL%/g, imageUrl)
+                        .replace(/%PUBLISH_DATE%/g, publishDate)
+                        .replace(/%AUTHOR%/g, author)
+                        .replace(/%CONTENT%/g, modifiedNews.content || '')
+                        .replace(/%BASE_URL%/g, baseUrl);
+
+                    const publisherMarkup = `
+                        <div itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+                            <meta itemprop="name" content="Вести Ингушетии" />
+                            <div itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+                                <meta itemprop="url" content="${baseUrl}/logo.png" />
+                            </div>
+                        </div>
+                    `;
+                    html = html.replace(/%PUBLISHER_MARKUP%/g, publisherMarkup);
+
+                    return res.send(html);
+                }
+            } catch (error) {
+                console.error('Ошибка при генерации SEO HTML:', error);
+            }
+        }
 
         res.json(modifiedNews);
     } catch (err) {
