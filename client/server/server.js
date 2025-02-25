@@ -48,70 +48,6 @@ const isBot = (req) => {
         userAgent.includes('googlebot');
 };
 
-app.use((req, res, next) => {
-    // Проверяем, это запрос к странице новостей?
-    const newsUrlMatch = req.path.match(/^\/news\/(\d+)$/);
-    if (!newsUrlMatch) {
-        return next(); // Если не страница новостей, пропускаем
-    }
-
-    // Проверяем User-Agent на бота
-    const userAgent = req.headers['user-agent'] || '';
-    const isBot = userAgent.toLowerCase().includes('bot') ||
-        userAgent.toLowerCase().includes('spider') ||
-        userAgent.toLowerCase().includes('crawler') ||
-        userAgent.toLowerCase().includes('yandex');
-
-    if (!isBot) {
-        return next(); // Если не бот, пропускаем
-    }
-
-    console.log(`!!!ПЕРЕХВАТ БОТА!!! URL: ${req.path}, UA: ${userAgent}`);
-
-    // Получаем ID новости из URL
-    const newsId = newsUrlMatch[1];
-
-    // Здесь напрямую читаем SEO-шаблон без обращения к БД (для быстрой проверки)
-    try {
-        const seoHtmlPath = path.join(__dirname, '../client/dist/seo.html');
-        console.log(`Проверка SEO шаблона: ${seoHtmlPath}, существует: ${fs.existsSync(seoHtmlPath)}`);
-
-        if (fs.existsSync(seoHtmlPath)) {
-            let html = fs.readFileSync(seoHtmlPath, 'utf8');
-
-            // Минимальная замена плейсхолдеров для теста
-            html = html
-                .replace(/%TITLE%/g, `Новость ${newsId} - Тестовый заголовок`)
-                .replace(/%DESCRIPTION%/g, `Описание новости ${newsId}`)
-                .replace(/%NEWS_ID%/g, newsId)
-                .replace(/%AUTHOR%/g, 'Тестовый автор')
-                .replace(/%PUBLISH_DATE%/g, new Date().toISOString())
-                .replace(/%CONTENT%/g, `<p>Тестовый контент новости ${newsId}</p>`)
-                .replace(/%FULLTEXT%/g, `Тестовый контент новости ${newsId}`)
-                .replace(/%IMAGE_URL%/g, `https://ingushetiatv.ru/default.jpg`)
-                .replace(/\${baseUrl}/g, `https://ingushetiatv.ru`)
-                .replace(/%BASE_URL%/g, `https://ingushetiatv.ru`)
-                .replace(/%PUBLISHER_MARKUP%/g, `
-                    <div itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-                        <meta itemprop="name" content="Вести Ингушетии" />
-                        <div itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-                            <meta itemprop="url" content="https://ingushetiatv.ru/logo.png" />
-                        </div>
-                    </div>
-                `);
-
-            console.log(`УСПЕШНО! Отправляю SEO-шаблон для бота!`);
-            return res.send(html);
-        } else {
-            console.log('SEO шаблон не найден');
-        }
-    } catch (error) {
-        console.error('Ошибка при обработке SEO шаблона:', error);
-    }
-
-    next();
-});
-
 // Базовые middleware для обработки запросов
 app.use(express.json());
 app.use(cookieParser());
@@ -368,9 +304,8 @@ app.use((req, res, next) => {
 // Статические файлы для клиентского приложения
 const distDir = path.join(__dirname, '../dist');
 app.use(express.static(distDir));
-
-// Обработчик ботов должен быть ПЕРЕД catch-all маршрутом
 app.use(botHandler);
+
 
 // Обработка ошибок
 app.use((err, req, res, next) => {
