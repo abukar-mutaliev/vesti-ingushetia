@@ -129,7 +129,6 @@ exports.generateSchemaForYandex = (news) => {
     return JSON.stringify(articleSchema);
 };
 
-// В вашем news.controller.js, модифицируйте функцию getNewsById
 exports.getNewsById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -171,6 +170,7 @@ exports.getNewsById = async (req, res) => {
                     const imageUrl = imageMedia
                         ? (imageMedia.url.startsWith('http') ? imageMedia.url : `${baseUrl}${imageMedia.url}`)
                         : `${baseUrl}/default.jpg`;
+                    console.log("URL изображения для бота:", imageUrl);
 
                     const author = modifiedNews.authorDetails?.username || 'Редакция';
                     const publishDate = modifiedNews.publishDate || modifiedNews.createdAt;
@@ -185,6 +185,7 @@ exports.getNewsById = async (req, res) => {
                         .replace(/%PUBLISH_DATE%/g, publishDate)
                         .replace(/%AUTHOR%/g, author)
                         .replace(/%CONTENT%/g, modifiedNews.content || '')
+                        .replace(/\${baseUrl}/g, baseUrl)
                         .replace(/%BASE_URL%/g, baseUrl);
 
                     const publisherMarkup = `
@@ -214,38 +215,7 @@ exports.getNewsById = async (req, res) => {
         });
     }
 };
-// exports.getNewsById = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         const news = await News.findByPk(id, {
-//             include: [
-//                 {
-//                     model: Category,
-//                     as: 'categories',
-//                     through: { attributes: [] },
-//                 },
-//                 { model: User, as: 'authorDetails' },
-//                 { model: Comment, as: 'comments' },
-//                 {
-//                     model: Media,
-//                     as: 'mediaFiles',
-//                 },
-//             ],
-//         });
-//         if (!news)
-//             return res.status(404).json({ message: 'Новость не найдена' });
-//
-//         await news.increment('views');
-//
-//         const modifiedNews = formatMediaUrls([news])[0];
-//
-//         res.json(modifiedNews);
-//     } catch (err) {
-//         res.status(500).json({
-//             error: `Ошибка получения новости: ${err.message}`,
-//         });
-//     }
-// };
+
 
 exports.getNewsByDate = async (req, res) => {
     try {

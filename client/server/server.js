@@ -38,7 +38,6 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 
-// Функция для определения ботов
 const isBot = (req) => {
     const userAgent = req.headers['user-agent']?.toLowerCase() || '';
     return userAgent.includes('bot') ||
@@ -48,17 +47,14 @@ const isBot = (req) => {
         userAgent.includes('googlebot');
 };
 
-// Базовые middleware для обработки запросов
 app.use(express.json());
 app.use(cookieParser());
 
-// Логирование запросов
 app.use((req, res, next) => {
     logger.info(`Получен запрос: ${req.method} ${req.url}`);
     next();
 });
 
-// Настройка CORS
 const corsOptions = {
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
@@ -80,9 +76,7 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Защитные middleware
 
-// Helmet для безопасности заголовков
 app.use(
     helmet({
         crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -120,7 +114,6 @@ app.use(
     }),
 );
 
-// Лимитер запросов
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10000000,
@@ -140,7 +133,6 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CSRF защита (только не для ботов, RSS и определенных путей)
 app.use((req, res, next) => {
     if (isBot(req) || req.path.includes('/rss') || req.path === '/robots.txt' ||
         req.path === '/sitemap.xml') {
@@ -158,7 +150,6 @@ app.use((req, res, next) => {
 });
 
 
-// Маршруты для роботов и SEO
 app.get('/robots.txt', (req, res) => {
     const robotsTxt = `User-agent: *
 Allow: /
@@ -238,16 +229,13 @@ app.get('/sitemap.xml', async (req, res) => {
     }
 });
 
-// Настройка RSS маршрутов
 app.use('/api/rss', require('./routes/rss'));
 app.use('/rss', (req, res) => {
     res.redirect('/api/rss');
 });
 
-// API маршруты
 app.use('/api', router);
 
-// Обработка загрузок/статических файлов
 const safePath = path.normalize(path.join(__dirname, '../uploads'));
 
 app.use('../uploads', (req, res, next) => {
@@ -259,7 +247,6 @@ app.use('../uploads', (req, res, next) => {
     return res.status(400).send('Invalid path');
 });
 
-// Статические файлы для загрузок
 app.use(
     '/uploads/images',
     express.static(imagesDir, {
@@ -293,7 +280,6 @@ app.use(
     }),
 );
 
-// Middleware для проверки, был ли уже отправлен ответ
 app.use((req, res, next) => {
     if (res.headersSent) {
         return;
@@ -301,13 +287,11 @@ app.use((req, res, next) => {
     next();
 });
 
-// Статические файлы для клиентского приложения
 const distDir = path.join(__dirname, '../dist');
 app.use(botHandler);
 app.use(express.static(distDir));
 
 
-// Обработка ошибок
 app.use((err, req, res, next) => {
     if (err.code === 'EBADCSRFTOKEN') {
         if (isBot(req) || req.path.includes('/rss')) {
@@ -339,7 +323,6 @@ app.get('*', (req, res) => {
     }
 });
 
-// Запуск сервера
 sequelize
     .sync()
     .then(() => {

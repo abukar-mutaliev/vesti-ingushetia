@@ -14,7 +14,7 @@
     <meta property="og:type" content="article" />
     <meta property="og:title" content="%TITLE%" />
     <meta property="og:description" content="%DESCRIPTION%" />
-    <meta property="og:url" content="${%BASE_URL%}/news/%NEWS_ID%" />
+    <meta property="og:url" content="%BASE_URL%/news/%NEWS_ID%" />
     <meta property="og:image" content="%IMAGE_URL%" />
     <meta property="og:locale" content="ru_RU" />
 
@@ -32,10 +32,10 @@
             %PUBLISHER_MARKUP%
 
             <h1 itemprop="headline">%TITLE%</h1>
+            <img src="%IMAGE_URL%" alt="%TITLE%" itemprop="image" />
             <div itemprop="articleBody">%CONTENT%</div>
 
-            <meta itemprop="image" content="%IMAGE_URL%" />
-            <meta itemprop="mainEntityOfPage" content="${%BASE_URL%}/news/%NEWS_ID%" />
+            <meta itemprop="mainEntityOfPage" content="%BASE_URL%/news/%NEWS_ID%" />
         </article>
     </div>
 </div>

@@ -15,12 +15,3 @@ router.get('/yandex_*.html', (req, res) => {
 });
 
 module.exports = router;
-
-// Пример файла верификации: verification/yandex_verification_code.html
-// Содержание:
-// <html>
-//   <head>
-//     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-//   </head>
-//   <body>Verification: VERIFICATION_CODE_FROM_YANDEX</body>
-// </html>
