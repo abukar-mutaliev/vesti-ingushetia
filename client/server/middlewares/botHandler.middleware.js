@@ -3,7 +3,7 @@ const fs = require('fs');
 const logger = require('../logger');
 const { News, Media } = require('../models');
 
-const formatMediaUrls = (newsItem) => {
+const formatMediaUrls = (newsItem, baseUrl) => {
     const newsObj = newsItem.toJSON();
     if (newsObj.mediaFiles) {
         newsObj.mediaFiles = newsObj.mediaFiles.map((media) => {
@@ -47,15 +47,15 @@ const botHandler = async (req, res, next) => {
 
     try {
         const news = await News.findByPk(newsId, {
-            include: [{ model: Media, as: 'mediaFiles' }], // Загружаем mediaFiles
+            include: [{ model: Media, as: 'mediaFiles' }],
         });
         if (!news) {
             logger.warn(`Новость ${newsId} не найдена`);
             return next();
         }
 
-        const modifiedNews = formatMediaUrls(news);
         const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
+        const modifiedNews = formatMediaUrls(news, baseUrl);
         const imageUrl = modifiedNews.mediaFiles?.find(m => m.type === 'image')?.url || `${baseUrl}/default.jpg`;
         const author = modifiedNews.authorDetails?.username || 'Редакция';
         const publishDate = modifiedNews.publishDate || modifiedNews.createdAt;
