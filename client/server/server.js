@@ -25,7 +25,7 @@ const credentials = {
 };
 
 const uploadDir = process.env.UPLOAD_DIR || path.resolve(__dirname, '..', '../uploads');
-const allowedOrigins = process.env.CORS_ORIGIN.split(',');
+const allowedOrigins = process.env.CORS_ORIGIN.split(','); // Исправлено здесь
 
 const imagesDir = path.join(uploadDir, 'images');
 const videoAdDir = path.join(uploadDir, 'videoAd');
@@ -129,11 +129,13 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// Подключаем маршруты RSS до CSRF
 app.use('/api/rss', require('./routes/rss'));
 app.use('/rss', (req, res) => {
     res.redirect('/api/rss');
 });
 
+// CSRF middleware
 app.use((req, res, next) => {
     if (isBot(req) || req.path.includes('/rss') || req.path === '/robots.txt' || req.path === '/sitemap.xml') {
         return next();
