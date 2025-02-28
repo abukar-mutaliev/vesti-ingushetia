@@ -24,8 +24,10 @@ const credentials = {
     ca: ca,
 };
 
-const uploadDir = process.env.UPLOAD_DIR || path.resolve(__dirname, '..', '../uploads');
-const allowedOrigins = process.env.CORS_ORIGIN.split(','); // Исправлено здесь
+const uploadDir =
+    process.env.UPLOAD_DIR || path.resolve(__dirname, '..', '../uploads');
+
+const allowedOrigins = process.env.CORS_ORIGIN.split(',');
 
 const imagesDir = path.join(uploadDir, 'images');
 const videoAdDir = path.join(uploadDir, 'videoAd');
@@ -34,6 +36,7 @@ const avatarDir = path.join(uploadDir, 'avatars');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
 
 const isBot = (req) => {
     const userAgent = req.headers['user-agent']?.toLowerCase() || '';
@@ -72,6 +75,7 @@ const corsOptions = {
     optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
+
 
 app.use(
     helmet({
@@ -121,7 +125,7 @@ const limiter = rateLimit({
             retryAfter: Math.ceil(limiter.windowMs / 1000),
         });
     },
-    skip: (req) => {
+    skip: (req, res) => {
         return isBot(req) || req.path === '/api/users/csrf-token' ||
             req.path.includes('/rss') || req.path === '/robots.txt' ||
             req.path === '/sitemap.xml';
@@ -129,15 +133,14 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Подключаем маршруты RSS до CSRF
 app.use('/api/rss', require('./routes/rss'));
 app.use('/rss', (req, res) => {
     res.redirect('/api/rss');
 });
 
-// CSRF middleware
 app.use((req, res, next) => {
-    if (isBot(req) || req.path.includes('/rss') || req.path === '/robots.txt' || req.path === '/sitemap.xml') {
+    if (isBot(req) || req.path.includes('/rss') || req.path === '/robots.txt' ||
+        req.path === '/sitemap.xml') {
         return next();
     }
 
@@ -275,6 +278,7 @@ app.use(
     }),
 );
 
+// Middleware для проверки, был ли уже отправлен ответ
 app.use((req, res, next) => {
     if (res.headersSent) {
         return;
@@ -282,15 +286,19 @@ app.use((req, res, next) => {
     next();
 });
 
+// Статические файлы для клиентского приложения
 const distDir = path.join(__dirname, '../dist');
 app.use(botHandler);
 app.use(express.static(distDir));
 
+
+// Обработка ошибок
 app.use((err, req, res, next) => {
     if (err.code === 'EBADCSRFTOKEN') {
         if (isBot(req) || req.path.includes('/rss')) {
             return next();
         }
+
         return res.status(403).json({ error: 'Недействительный CSRF токен' });
     }
     next(err);
@@ -316,6 +324,7 @@ app.get('*', (req, res) => {
     }
 });
 
+// Запуск сервера
 sequelize
     .sync()
     .then(() => {
