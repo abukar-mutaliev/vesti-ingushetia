@@ -34,6 +34,9 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
         return null;
     }
 
+    let largestImage = null;
+    let maxArea = 0;
+
     for (const image of images) {
         const imageUrl = image.url.startsWith('http') ? image.url : `${baseUrl}/${image.url}`;
         const imagePath = path.join(__dirname, '../../../uploads/images', path.basename(image.url));
@@ -46,16 +49,18 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
                 logger.info(`Размеры изображения ${imageUrl}: ${metadata.width}x${metadata.height}`);
 
                 if (metadata.width >= 400 && metadata.height >= 800) {
-                    return {
-                        url: imageUrl,
-                        length: metadata.size,
-                        type: 'image/jpeg'
-                    };
+                    const area = metadata.width * metadata.height;
+                    if (area > maxArea) {
+                        maxArea = area;
+                        largestImage = {
+                            url: imageUrl,
+                            length: metadata.size,
+                            type: 'image/jpeg'
+                        };
+                        logger.info(`Найдено подходящее изображение: ${imageUrl}, площадь: ${area}`);
+                    }
                 } else {
-                    logger.warn(
-                        `Изображение ${imageUrl} не соответствует требованиям:
-                         ${metadata.width}x${metadata.height}`
-                    );
+                    logger.warn(`Изображение ${imageUrl} не соответствует требованиям: ${metadata.width}x${metadata.height}`);
                 }
             } else {
                 logger.warn(`Файл изображения не найден: ${imagePath}`);
@@ -65,8 +70,13 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
         }
     }
 
-    logger.info('Подходящее изображение не найдено, используется дефолтное');
-    return null;
+    if (largestImage) {
+        logger.info(`Выбрано изображение: ${largestImage.url}`);
+        return largestImage;
+    } else {
+        logger.info('Подходящее изображение не найдено, используется дефолтное');
+        return null;
+    }
 };
 
 const generateRssFeed = async (newsItems, req) => {
