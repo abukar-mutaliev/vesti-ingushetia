@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const logger = require('../logger');
 const { News, Media } = require('../models');
+const sharp = require('sharp');
 
 const formatMediaUrls = (newsItem, baseUrl) => {
     const newsObj = newsItem.toJSON();
@@ -21,9 +22,37 @@ const formatMediaUrls = (newsItem, baseUrl) => {
     return newsObj;
 };
 
+const getLargestValidImage = async (mediaFiles, baseUrl) => {
+    if (!mediaFiles || mediaFiles.length === 0) return null;
+
+    const images = mediaFiles.filter(m => m.type === 'image');
+    if (images.length === 0) return null;
+
+    for (const image of images) {
+        const imageUrl = image.url.startsWith('http') ? image.url : `${baseUrl}/${image.url}`;
+        const imagePath = path.join(__dirname, '../../uploads/images', path.basename(image.url));
+
+        try {
+            if (fs.existsSync(imagePath)) {
+                const metadata = await sharp(imagePath).metadata();
+                if (metadata.width >= 400 && metadata.height >= 800) {
+                    return {
+                        url: imageUrl,
+                        length: metadata.size,
+                        type: 'image/jpeg'
+                    };
+                }
+            }
+        } catch (error) {
+            logger.warn(`Ошибка проверки изображения ${imageUrl}: ${error.message}`);
+        }
+    }
+
+    return null;
+};
+
 const botHandler = async (req, res, next) => {
     const userAgent = req.headers['user-agent']?.toLowerCase() || '';
-    logger.info(`User-Agent запроса: ${userAgent}`);
 
     const isBot = userAgent.includes('bot') ||
         userAgent.includes('spider') ||
@@ -32,18 +61,15 @@ const botHandler = async (req, res, next) => {
         userAgent.includes('googlebot');
 
     if (!isBot) {
-        logger.info(`Не бот, пропускаю: ${req.path}`);
         return next();
     }
 
     const newsMatch = req.path.match(/^\/news\/(\d+)$/);
     if (!newsMatch) {
-        logger.info(`Путь ${req.path} не /news/:id, пропускаю`);
         return next();
     }
 
     const newsId = newsMatch[1];
-    logger.info(`Бот запрашивает /news/${newsId}`);
 
     try {
         const news = await News.findByPk(newsId, {
@@ -56,22 +82,36 @@ const botHandler = async (req, res, next) => {
 
         const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
         const modifiedNews = formatMediaUrls(news, baseUrl);
-        const imageUrl = modifiedNews.mediaFiles?.find(m => m.type === 'image')?.url || `${baseUrl}/default.jpg`;
+
+        let imageData = await getLargestValidImage(modifiedNews.mediaFiles, baseUrl);
+        if (!imageData) {
+            const defaultImagePath = path.join(__dirname, '../../client/public/default.jpg');
+            if (fs.existsSync(defaultImagePath)) {
+                const metadata = await sharp(defaultImagePath).metadata();
+                if (metadata.width >= 400 && metadata.height >= 800) {
+                    imageData = {
+                        url: `${baseUrl}/default.jpg`,
+                        length: metadata.size,
+                        type: 'image/jpeg'
+                    };
+                }
+            }
+        }
+
+        const imageUrl = imageData ? imageData.url : `${baseUrl}/default.jpg`;
+        const imageLength = imageData ? imageData.length : '';
+        const imageType = imageData ? imageData.type : '';
         const author = modifiedNews.authorDetails?.username || 'Редакция';
         const publishDate = modifiedNews.publishDate || modifiedNews.createdAt;
         const plainContent = modifiedNews.content?.replace(/<[^>]*>?/gm, '') || '';
 
         const seoHtmlPath = path.join(__dirname, '../../dist/seo.html');
-        logger.info(`Ищу SEO-шаблон по пути: ${seoHtmlPath}`);
-        logger.info(`Шаблон существует: ${fs.existsSync(seoHtmlPath)}`);
-
         if (!fs.existsSync(seoHtmlPath)) {
             logger.error(`SEO-шаблон не найден: ${seoHtmlPath}`);
             return next();
         }
 
         let htmlTemplate = fs.readFileSync(seoHtmlPath, 'utf8');
-        logger.info(`SEO-шаблон успешно прочитан`);
 
         htmlTemplate = htmlTemplate
             .replace(/%TITLE%/g, modifiedNews.title)
@@ -79,6 +119,8 @@ const botHandler = async (req, res, next) => {
             .replace(/%FULLTEXT%/g, plainContent)
             .replace(/%NEWS_ID%/g, newsId)
             .replace(/%IMAGE_URL%/g, imageUrl)
+            .replace(/%IMAGE_LENGTH%/g, imageLength)
+            .replace(/%IMAGE_TYPE%/g, imageType)
             .replace(/%PUBLISH_DATE%/g, publishDate.toISOString())
             .replace(/%AUTHOR%/g, author)
             .replace(/%CONTENT%/g, modifiedNews.content || '')
@@ -93,7 +135,6 @@ const botHandler = async (req, res, next) => {
             `)
             .replace(/%[A-Z_]+%/g, '');
 
-        logger.info(`Отправляю SEO-HTML для бота, новость ${newsId}, imageUrl: ${imageUrl}`);
         return res.send(htmlTemplate);
     } catch (error) {
         logger.error(`Ошибка в botHandler: ${error.message}`);

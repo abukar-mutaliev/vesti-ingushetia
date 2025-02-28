@@ -31,6 +31,7 @@
         "pg-hstore": "^2.3.4",
         "sequelize": "^6.37.3",
         "sequelize-cli": "^6.6.2",
+        "sharp": "^0.33.5",
         "uid-safe": "^2.1.5",
         "winston": "^3.17.0"
     },
