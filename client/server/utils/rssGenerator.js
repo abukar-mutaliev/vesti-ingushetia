@@ -36,7 +36,7 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
 
     for (const image of images) {
         const imageUrl = image.url.startsWith('http') ? image.url : `${baseUrl}/${image.url}`;
-        const imagePath = path.join(__dirname, '../../uploads/images', path.basename(image.url));
+        const imagePath = path.join(__dirname, '../../server/uploads/images', path.basename(image.url));
 
         logger.info(`Проверка изображения: ${imageUrl}, путь: ${imagePath}`);
 
@@ -52,7 +52,10 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
                         type: 'image/jpeg'
                     };
                 } else {
-                    logger.warn(`Изображение ${imageUrl} не соответствует требованиям: ${metadata.width}x${metadata.height}`);
+                    logger.warn(
+                        `Изображение ${imageUrl} не соответствует требованиям:
+                         ${metadata.width}x${metadata.height}`
+                    );
                 }
             } else {
                 logger.warn(`Файл изображения не найден: ${imagePath}`);
@@ -99,7 +102,7 @@ const generateRssFeed = async (newsItems, req) => {
                             '@_type': image.type
                         };
                     } else {
-                        const defaultImagePath = path.join(__dirname, '../../client/public/default.png');
+                        const defaultImagePath = path.join(__dirname, '../../public/default.png');
                         if (fs.existsSync(defaultImagePath)) {
                             const metadata = await sharp(defaultImagePath).metadata();
                             item.enclosure = {
