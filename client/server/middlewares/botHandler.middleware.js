@@ -85,7 +85,7 @@ const botHandler = async (req, res, next) => {
 
         let imageData = await getLargestValidImage(modifiedNews.mediaFiles, baseUrl);
         if (!imageData) {
-            const defaultImagePath = path.join(__dirname, '../../client/public/default.jpg');
+            const defaultImagePath = path.join(__dirname, '../../public/default.jpg');
             if (fs.existsSync(defaultImagePath)) {
                 const metadata = await sharp(defaultImagePath).metadata();
                 imageData = {
@@ -100,8 +100,8 @@ const botHandler = async (req, res, next) => {
                 logger.error(`Дефолтное изображение не найдено: ${defaultImagePath}`);
                 imageData = {
                     url: `${baseUrl}/default.jpg`,
-                    length: '',
-                    type: ''
+                    length: '0',
+                    type: 'image/jpeg'
                 };
             }
         }
@@ -113,7 +113,7 @@ const botHandler = async (req, res, next) => {
         const publishDate = modifiedNews.publishDate || modifiedNews.createdAt;
         const plainContent = modifiedNews.content?.replace(/<[^>]*>?/gm, '') || '';
 
-        const seoHtmlPath = path.join(__dirname, '../../dist/seo.html');
+        const seoHtmlPath = path.join(__dirname, '../../public/seo.html');
         if (!fs.existsSync(seoHtmlPath)) {
             logger.error(`SEO-шаблон не найден: ${seoHtmlPath}`);
             return next();
