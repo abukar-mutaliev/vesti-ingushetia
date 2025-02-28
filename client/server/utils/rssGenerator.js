@@ -44,7 +44,7 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
         logger.info(`Проверка изображения: ${imageUrl}, путь: ${imagePath}`);
 
         try {
-            if (existsSync(imagePath)) {
+            if (fs.existsSync(imagePath)) { // Исправлено с existsSync на fs.existsSync
                 const metadata = await sharp(imagePath).metadata();
                 logger.info(`Размеры изображения ${imageUrl}: ${metadata.width}x${metadata.height}`);
 

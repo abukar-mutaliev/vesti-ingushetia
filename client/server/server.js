@@ -24,9 +24,7 @@ const credentials = {
     ca: ca,
 };
 
-const uploadDir =
-    process.env.UPLOAD_DIR || path.resolve(__dirname, '..', '../uploads');
-
+const uploadDir = process.env.UPLOAD_DIR || path.resolve(__dirname, '..', '../uploads');
 const allowedOrigins = process.env.CORS_ORIGIN.split(',');
 
 const imagesDir = path.join(uploadDir, 'images');
@@ -36,7 +34,6 @@ const avatarDir = path.join(uploadDir, 'avatars');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
 
 const isBot = (req) => {
     const userAgent = req.headers['user-agent']?.toLowerCase() || '';
@@ -75,7 +72,6 @@ const corsOptions = {
     optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
-
 
 app.use(
     helmet({
@@ -125,7 +121,7 @@ const limiter = rateLimit({
             retryAfter: Math.ceil(limiter.windowMs / 1000),
         });
     },
-    skip: (req, res) => {
+    skip: (req) => {
         return isBot(req) || req.path === '/api/users/csrf-token' ||
             req.path.includes('/rss') || req.path === '/robots.txt' ||
             req.path === '/sitemap.xml';
@@ -133,9 +129,13 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+app.use('/api/rss', require('./routes/rss'));
+app.use('/rss', (req, res) => {
+    res.redirect('/api/rss');
+});
+
 app.use((req, res, next) => {
-    if (isBot(req) || req.path.includes('/rss') || req.path === '/robots.txt' ||
-        req.path === '/sitemap.xml') {
+    if (isBot(req) || req.path.includes('/rss') || req.path === '/robots.txt' || req.path === '/sitemap.xml') {
         return next();
     }
 
@@ -148,7 +148,6 @@ app.use((req, res, next) => {
         },
     })(req, res, next);
 });
-
 
 app.get('/robots.txt', (req, res) => {
     const robotsTxt = `User-agent: *
@@ -229,18 +228,12 @@ app.get('/sitemap.xml', async (req, res) => {
     }
 });
 
-app.use('/api/rss', require('./routes/rss'));
-app.use('/rss', (req, res) => {
-    res.redirect('/api/rss');
-});
-
 app.use('/api', router);
 
 const safePath = path.normalize(path.join(__dirname, '../uploads'));
 
 app.use('../uploads', (req, res, next) => {
     let filePath = path.join(__dirname, req.path);
-
     if (filePath.startsWith(safePath)) {
         return next();
     }
@@ -291,13 +284,11 @@ const distDir = path.join(__dirname, '../dist');
 app.use(botHandler);
 app.use(express.static(distDir));
 
-
 app.use((err, req, res, next) => {
     if (err.code === 'EBADCSRFTOKEN') {
         if (isBot(req) || req.path.includes('/rss')) {
             return next();
         }
-
         return res.status(403).json({ error: 'Недействительный CSRF токен' });
     }
     next(err);
