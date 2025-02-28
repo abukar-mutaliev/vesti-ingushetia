@@ -91,7 +91,7 @@ const botHandler = async (req, res, next) => {
                 imageData = {
                     url: `${baseUrl}/default.png`,
                     length: metadata.size,
-                    type: 'image/jpeg'
+                    type: 'image/png'
                 };
                 if (metadata.width < 400 || metadata.height < 800) {
                     logger.warn(`Дефолтное изображение ${defaultImagePath} не соответствует требованиям: ${metadata.width}x${metadata.height}`);
@@ -100,8 +100,8 @@ const botHandler = async (req, res, next) => {
                 logger.error(`Дефолтное изображение не найдено: ${defaultImagePath}`);
                 imageData = {
                     url: `${baseUrl}/default.png`,
-                    length: '35878',
-                    type: 'image/jpeg'
+                    length: '35878', // Fallback значение
+                    type: 'image/png'
                 };
             }
         }

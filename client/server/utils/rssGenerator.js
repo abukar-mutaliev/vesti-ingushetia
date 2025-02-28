@@ -90,7 +90,7 @@ const generateRssFeed = async (newsItems, req) => {
                             item.enclosure = {
                                 '@_url': `${baseUrl}/default.png`,
                                 '@_length': metadata.size,
-                                '@_type': 'image/jpeg'
+                                '@_type': 'image/png'
                             };
                         }
                     }
