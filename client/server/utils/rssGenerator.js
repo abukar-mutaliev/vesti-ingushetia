@@ -1,8 +1,8 @@
 const { XMLBuilder } = require("fast-xml-parser");
 const sharp = require('sharp');
 const logger = require('../logger');
-const path = require("node:path");
-const fs = require("node:fs");
+const path = require('path');
+const fs = require('fs');
 
 const stripHtml = (html = "") => {
     return html.replace(/<[^>]*>/g, '');
@@ -55,44 +55,43 @@ const generateRssFeed = async (newsItems, req) => {
     const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
 
     const feed = {
+        '?xml': { '@_version': '1.0', '@_encoding': 'UTF-8' },
         rss: {
-            "@_version": "2.0",
-            "@_xmlns:dc": "http://purl.org/dc/elements/1.1/",
-            "@_xmlns:yandex": "http://news.yandex.ru",
+            '@_version': '2.0',
+            '@_xmlns:dc': 'http://purl.org/dc/elements/1.1/',
+            '@_xmlns:yandex': 'http://news.yandex.ru',
             channel: {
-                title: "Новости ГТРК Ингушетия",
-                link: "https://ingushetiatv.ru/",
-                description: "Последние новости с сайта ВЕСТИ ИНГУШЕТИИ",
-                language: "ru",
+                title: 'Новости ГТРК Ингушетия',
+                link: 'https://ingushetiatv.ru/',
+                description: 'Последние новости с сайта ВЕСТИ ИНГУШЕТИИ',
+                language: 'ru',
                 lastBuildDate: formatDateRFC822(new Date()),
                 item: await Promise.all(newsItems.map(async (news) => {
                     const item = {
-                        title: news.title,
+                        title: news.title || 'Без заголовка',
                         link: `https://ingushetiatv.ru/news/${news.id}`,
-                        description: news.description || stripHtml(news.content),
-                        pubDate: formatDateRFC822(news.publishDate || new Date()),
-                        "dc:creator": news.authorDetails?.username || "Редакция",
-                        "yandex:full-text": news.content || "",
+                        description: news.description || stripHtml(news.content || ''),
+                        pubDate: formatDateRFC822(news.publishDate || news.createdAt || new Date()),
+                        'dc:creator': news.authorDetails?.username || 'Редакция',
+                        'yandex:full-text': news.content || ''
                     };
 
                     const image = await getLargestValidImage(news.mediaFiles, baseUrl);
                     if (image) {
                         item.enclosure = {
-                            "@_url": image.url,
-                            "@_length": image.length,
-                            "@_type": image.type
+                            '@_url': image.url,
+                            '@_length': image.length,
+                            '@_type': image.type
                         };
                     } else {
-                        const defaultImagePath = path.join(__dirname, '../../client/public/default.jpg');
+                        const defaultImagePath = path.join(__dirname, '../../public/default.png');
                         if (fs.existsSync(defaultImagePath)) {
                             const metadata = await sharp(defaultImagePath).metadata();
-                            if (metadata.width >= 400 && metadata.height >= 800) {
-                                item.enclosure = {
-                                    "@_url": `${baseUrl}/default.jpg`,
-                                    "@_length": metadata.size,
-                                    "@_type": 'image/jpeg'
-                                };
-                            }
+                            item.enclosure = {
+                                '@_url': `${baseUrl}/default.png`,
+                                '@_length': metadata.size,
+                                '@_type': 'image/jpeg'
+                            };
                         }
                     }
 
@@ -105,10 +104,12 @@ const generateRssFeed = async (newsItems, req) => {
     const builder = new XMLBuilder({
         format: true,
         ignoreAttributes: false,
-        suppressEmptyNode: true
+        suppressEmptyNode: true,
+        processEntities: false
     });
 
-    return builder.build(feed);
+    const xml = builder.build(feed);
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + xml;
 };
 
 module.exports = { generateRssFeed };

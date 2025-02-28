@@ -85,12 +85,12 @@ const botHandler = async (req, res, next) => {
 
         let imageData = await getLargestValidImage(modifiedNews.mediaFiles, baseUrl);
         if (!imageData) {
-            const defaultImagePath = path.join(__dirname, '../../public/default.jpg');
+            const defaultImagePath = path.join(__dirname, '../../public/default.png');
             if (fs.existsSync(defaultImagePath)) {
                 const metadata = await sharp(defaultImagePath).metadata();
                 imageData = {
-                    url: `${baseUrl}/default.jpg`,
-                    length: metadata.size || 0,
+                    url: `${baseUrl}/default.png`,
+                    length: metadata.size,
                     type: 'image/jpeg'
                 };
                 if (metadata.width < 400 || metadata.height < 800) {
@@ -99,8 +99,8 @@ const botHandler = async (req, res, next) => {
             } else {
                 logger.error(`Дефолтное изображение не найдено: ${defaultImagePath}`);
                 imageData = {
-                    url: `${baseUrl}/default.jpg`,
-                    length: '0',
+                    url: `${baseUrl}/default.png`,
+                    length: '35878',
                     type: 'image/jpeg'
                 };
             }

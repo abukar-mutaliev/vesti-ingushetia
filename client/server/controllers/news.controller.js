@@ -117,7 +117,7 @@ exports.generateSchemaForYandex = (news) => {
                 return imageUrl;
             });
         } else {
-            articleSchema.image = [`${baseUrl}/default.jpg`];
+            articleSchema.image = [`${baseUrl}/default.png`];
         }
     }
 
@@ -157,7 +157,7 @@ exports.getNewsById = async (req, res) => {
         if (req.isBot) {
             try {
                 const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
-                const seoHtmlPath = path.join(__dirname, '../../dist/seo.html');
+                const seoHtmlPath = path.join(__dirname, '../../public/seo.html');
                 console.log(`Ищу SEO-шаблон по пути: ${seoHtmlPath}`);
                 console.log(`Шаблон существует: ${fs.existsSync(seoHtmlPath)}`);
 
@@ -169,8 +169,7 @@ exports.getNewsById = async (req, res) => {
                     const imageMedia = modifiedNews.mediaFiles?.find(media => media.type === 'image');
                     const imageUrl = imageMedia
                         ? (imageMedia.url.startsWith('http') ? imageMedia.url : `${baseUrl}${imageMedia.url}`)
-                        : `${baseUrl}/default.jpg`;
-                    console.log("URL изображения для бота:", imageUrl);
+                        : `${baseUrl}/default.png`;
 
                     const author = modifiedNews.authorDetails?.username || 'Редакция';
                     const publishDate = modifiedNews.publishDate || modifiedNews.createdAt;
