@@ -88,19 +88,27 @@ const botHandler = async (req, res, next) => {
             const defaultImagePath = path.join(__dirname, '../../client/public/default.jpg');
             if (fs.existsSync(defaultImagePath)) {
                 const metadata = await sharp(defaultImagePath).metadata();
-                if (metadata.width >= 400 && metadata.height >= 800) {
-                    imageData = {
-                        url: `${baseUrl}/default.jpg`,
-                        length: metadata.size,
-                        type: 'image/jpeg'
-                    };
+                imageData = {
+                    url: `${baseUrl}/default.jpg`,
+                    length: metadata.size || 0,
+                    type: 'image/jpeg'
+                };
+                if (metadata.width < 400 || metadata.height < 800) {
+                    logger.warn(`Дефолтное изображение ${defaultImagePath} не соответствует требованиям: ${metadata.width}x${metadata.height}`);
                 }
+            } else {
+                logger.error(`Дефолтное изображение не найдено: ${defaultImagePath}`);
+                imageData = {
+                    url: `${baseUrl}/default.jpg`,
+                    length: '',
+                    type: ''
+                };
             }
         }
 
-        const imageUrl = imageData ? imageData.url : `${baseUrl}/default.jpg`;
-        const imageLength = imageData ? imageData.length : '';
-        const imageType = imageData ? imageData.type : '';
+        const imageUrl = imageData.url;
+        const imageLength = imageData.length;
+        const imageType = imageData.type;
         const author = modifiedNews.authorDetails?.username || 'Редакция';
         const publishDate = modifiedNews.publishDate || modifiedNews.createdAt;
         const plainContent = modifiedNews.content?.replace(/<[^>]*>?/gm, '') || '';

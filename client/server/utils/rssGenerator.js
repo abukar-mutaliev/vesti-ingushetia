@@ -2,6 +2,7 @@ const { XMLBuilder } = require("fast-xml-parser");
 const sharp = require('sharp');
 const logger = require('../logger');
 const path = require("node:path");
+const fs = require("node:fs");
 
 const stripHtml = (html = "") => {
     return html.replace(/<[^>]*>/g, '');
