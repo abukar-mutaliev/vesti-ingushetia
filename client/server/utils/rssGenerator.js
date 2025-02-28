@@ -2,7 +2,7 @@ const { XMLBuilder } = require("fast-xml-parser");
 const sharp = require('sharp');
 const logger = require('../logger');
 const path = require('path');
-const fs = require('fs');
+const {existsSync} = require("node:fs");
 
 const stripHtml = (html = "") => {
     return html.replace(/<[^>]*>/g, '');
@@ -44,7 +44,7 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
         logger.info(`Проверка изображения: ${imageUrl}, путь: ${imagePath}`);
 
         try {
-            if (fs.existsSync(imagePath)) {
+            if (existsSync(imagePath)) {
                 const metadata = await sharp(imagePath).metadata();
                 logger.info(`Размеры изображения ${imageUrl}: ${metadata.width}x${metadata.height}`);
 

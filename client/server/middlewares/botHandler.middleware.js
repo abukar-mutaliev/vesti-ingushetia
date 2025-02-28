@@ -1,8 +1,8 @@
 const path = require('path');
-const fs = require('fs');
 const logger = require('../logger');
 const { News, Media } = require('../models');
 const sharp = require('sharp');
+const fs = require("node:fs");
 
 const formatMediaUrls = (newsItem, baseUrl) => {
     const newsObj = newsItem.toJSON();
