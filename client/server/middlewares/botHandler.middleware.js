@@ -1,8 +1,8 @@
 const path = require('path');
+const fs = require('fs');
 const logger = require('../logger');
 const { News, Media } = require('../models');
 const sharp = require('sharp');
-const fs = require('fs');
 
 const formatMediaUrls = (newsItem, baseUrl) => {
     const newsObj = newsItem.toJSON();
@@ -34,9 +34,6 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
         return null;
     }
 
-    let largestImage = null;
-    let maxArea = 0;
-
     for (const image of images) {
         const imageUrl = image.url.startsWith('http') ? image.url : `${baseUrl}/${image.url}`;
         const imagePath = path.join(__dirname, '../../../uploads/images', path.basename(image.url));
@@ -49,18 +46,16 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
                 logger.info(`Размеры изображения ${imageUrl}: ${metadata.width}x${metadata.height}`);
 
                 if (metadata.width >= 400 && metadata.height >= 800) {
-                    const area = metadata.width * metadata.height;
-                    if (area > maxArea) {
-                        maxArea = area;
-                        largestImage = {
-                            url: imageUrl,
-                            length: metadata.size,
-                            type: 'image/jpeg'
-                        };
-                        logger.info(`Найдено подходящее изображение: ${imageUrl}, площадь: ${area}`);
-                    }
+                    return {
+                        url: imageUrl,
+                        length: metadata.size,
+                        type: 'image/jpeg'
+                    };
                 } else {
-                    logger.warn(`Изображение ${imageUrl} не соответствует требованиям: ${metadata.width}x${metadata.height}`);
+                    logger.warn(
+                        `Изображение ${imageUrl} не соответствует требованиям:
+                         ${metadata.width}x${metadata.height}`
+                    );
                 }
             } else {
                 logger.warn(`Файл изображения не найден: ${imagePath}`);
@@ -70,13 +65,8 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
         }
     }
 
-    if (largestImage) {
-        logger.info(`Выбрано изображение: ${largestImage.url}`);
-        return largestImage;
-    } else {
-        logger.info('Подходящее изображение не найдено, используется дефолтное');
-        return null;
-    }
+    logger.info('Подходящее изображение не найдено, используется дефолтное');
+    return null;
 };
 
 const botHandler = async (req, res, next) => {
