@@ -127,7 +127,7 @@ const generateRssFeed = async (newsItems, req) => {
     });
 
     const xml = builder.build(feed);
-    return '<?xml version="1.0" encoding="UTF-8"?>\n' + xml;
+    return xml;
 };
 
 module.exports = { generateRssFeed };
