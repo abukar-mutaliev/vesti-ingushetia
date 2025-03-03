@@ -7,7 +7,6 @@ const logger = require('../logger');
 router.get("/", async (req, res) => {
     try {
         logger.info("Запрос RSS-фида");
-
         logger.info(`Заголовки: User-Agent=${req.headers['user-agent']}`);
 
         const newsItems = await News.findAll({
@@ -31,7 +30,14 @@ router.get("/", async (req, res) => {
             limit: 20,
         });
 
-        const rssFeed = generateRssFeed(newsItems, req);
+        logger.info(`Найдено новостей: ${newsItems.length}`);
+
+        if (!newsItems || newsItems.length === 0) {
+            logger.warn("Нет новостей для RSS-фида");
+            return res.status(200).send('<rss version="2.0"><channel><title>Новости ГТРК Ингушетия</title><link>https://ingushetiatv.ru/</link><description>Нет новостей</description></channel></rss>');
+        }
+
+        const rssFeed = await generateRssFeed(newsItems, req);
 
         res.set({
             'Content-Type': 'application/rss+xml; charset=utf-8',
@@ -44,7 +50,6 @@ router.get("/", async (req, res) => {
 
     } catch (error) {
         logger.error(`Ошибка генерации RSS: ${error.message}`);
-
         if (!res.headersSent) {
             res.status(500).send("Ошибка сервера при генерации RSS");
         }
