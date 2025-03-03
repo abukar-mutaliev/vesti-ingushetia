@@ -30,7 +30,12 @@ router.get("/", async (req, res) => {
             limit: 20,
         });
 
-        logger.info(`Найдено новостей: ${newsItems.length}`);
+        logger.info(`Найдено новостей: ${newsItems.length}`); // Отладка
+        if (newsItems.length > 0) {
+            newsItems.forEach((news, index) => {
+                logger.info(`Новость #${index + 1}: title=${news.title}, id=${news.id}, mediaFiles=${JSON.stringify(news.mediaFiles)}`);
+            });
+        }
 
         if (!newsItems || newsItems.length === 0) {
             logger.warn("Нет новостей для RSS-фида");
@@ -38,6 +43,7 @@ router.get("/", async (req, res) => {
         }
 
         const rssFeed = await generateRssFeed(newsItems, req);
+        logger.info(`Сгенерированный RSS: ${rssFeed.substring(0, 100)}...`); // Логируем первые 100 символов RSS
 
         res.set({
             'Content-Type': 'application/rss+xml; charset=utf-8',
@@ -46,7 +52,7 @@ router.get("/", async (req, res) => {
 
         res.send(rssFeed);
 
-        logger.info('RSS-фид успешно сгенерирован');
+        logger.info('RSS-фид успешно отправлен');
 
     } catch (error) {
         logger.error(`Ошибка генерации RSS: ${error.message}`);

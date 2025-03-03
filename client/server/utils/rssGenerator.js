@@ -70,6 +70,7 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
 };
 
 const generateRssFeed = async (newsItems, req) => {
+    logger.info(`Генерация RSS для ${newsItems.length} новостей`);
     const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
 
     const feed = {
@@ -84,7 +85,8 @@ const generateRssFeed = async (newsItems, req) => {
                 description: 'Последние новости с сайта ВЕСТИ ИНГУШЕТИИ',
                 language: 'ru',
                 lastBuildDate: formatDateRFC822(new Date()),
-                item: await Promise.all(newsItems.map(async (news) => {
+                item: await Promise.all(newsItems.map(async (news, index) => {
+                    logger.info(`Обработка новости #${index + 1}: ${news.title}`);
                     const item = {
                         title: news.title || 'Без заголовка',
                         link: `https://ingushetiatv.ru/news/${news.id}`,
@@ -96,12 +98,14 @@ const generateRssFeed = async (newsItems, req) => {
 
                     const image = await getLargestValidImage(news.mediaFiles, baseUrl);
                     if (image) {
+                        logger.info(`Добавлено изображение: ${image.url}`);
                         item.enclosure = {
                             '@_url': image.url,
                             '@_length': image.length,
                             '@_type': image.type
                         };
                     } else {
+                        logger.warn(`Изображение для новости ${news.title} не найдено, используется дефолтное`);
                         const defaultImagePath = path.join(__dirname, '../../public/default.png');
                         if (fs.existsSync(defaultImagePath)) {
                             const metadata = await sharp(defaultImagePath).metadata();
@@ -127,6 +131,7 @@ const generateRssFeed = async (newsItems, req) => {
     });
 
     const xml = builder.build(feed);
+    logger.info(`Сгенерированный XML: ${xml.substring(0, 100)}...`);
     return xml;
 };
 
