@@ -86,7 +86,7 @@ const generateRssFeed = async (newsItems, req) => {
                 language: 'ru',
                 lastBuildDate: formatDateRFC822(new Date()),
                 item: await Promise.all(newsItems.map(async (news, index) => {
-                    logger.info(`Обработка новости #${index + 1}: ${news.title}`);
+                    logger.info(`Обработка новости #${index + 1}: ${news.title || 'Без заголовка'}`);
                     const item = {
                         title: news.title || 'Без заголовка',
                         link: `https://ingushetiatv.ru/news/${news.id}`,
@@ -105,7 +105,7 @@ const generateRssFeed = async (newsItems, req) => {
                             '@_type': image.type
                         };
                     } else {
-                        logger.warn(`Изображение для новости ${news.title} не найдено, используется дефолтное`);
+                        logger.warn(`Изображение для новости ${news.title || 'Без заголовка'} не найдено, используется дефолтное`);
                         const defaultImagePath = path.join(__dirname, '../../public/default.png');
                         if (fs.existsSync(defaultImagePath)) {
                             const metadata = await sharp(defaultImagePath).metadata();
@@ -114,6 +114,8 @@ const generateRssFeed = async (newsItems, req) => {
                                 '@_length': metadata.size,
                                 '@_type': 'image/png'
                             };
+                        } else {
+                            logger.error(`Дефолтное изображение не найдено: ${defaultImagePath}`);
                         }
                     }
 
@@ -131,7 +133,11 @@ const generateRssFeed = async (newsItems, req) => {
     });
 
     const xml = builder.build(feed);
-    logger.info(`Сгенерированный XML: ${xml.substring(0, 100)}...`);
+    if (!xml || xml.trim() === '') {
+        logger.error('Сгенерированный XML пустой');
+        throw new Error('Сгенерированный XML пустой');
+    }
+    logger.info(`Сгенерированный XML (первые 200 символов): ${xml.substring(0, 200)}...`);
     return xml;
 };
 
