@@ -10,31 +10,23 @@ const stripHtml = (html = "") => {
         .replace(/ /g, ' ')
         .replace(/&[a-z]+;/gi, ' ')
         .replace(/\s+/g, ' ')
-        .replace(/[^\x20-\x7E]/g, ' ')
         .trim();
 };
 
 const cleanYandexFullText = (html = "") => {
     let cleaned = html;
 
-    cleaned = cleaned.replace(/<br\s*\/?>/gi, ' ');
+    cleaned = cleaned.replace(/<br\s*\/?>/gi, '\n');
 
-    cleaned = cleaned.replace(/<(?!\/?p\s*\/?|\/?ul\s*\/?|\/?li\s*\/?)[^>]+>/gi, '');
+    cleaned = cleaned.replace(/<(?!\/?p\s*\/?)[^>]+>/gi, '');
 
     cleaned = cleaned
         .replace(/ /g, ' ')
         .replace(/&[a-z]+;/gi, ' ')
         .replace(/\s+/g, ' ')
-        .replace(/[^\x20-\x7E]/g, ' ')
         .trim();
 
-    cleaned = cleaned
-        .replace(/<p>/gi, '<p>')
-        .replace(/<\/p>/gi, '</p>')
-        .replace(/<ul>/gi, '<ul>')
-        .replace(/<\/ul>/gi, '</ul>')
-        .replace(/<li>/gi, '<li>')
-        .replace(/<\/li>/gi, '</li>');
+    cleaned = cleaned.replace(/<p>/gi, '<p>').replace(/<\/p>/gi, '</p>');
 
     return cleaned;
 };
