@@ -5,7 +5,11 @@ const path = require('path');
 const fs = require('fs');
 
 const stripHtml = (html = "") => {
-    return html.replace(/<[^>]*>/g, '');
+    return html
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&[a-z]+;/gi, '')
+        .trim();
 };
 
 const formatDateRFC822 = (date) => {
@@ -90,10 +94,14 @@ const generateRssFeed = async (newsItems, req) => {
                     const item = {
                         title: news.title || 'Без заголовка',
                         link: `https://ingushetiatv.ru/news/${news.id}`,
-                        description: news.description || stripHtml(news.content || ''),
+                        // Очищаем описание от HTML, включая &nbsp;
+                        description: stripHtml(news.description || news.content || ''),
                         pubDate: formatDateRFC822(news.publishDate || news.createdAt || new Date()),
                         'dc:creator': news.authorDetails?.username || 'Редакция',
-                        'yandex:full-text': news.content || ''
+                        // Оставляем HTML в full-text, но убираем &nbsp;
+                        'yandex:full-text': (news.content || '')
+                            .replace(/&nbsp;/g, ' ') // Заменяем &nbsp; на обычный пробел
+                            .replace(/&[a-z]+;/gi, '') // Удаляем другие сущности, если нужно
                     };
 
                     const image = await getLargestValidImage(news.mediaFiles, baseUrl);
