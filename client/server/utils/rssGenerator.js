@@ -7,9 +7,28 @@ const fs = require('fs');
 const stripHtml = (html = "") => {
     return html
         .replace(/<[^>]*>/g, '')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&[a-z]+;/gi, '')
+        .replace(/ /g, ' ')
+        .replace(/&[a-z]+;/gi, ' ')
+        .replace(/\s+/g, ' ')
         .trim();
+};
+
+const cleanYandexFullText = (html = "") => {
+    let cleaned = html;
+
+    cleaned = cleaned.replace(/<br\s*\/?>/gi, '\n');
+
+    cleaned = cleaned.replace(/<(?!\/?p\s*\/?)[^>]+>/gi, '');
+
+    cleaned = cleaned
+        .replace(/ /g, ' ')
+        .replace(/&[a-z]+;/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    cleaned = cleaned.replace(/<p>/gi, '<p>').replace(/<\/p>/gi, '</p>');
+
+    return cleaned;
 };
 
 const formatDateRFC822 = (date) => {
@@ -94,14 +113,10 @@ const generateRssFeed = async (newsItems, req) => {
                     const item = {
                         title: news.title || 'Без заголовка',
                         link: `https://ingushetiatv.ru/news/${news.id}`,
-                        // Очищаем описание от HTML, включая &nbsp;
                         description: stripHtml(news.description || news.content || ''),
                         pubDate: formatDateRFC822(news.publishDate || news.createdAt || new Date()),
                         'dc:creator': news.authorDetails?.username || 'Редакция',
-                        // Оставляем HTML в full-text, но убираем &nbsp;
-                        'yandex:full-text': (news.content || '')
-                            .replace(/&nbsp;/g, ' ') // Заменяем &nbsp; на обычный пробел
-                            .replace(/&[a-z]+;/gi, '') // Удаляем другие сущности, если нужно
+                        'yandex:full-text': cleanYandexFullText(news.content || '')
                     };
 
                     const image = await getLargestValidImage(news.mediaFiles, baseUrl);
