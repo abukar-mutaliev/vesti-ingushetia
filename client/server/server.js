@@ -278,7 +278,6 @@ app.use(
     }),
 );
 
-// Middleware для проверки, был ли уже отправлен ответ
 app.use((req, res, next) => {
     if (res.headersSent) {
         return;
@@ -286,13 +285,11 @@ app.use((req, res, next) => {
     next();
 });
 
-// Статические файлы для клиентского приложения
 const distDir = path.join(__dirname, '../dist');
 app.use(botHandler);
 app.use(express.static(distDir));
 
 
-// Обработка ошибок
 app.use((err, req, res, next) => {
     if (err.code === 'EBADCSRFTOKEN') {
         if (isBot(req) || req.path.includes('/rss')) {
@@ -324,7 +321,6 @@ app.get('*', (req, res) => {
     }
 });
 
-// Запуск сервера
 sequelize
     .sync()
     .then(() => {

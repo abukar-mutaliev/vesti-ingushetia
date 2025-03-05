@@ -10,23 +10,21 @@ const stripHtml = (html = "") => {
         .replace(/ /g, ' ')
         .replace(/&[a-z]+;/gi, ' ')
         .replace(/\s+/g, ' ')
+        .replace(/[^\x20-\x7E]/g, ' ')
         .trim();
 };
 
 const cleanYandexFullText = (html = "") => {
     let cleaned = html;
 
-    cleaned = cleaned.replace(/<br\s*\/?>/gi, '\n');
-
-    cleaned = cleaned.replace(/<(?!\/?p\s*\/?)[^>]+>/gi, '');
+    cleaned = cleaned.replace(/<[^>]*>/g, '');
 
     cleaned = cleaned
         .replace(/ /g, ' ')
         .replace(/&[a-z]+;/gi, ' ')
         .replace(/\s+/g, ' ')
+        .replace(/[^\x20-\x7E]/g, ' ')
         .trim();
-
-    cleaned = cleaned.replace(/<p>/gi, '<p>').replace(/<\/p>/gi, '</p>');
 
     return cleaned;
 };
@@ -157,10 +155,8 @@ const generateRssFeed = async (newsItems, req) => {
 
     const xml = builder.build(feed);
     if (!xml || xml.trim() === '') {
-        logger.error('Сгенерированный XML пустой');
         throw new Error('Сгенерированный XML пустой');
     }
-    logger.info(`Сгенерированный XML (первые 200 символов): ${xml.substring(0, 200)}...`);
     return xml;
 };
 
