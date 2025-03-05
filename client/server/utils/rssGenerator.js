@@ -5,16 +5,21 @@ const path = require('path');
 const fs = require('fs');
 
 const stripHtml = (html = "") => {
-    return html
+    logger.debug(`Входной текст для stripHtml: ${html.substring(0, 100)}...`);
+    let cleaned = html
         .replace(/<[^>]*>/g, '')
         .replace(/ /g, ' ')
         .replace(/&[a-z]+;/gi, ' ')
         .replace(/\s+/g, ' ')
-        .replace(/[^\x20-\x7E]/g, ' ')
+        .replace(/[\t\r\n]+/g, ' ')
         .trim();
+
+    logger.debug(`Очищенный текст stripHtml: ${cleaned.substring(0, 100)}...`);
+    return cleaned;
 };
 
 const cleanYandexFullText = (html = "") => {
+    logger.debug(`Входной текст для cleanYandexFullText: ${html.substring(0, 100)}...`);
     let cleaned = html;
 
     cleaned = cleaned.replace(/<[^>]*>/g, '');
@@ -23,9 +28,10 @@ const cleanYandexFullText = (html = "") => {
         .replace(/ /g, ' ')
         .replace(/&[a-z]+;/gi, ' ')
         .replace(/\s+/g, ' ')
-        .replace(/[^\x20-\x7E]/g, ' ')
-        .trim();
+        .replace(/[\t\r\n]+/g, ' ')
+        .trim(); // Удаляем лишние пробелы
 
+    logger.debug(`Очищенный текст cleanYandexFullText: ${cleaned.substring(0, 100)}...`);
     return cleaned;
 };
 
@@ -155,8 +161,10 @@ const generateRssFeed = async (newsItems, req) => {
 
     const xml = builder.build(feed);
     if (!xml || xml.trim() === '') {
+        logger.error('Сгенерированный XML пустой');
         throw new Error('Сгенерированный XML пустой');
     }
+    logger.info(`Сгенерированный XML (первые 200 символов): ${xml.substring(0, 200)}...`);
     return xml;
 };
 
