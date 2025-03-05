@@ -29,10 +29,16 @@ const cleanYandexFullText = (html = "") => {
         .replace(/&[a-z]+;/gi, ' ')
         .replace(/\s+/g, ' ')
         .replace(/[\t\r\n]+/g, ' ')
-        .trim(); // Удаляем лишние пробелы
+        .trim();
 
     logger.debug(`Очищенный текст cleanYandexFullText: ${cleaned.substring(0, 100)}...`);
     return cleaned;
+};
+
+const truncateToTwoSentences = (text = "") => {
+    const sentences = text.split(/[.!?]+/).filter(sentence => sentence.trim().length > 0);
+    const truncated = sentences.slice(0, 2).join('. ') + '.';
+    return truncated.trim();
 };
 
 const formatDateRFC822 = (date) => {
@@ -114,13 +120,14 @@ const generateRssFeed = async (newsItems, req) => {
                 lastBuildDate: formatDateRFC822(new Date()),
                 item: await Promise.all(newsItems.map(async (news, index) => {
                     logger.info(`Обработка новости #${index + 1}: ${news.title || 'Без заголовка'}`);
+                    const fullText = news.description || news.content || '';
                     const item = {
                         title: news.title || 'Без заголовка',
                         link: `https://ingushetiatv.ru/news/${news.id}`,
-                        description: stripHtml(news.description || news.content || ''),
+                        description: truncateToTwoSentences(stripHtml(fullText)),
                         pubDate: formatDateRFC822(news.publishDate || news.createdAt || new Date()),
                         'dc:creator': news.authorDetails?.username || 'Редакция',
-                        'yandex:full-text': cleanYandexFullText(news.content || '')
+                        'yandex:full-text': cleanYandexFullText(fullText)
                     };
 
                     const image = await getLargestValidImage(news.mediaFiles, baseUrl);
