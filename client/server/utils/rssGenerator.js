@@ -168,7 +168,6 @@ const generateRssFeed = async (newsItems, req) => {
 
     const xml = builder.build(feed);
     if (!xml || xml.trim() === '') {
-        logger.error('Сгенерированный XML пустой');
         throw new Error('Сгенерированный XML пустой');
     }
     logger.info(`Сгенерированный XML (первые 200 символов): ${xml.substring(0, 200)}...`);
