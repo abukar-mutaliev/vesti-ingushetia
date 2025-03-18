@@ -33,6 +33,8 @@ const imagesDir = path.join(uploadDir, 'images');
 const videoAdDir = path.join(uploadDir, 'videoAd');
 const audioDir = path.join(uploadDir, 'audio');
 const avatarDir = path.join(uploadDir, 'avatars');
+const publicDir = path.join(__dirname, '../public');
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -138,6 +140,9 @@ app.use('/rss', (req, res) => {
     res.redirect('/api/rss');
 });
 
+app.use(express.static(publicDir));
+
+
 app.use((req, res, next) => {
     if (isBot(req) || req.path.includes('/rss') || req.path === '/robots.txt' ||
         req.path === '/sitemap.xml') {
@@ -194,11 +199,13 @@ app.get('/sitemap.xml', async (req, res) => {
             attributes: ['id']
         });
 
+        const domain = 'ingushetiatv.ru';
+
         let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
         xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
         xml += '  <url>\n';
-        xml += `    <loc>https://${req.get('host')}/</loc>\n`;
+        xml += `    <loc>https://${domain}/</loc>\n`;
         xml += '    <changefreq>daily</changefreq>\n';
         xml += '    <priority>1.0</priority>\n';
         xml += '  </url>\n';
@@ -208,7 +215,7 @@ app.get('/sitemap.xml', async (req, res) => {
             const lastMod = item.updatedAt || pubDate;
 
             xml += '  <url>\n';
-            xml += `    <loc>https://${req.get('host')}/news/${item.id}</loc>\n`;
+            xml += `    <loc>https://${domain}/news/${item.id}</loc>\n`;
             xml += `    <lastmod>${new Date(lastMod).toISOString().split('T')[0]}</lastmod>\n`;
             xml += '    <changefreq>monthly</changefreq>\n';
             xml += '    <priority>0.8</priority>\n';
@@ -217,7 +224,7 @@ app.get('/sitemap.xml', async (req, res) => {
 
         categories.forEach(category => {
             xml += '  <url>\n';
-            xml += `    <loc>https://${req.get('host')}/category/${category.id}</loc>\n`;
+            xml += `    <loc>https://${domain}/category/${category.id}</loc>\n`;
             xml += '    <changefreq>weekly</changefreq>\n';
             xml += '    <priority>0.7</priority>\n';
             xml += '  </url>\n';
@@ -284,9 +291,10 @@ app.use((req, res, next) => {
     }
     next();
 });
-
 const distDir = path.join(__dirname, '../dist');
+
 app.use(botHandler);
+
 app.use(express.static(distDir));
 
 
@@ -316,7 +324,6 @@ app.use((err, req, res, next) => {
 
 app.get('*', (req, res) => {
     if (!res.headersSent) {
-        logger.info(`Отправляю index.html для ${req.path}`);
         res.sendFile(path.join(distDir, 'index.html'));
     }
 });
