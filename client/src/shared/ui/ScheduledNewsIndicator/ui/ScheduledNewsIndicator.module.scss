@@ -1,0 +1,106 @@
+.indicator {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #4a67c8 0%, #6c5ce7 100%);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(74, 103, 200, 0.3);
+    transition: all 0.3s ease;
+    min-width: 180px;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(74, 103, 200, 0.4);
+    }
+
+    &.warning {
+        background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+
+        &:hover {
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+        }
+    }
+
+    .icon {
+        font-size: 20px;
+        opacity: 0.9;
+
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+    }
+
+    .content {
+        flex: 1;
+        min-width: 0;
+
+        .count {
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .label {
+            font-size: 12px;
+            opacity: 0.8;
+            font-weight: 500;
+        }
+
+        .alerts {
+            margin-top: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+
+            .overdue,
+            .errors {
+                font-size: 10px;
+                font-weight: 600;
+                padding: 2px 6px;
+                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.2);
+                width: fit-content;
+            }
+        }
+
+        .upcoming {
+            margin-top: 4px;
+            font-size: 10px;
+            opacity: 0.8;
+            font-weight: 500;
+        }
+    }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .indicator {
+        min-width: 140px;
+        padding: 10px 12px;
+
+        .icon {
+            font-size: 16px;
+        }
+
+        .content {
+            .count {
+                font-size: 20px;
+            }
+
+            .label {
+                font-size: 10px;
+            }
+
+            .upcoming {
+                font-size: 9px;
+            }
+        }
+    }
+} 

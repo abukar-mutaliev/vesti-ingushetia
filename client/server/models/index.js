@@ -23,6 +23,7 @@ const TvProgram = require('./TvProgram.model')(sequelize);
 const VideoAd = require('./VideoAd.model')(sequelize);
 const Project = require('./Projects.model')(sequelize);
 const NewsCategory = require('./NewsCategory.model')(sequelize);
+const ScheduledNews = require('./ScheduledNews.model')(sequelize);
 
 const models = {
     User,
@@ -38,6 +39,7 @@ const models = {
     TvProgram,
     VideoAd,
     Project,
+    ScheduledNews,
 };
 
 Object.values(models).forEach((model) => {

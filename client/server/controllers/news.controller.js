@@ -10,8 +10,14 @@ const {
 } = require('../models');
 const fs = require('fs');
 const baseUrl = process.env.BASE_URL;
+const newsScheduler = require('../schedulers/newsScheduler');
+const logger = require('../logger');
 
 const path = require('path');
+
+const SAFE_USER_ATTRIBUTES = ['id', 'username', 'avatarUrl', 'createdAt'];
+
+const ADMIN_USER_ATTRIBUTES = ['id', 'username', 'email', 'avatarUrl', 'isAdmin', 'createdAt'];
 
 const formatMediaUrls = (newsItems) => {
     return newsItems.map((item) => {
@@ -47,13 +53,16 @@ const formatMediaUrls = (newsItems) => {
 
 exports.getAllNews = async (req, res) => {
     try {
+        const isAdmin = req.user && req.user.isAdmin;
+        const userAttributes = isAdmin ? ADMIN_USER_ATTRIBUTES : SAFE_USER_ATTRIBUTES;
+
         const news = await News.findAll({
             order: [['createdAt', 'DESC']],
             include: [
                 {
                     model: User,
                     as: 'authorDetails',
-                    attributes: ['id', 'username', 'email', 'avatarUrl', 'isAdmin']
+                    attributes: userAttributes
                 },
                 {
                     model: Category,
@@ -132,6 +141,10 @@ exports.generateSchemaForYandex = (news) => {
 exports.getNewsById = async (req, res) => {
     try {
         const { id } = req.params;
+
+        const isAdmin = req.user && req.user.isAdmin;
+        const userAttributes = isAdmin ? ADMIN_USER_ATTRIBUTES : SAFE_USER_ATTRIBUTES;
+
         const news = await News.findByPk(id, {
             include: [
                 {
@@ -139,7 +152,11 @@ exports.getNewsById = async (req, res) => {
                     as: 'categories',
                     through: { attributes: [] },
                 },
-                { model: User, as: 'authorDetails' },
+                {
+                    model: User,
+                    as: 'authorDetails',
+                    attributes: userAttributes
+                },
                 { model: Comment, as: 'comments' },
                 {
                     model: Media,
@@ -215,7 +232,6 @@ exports.getNewsById = async (req, res) => {
     }
 };
 
-
 exports.getNewsByDate = async (req, res) => {
     try {
         const { date } = req.query;
@@ -225,10 +241,17 @@ exports.getNewsByDate = async (req, res) => {
         const endOfDay = new Date(date);
         endOfDay.setUTCHours(23, 59, 59, 999);
 
+        const isAdmin = req.user && req.user.isAdmin;
+        const userAttributes = isAdmin ? ADMIN_USER_ATTRIBUTES : SAFE_USER_ATTRIBUTES;
+
         const news = await News.findAll({
             where: { createdAt: { [Op.between]: [startOfDay, endOfDay] } },
             include: [
-                { model: User, as: 'authorDetails' },
+                {
+                    model: User,
+                    as: 'authorDetails',
+                    attributes: userAttributes
+                },
                 {
                     model: Category,
                     as: 'categories',
@@ -254,10 +277,60 @@ exports.getNewsByDate = async (req, res) => {
 };
 
 exports.createNews = async (req, res) => {
-    const { title, content, categoryIds, videoUrl, publishDate } = req.body;
+    const { title, content, categoryIds, videoUrl, publishDate, scheduleForLater } = req.body;
     const mediaFiles = req.files;
     const authorId = req.user.id;
 
+    // Проверяем, нужно ли создать отложенную публикацию
+    if (scheduleForLater && publishDate) {
+        const scheduledDate = new Date(publishDate);
+        const now = new Date();
+
+        // Если дата публикации в будущем, создаем отложенную новость
+        if (scheduledDate > now) {
+            try {
+                // Подготавливаем данные для отложенной публикации
+                const newsData = {
+                    title,
+                    content,
+                    categoryIds: JSON.parse(categoryIds || '[]'),
+                    videoUrl,
+                    publishDate: scheduledDate,
+                    mediaFiles: mediaFiles ? mediaFiles.images : []
+                };
+
+                // Создаем отложенную новость
+                const scheduledNews = await newsScheduler.scheduleNews(
+                    newsData,
+                    scheduledDate,
+                    authorId
+                );
+
+                logger.info(`Создана отложенная новость: ${title}`, {
+                    authorId,
+                    scheduledDate,
+                    newsId: scheduledNews.id
+                });
+
+                return res.status(201).json({
+                    message: 'Новость запланирована для отложенной публикации',
+                    scheduledNews: {
+                        id: scheduledNews.id,
+                        title: scheduledNews.title,
+                        scheduledDate: scheduledNews.scheduledDate,
+                        status: scheduledNews.status
+                    }
+                });
+            } catch (error) {
+                logger.error('Ошибка создания отложенной новости:', error);
+                return res.status(400).json({
+                    error: `Ошибка создания отложенной новости: ${error.message}`
+                });
+            }
+        }
+    }
+
+    // Если не отложенная публикация, создаем новость обычным способом
     let transaction;
     try {
         transaction = await sequelize.transaction();
@@ -340,12 +413,20 @@ exports.createNews = async (req, res) => {
         }
 
         await transaction.commit();
+
         const createdNews = await News.findByPk(news.id, {
             include: [
                 { model: Category, as: 'categories' },
                 { model: Media, as: 'mediaFiles' }
             ],
         });
+
+        logger.info(`Создана новость: ${title}`, {
+            authorId,
+            newsId: news.id,
+            immediate: !scheduleForLater
+        });
+
         res.status(201).json(createdNews);
     } catch (err) {
         if (transaction) await transaction.rollback();
@@ -520,7 +601,6 @@ exports.updateNews = async (req, res) => {
         res.status(500).json({ error: `Ошибка: ${err.message}` });
     }
 };
-
 
 exports.deleteNews = async (req, res) => {
     try {

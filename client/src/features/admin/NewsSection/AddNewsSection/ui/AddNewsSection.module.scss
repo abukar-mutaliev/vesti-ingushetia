@@ -289,3 +289,225 @@
         transform: translateY(0);
     }
 }
+
+// Добавьте эти стили в AddNewsSection.module.scss
+
+.deferredSection {
+    margin: 20px 0;
+    padding: 15px;
+    border: 2px dashed #e0e0e0;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+    transition: all 0.3s ease;
+
+    &:hover {
+        border-color: #c0c8ff;
+        background: linear-gradient(135deg, #f0f2ff 0%, #fff 100%);
+    }
+}
+
+.deferredToggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    margin-bottom: 15px;
+    transition: color 0.3s ease;
+
+    &:hover {
+        color: #4a67c8;
+    }
+}
+
+.clockIcon {
+    color: #4a67c8;
+    font-size: 16px;
+}
+
+.deferredDateTime {
+    margin-left: 30px;
+    padding: 15px;
+    background: #f8f9ff;
+    border-radius: 6px;
+    border-left: 4px solid #4a67c8;
+
+    label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 10px;
+    }
+}
+
+.calendarIcon {
+    color: #4a67c8;
+    font-size: 14px;
+}
+
+.deferredInput {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+
+    &:focus {
+        outline: none;
+        border-color: #4a67c8;
+        box-shadow: 0 0 0 3px rgba(74, 103, 200, 0.1);
+    }
+}
+
+.deferredInfo {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+}
+
+.buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.saveButton {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+.deferredButton {
+    background: linear-gradient(135deg, #4a67c8 0%, #6c5ce7 100%);
+
+    &:hover {
+        box-shadow: 0 6px 20px rgba(74, 103, 200, 0.3);
+    }
+}
+
+.draftButton {
+    background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.3);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+.cancelButton {
+    background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.3);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+.fileInfo {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.success {
+    color: #28a745 !important;
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.checkboxInput:checked + .checkboxCustom {
+    background: linear-gradient(135deg, #4a67c8 0%, #6c5ce7 100%);
+    border-color: #4a67c8;
+
+    &::after {
+        content: '✓';
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+}
+
+.checkboxCustom {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ddd;
+    border-radius: 3px;
+    display: inline-block;
+    transition: all 0.3s ease;
+    margin-right: 8px;
+}
+
+@media (max-width: 768px) {
+    .buttons {
+        flex-direction: column;
+
+        button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    .deferredDateTime {
+        margin-left: 0;
+    }
+
+    .deferredToggle {
+        flex-wrap: wrap;
+    }
+}

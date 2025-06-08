@@ -3,6 +3,7 @@ import { combineReducers } from 'redux';
 import authorReducer from '@entities/authors/model/authorSlice';
 import categoryReducer from '@entities/categories/model/categorySlice.js';
 import newsReducer from '@entities/news/model/newsSlice.js';
+import scheduledNewsReducer from '@entities/news/model/scheduledNewsSlice.js';
 import searchReducer from '@features/search/model/searchSlice';
 import videoSliderReducer from '@entities/videos/model/videoSliderSlice.js';
 import commentReducer from '@entities/comments/model/commentsSlice.js';
@@ -19,6 +20,7 @@ const rootReducer = combineReducers({
     categories: categoryReducer,
     comments: commentReducer,
     news: newsReducer,
+    scheduledNews: scheduledNewsReducer,
     search: searchReducer,
     videoSlider: videoSliderReducer,
     radio: radioReducer,

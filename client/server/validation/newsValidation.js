@@ -47,10 +47,34 @@ exports.createNewsValidator = [
         return true;
     }),
     body('videoUrl').optional().custom(isSupportedVideoUrl),
+    body('scheduleForLater')
+    .optional()
+    .isBoolean()
+    .withMessage('Поле scheduleForLater должно быть булевым значением'),
     body('publishDate')
     .optional()
     .isISO8601()
-    .withMessage('Дата публикации должна быть в формате ISO8601'),
+    .withMessage('Дата публикации должна быть в формате ISO8601')
+    .custom((value, { req }) => {
+        if (req.body.scheduleForLater && value) {
+            const scheduledDate = new Date(value);
+            const now = new Date();
+            
+            if (scheduledDate <= now) {
+                throw new Error('Дата отложенной публикации должна быть в будущем');
+            }
+            
+            // Проверяем, что дата не слишком далеко в будущем (например, не более года)
+            const oneYearFromNow = new Date();
+            oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+            
+            if (scheduledDate > oneYearFromNow) {
+                throw new Error('Дата отложенной публикации не может быть более чем через год');
+            }
+        }
+        
+        return true;
+    }),
 ];
 
 exports.updateNewsValidator = [

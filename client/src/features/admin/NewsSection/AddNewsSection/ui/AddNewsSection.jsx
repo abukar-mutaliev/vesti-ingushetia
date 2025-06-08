@@ -4,8 +4,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectCategories } from '@entities/categories/model/categorySelectors.js';
 import { fetchCategories } from '@entities/categories/model/categorySlice.js';
 import { createNews, fetchAllNews } from '@entities/news/model/newsSlice.js';
+import { createScheduledNews } from '@entities/news/model/scheduledNewsSlice.js';
 import { RichTextEditor } from '@shared/ui/RichTextEditor';
-import { FaDeleteLeft } from 'react-icons/fa6';
+import { FaDeleteLeft, FaClock } from 'react-icons/fa6';
+import { FaCalendarAlt } from 'react-icons/fa';
 
 const LOCAL_STORAGE_KEY = 'adminDashboard_addNewsSectionFormData';
 
@@ -38,6 +40,16 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         return saved ? JSON.parse(saved).publishDate || '' : '';
     });
 
+    const [isDeferred, setIsDeferred] = useState(() => {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        return saved ? JSON.parse(saved).isDeferred || false : false;
+    });
+
+    const [deferredDate, setDeferredDate] = useState(() => {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        return saved ? JSON.parse(saved).deferredDate || '' : '';
+    });
+
     const [newsMedia, setNewsMedia] = useState([[]]);
     const [errors, setErrors] = useState({});
 
@@ -52,9 +64,11 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             selectedCategoryIds,
             videoUrl,
             publishDate,
+            isDeferred,
+            deferredDate,
         };
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(formData));
-    }, [newsTitle, newsContent, selectedCategoryIds, videoUrl, publishDate]);
+    }, [newsTitle, newsContent, selectedCategoryIds, videoUrl, publishDate, isDeferred, deferredDate]);
 
     useEffect(() => {
         validateField('media', newsMedia);
@@ -111,6 +125,19 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                     }
                 }
                 break;
+            case 'deferredDate':
+                if (isDeferred && !value) {
+                    error = 'Укажите дату и время отложенной публикации.';
+                } else if (value) {
+                    const date = new Date(value);
+                    const now = new Date();
+                    if (isNaN(date)) {
+                        error = 'Неверный формат даты.';
+                    } else if (date <= now) {
+                        error = 'Дата публикации должна быть в будущем.';
+                    }
+                }
+                break;
             default:
                 break;
         }
@@ -125,6 +152,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         const isCategoriesValid = validateField('categories', selectedCategoryIds);
         const isVideoUrlValid = validateField('videoUrl', videoUrl);
         const isPublishDateValid = validateField('publishDate', publishDate);
+        const isDeferredDateValid = validateField('deferredDate', deferredDate);
 
         const isMediaValid =
             videoUrl.trim() || newsMedia.some((group) => group.length > 0);
@@ -141,8 +169,44 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             isCategoriesValid &&
             isVideoUrlValid &&
             isPublishDateValid &&
+            isDeferredDateValid &&
             isMediaValid
         );
+    };
+
+    const saveToDrafts = () => {
+        const draftData = {
+            id: Date.now(),
+            newsTitle,
+            newsContent,
+            selectedCategoryIds,
+            videoUrl,
+            publishDate,
+            isDeferred,
+            deferredDate,
+            newsMedia: newsMedia.flat().map(file => ({
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                lastModified: file.lastModified
+            })),
+            createdAt: new Date().toISOString(),
+            status: isDeferred ? 'scheduled' : 'draft'
+        };
+
+        const existingDrafts = JSON.parse(localStorage.getItem('newsDrafts') || '[]');
+        existingDrafts.push(draftData);
+        localStorage.setItem('newsDrafts', JSON.stringify(existingDrafts));
+
+        setErrors(prev => ({
+            ...prev,
+            submit: `Новость сохранена в ${isDeferred ? 'отложенные' : 'черновики'}.`
+        }));
+
+        setTimeout(() => {
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+            onSave();
+        }, 1500);
     };
 
     const handleSave = () => {
@@ -159,9 +223,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         if (validCategoryIds.length === 0) {
             setErrors(prev => ({
                 ...prev,
-
                 categories: 'Необходимо создать хотя бы одну категорию'
-
             }));
             return;
         }
@@ -176,39 +238,58 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             formData.append('publishDate', publishDate);
         }
 
+        // Добавляем информацию об отложенной публикации согласно серверному API
+        if (isDeferred) {
+            formData.append('scheduleForLater', 'true');
+            formData.append('publishDate', deferredDate); // Используем deferredDate как publishDate для отложенной публикации
+        }
+
         newsMedia.flat().forEach((file) => {
             if (file.type.startsWith('image')) {
                 formData.append('images', file);
             }
         });
 
+        const actionToDispatch = isDeferred ? createScheduledNews : createNews;
 
-        dispatch(createNews(formData))
-        .unwrap()
-        .then(() => {
-            dispatch(fetchAllNews());
-            localStorage.removeItem(LOCAL_STORAGE_KEY);
-            onSave();
-        })
-        .catch((error) => {
-            console.error('Ошибка при создании новости:', error);
-            if (error.errors) {
-                const newErrors = {};
-                error.errors.forEach(err => {
-                    newErrors[err.path] = err.msg;
-                });
-                setErrors(prev => ({
-                    ...prev,
-                    ...newErrors,
-                    submit: 'Пожалуйста, исправьте ошибки в форме.'
-                }));
-            } else {
-                setErrors(prev => ({
-                    ...prev,
-                    submit: error.error || 'Произошла ошибка при сохранении новости.'
-                }));
-            }
-        });
+        dispatch(actionToDispatch(formData))
+            .unwrap()
+            .then((response) => {
+                if (isDeferred) {
+                    setErrors(prev => ({
+                        ...prev,
+                        submit: `Новость запланирована на ${new Date(deferredDate).toLocaleString('ru-RU')}!`
+                    }));
+
+                    setTimeout(() => {
+                        localStorage.removeItem(LOCAL_STORAGE_KEY);
+                        onSave();
+                    }, 2000);
+                } else {
+                    dispatch(fetchAllNews());
+                    localStorage.removeItem(LOCAL_STORAGE_KEY);
+                    onSave();
+                }
+            })
+            .catch((error) => {
+                console.error('Ошибка при создании новости:', error);
+                if (error.errors) {
+                    const newErrors = {};
+                    error.errors.forEach(err => {
+                        newErrors[err.path] = err.msg;
+                    });
+                    setErrors(prev => ({
+                        ...prev,
+                        ...newErrors,
+                        submit: 'Пожалуйста, исправьте ошибки в форме.'
+                    }));
+                } else {
+                    setErrors(prev => ({
+                        ...prev,
+                        submit: error.error || 'Произошла ошибка при сохранении новости.'
+                    }));
+                }
+            });
     };
 
     const handleInputChange = (field, value) => {
@@ -225,10 +306,22 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             case 'publishDate':
                 setPublishDate(value);
                 break;
+            case 'deferredDate':
+                setDeferredDate(value);
+                break;
             default:
                 break;
         }
         validateField(field, value);
+    };
+
+    const handleDeferredToggle = (e) => {
+        const checked = e.target.checked;
+        setIsDeferred(checked);
+        if (!checked) {
+            setDeferredDate('');
+            setErrors(prev => ({ ...prev, deferredDate: '' }));
+        }
     };
 
     const handleCategoryChange = (e) => {
@@ -271,6 +364,12 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
     const handleCancel = () => {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
         onCancel();
+    };
+
+    const getMinDateTime = () => {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 5);
+        return now.toISOString().slice(0, 16);
     };
 
     return (
@@ -339,13 +438,51 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                     <p className={styles.error}>{errors.publishDate}</p>
                 )}
 
+                <div className={styles.deferredSection}>
+                    <label className={styles.deferredToggle}>
+                        <input
+                            type="checkbox"
+                            checked={isDeferred}
+                            onChange={handleDeferredToggle}
+                            className={styles.checkboxInput}
+                        />
+                        <span className={styles.checkboxCustom}></span>
+                        <FaClock className={styles.clockIcon} />
+                        Отложенная публикация
+                    </label>
+
+                    {isDeferred && (
+                        <div className={styles.deferredDateTime}>
+                            <label>
+                                <FaCalendarAlt className={styles.calendarIcon} />
+                                Дата и время публикации
+                            </label>
+                            <input
+                                type="datetime-local"
+                                value={deferredDate}
+                                min={getMinDateTime()}
+                                onChange={(e) =>
+                                    handleInputChange('deferredDate', e.target.value)
+                                }
+                                className={styles.deferredInput}
+                            />
+                            {errors.deferredDate && (
+                                <p className={styles.error}>{errors.deferredDate}</p>
+                            )}
+                            <p className={styles.deferredInfo}>
+                                Новость будет автоматически опубликована в указанное время
+                            </p>
+                        </div>
+                    )}
+                </div>
+
                 <label>Изображения</label>
                 {newsMedia.map((mediaGroup, index) => (
                     <div key={index}>
                         <input
                             type="file"
                             multiple
-                            accept="image/*"
+                            accept="image/jpeg,image/png"
                             onChange={(e) => handleMediaChange(e, index)}
                             className={styles.fileInput}
                         />
@@ -383,14 +520,36 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 >
                     + Добавить ещё файлы
                 </button>
+                <p className={styles.fileInfo}>
+                    Допустимые форматы: JPG, PNG. Максимальный размер: 5MB
+                </p>
                 {errors.media && <p className={styles.error}>{errors.media}</p>}
                 {errors.submit && (
-                    <p className={styles.error}>{errors.submit}</p>
+                    <p className={`${styles.error} ${errors.submit.includes('сохранена') ? styles.success : ''}`}>
+                        {errors.submit}
+                    </p>
                 )}
 
                 <div className={styles.buttons}>
-                    <button className={styles.saveButton} onClick={handleSave}>
-                        Сохранить
+                    <button
+                        className={`${styles.saveButton} ${isDeferred ? styles.deferredButton : ''}`}
+                        onClick={handleSave}
+                    >
+                        {isDeferred ? (
+                            <>
+                                <FaClock />
+                                Запланировать публикацию
+                            </>
+                        ) : (
+                            'Опубликовать сейчас'
+                        )}
+                    </button>
+                    <button
+                        type="button"
+                        className={styles.draftButton}
+                        onClick={saveToDrafts}
+                    >
+                        Сохранить в черновики
                     </button>
                     <button
                         className={styles.cancelButton}

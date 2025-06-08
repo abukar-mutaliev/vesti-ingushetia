@@ -6,23 +6,88 @@ const { Comment } = require('../models');
 const { Op } = require('sequelize');
 require('dotenv').config();
 const fs = require('fs');
-require('dotenv').config();
 const JWT_SECRET = process.env.SECRET_KEY;
 const BASE_URL = process.env.BASE_URL;
 const logger = require('../logger');
 const { validationResult } = require('express-validator');
 
+// БЕЗОПАСНОСТЬ: Определяем безопасные атрибуты пользователя
+const SAFE_USER_ATTRIBUTES = ['id', 'username', 'avatarUrl', 'createdAt'];
+const ADMIN_USER_ATTRIBUTES = ['id', 'username', 'email', 'avatarUrl', 'isAdmin', 'createdAt', 'updatedAt'];
+const FORBIDDEN_USER_FIELDS = ['password', 'passwordHash', 'resetToken', 'refreshToken'];
+
+/**
+ * Фильтрует объект пользователя, удаляя чувствительные данные
+ */
+const sanitizeUserData = (user, isAdmin = false) => {
+    if (!user) return null;
+
+    const userObj = user.toJSON ? user.toJSON() : user;
+    const allowedFields = isAdmin ? ADMIN_USER_ATTRIBUTES : SAFE_USER_ATTRIBUTES;
+
+    // Создаем новый объект только с разрешенными полями
+    const sanitized = {};
+    allowedFields.forEach(field => {
+        if (userObj.hasOwnProperty(field)) {
+            sanitized[field] = userObj[field];
+        }
+    });
+
+    // Убеждаемся, что запрещенные поля удалены
+    FORBIDDEN_USER_FIELDS.forEach(field => {
+        delete sanitized[field];
+    });
+
+    // Форматируем URL аватара
+    if (sanitized.avatarUrl) {
+        sanitized.avatarUrl = sanitized.avatarUrl.startsWith('http')
+            ? sanitized.avatarUrl
+            : `${BASE_URL}/${sanitized.avatarUrl}`;
+    }
+
+    return sanitized;
+};
+
+/**
+ * КРИТИЧНО: Получение всех пользователей - ТОЛЬКО для администраторов
+ */
 exports.getAllUsers = async (req, res) => {
     try {
-        const users = await User.findAll();
-        const usersWithFullAvatarUrl = users.map((user) => ({
-            ...user.toJSON(),
-            avatarUrl: user.avatarUrl ? `${BASE_URL}/${user.avatarUrl}` : null,
-        }));
-        res.json(usersWithFullAvatarUrl);
+        // БЕЗОПАСНОСТЬ: Проверяем права администратора
+        if (!req.user || !req.user.isAdmin) {
+            logger.warn(`Попытка неавторизованного доступа к списку пользователей`, {
+                ip: req.ip,
+                userAgent: req.get('User-Agent'),
+                userId: req.user?.id || 'anonymous',
+                timestamp: new Date().toISOString()
+            });
+
+            return res.status(403).json({
+                error: 'Доступ запрещен. Требуются права администратора.'
+            });
+        }
+
+        // Получаем пользователей с безопасными атрибутами
+        const users = await User.findAll({
+            attributes: ADMIN_USER_ATTRIBUTES, // Только разрешенные поля
+            order: [['createdAt', 'DESC']]
+        });
+
+        // Дополнительная санитизация данных
+        const sanitizedUsers = users.map(user => sanitizeUserData(user, true));
+
+        // Логируем административный доступ
+        logger.info(`Администратор ${req.user.id} получил список пользователей`, {
+            timestamp: new Date().toISOString(),
+            usersCount: sanitizedUsers.length,
+            ip: req.ip
+        });
+
+        res.json(sanitizedUsers);
     } catch (err) {
+        logger.error('Ошибка получения пользователей:', err);
         res.status(500).json({
-            error: `Ошибка получения пользователей: ${err}`,
+            error: `Ошибка получения пользователей: ${err.message}`,
         });
     }
 };
@@ -52,11 +117,18 @@ exports.registerUser = async (req, res) => {
             avatarUrl,
         });
 
-        res.status(201).json({
-            ...user.toJSON(),
-            avatarUrl: avatarUrl ? `${BASE_URL}/${avatarUrl}` : null,
+        // Возвращаем только безопасные данные
+        const sanitizedUser = sanitizeUserData(user, false);
+
+        logger.info(`Зарегистрирован новый пользователь: ${username}`, {
+            userId: user.id,
+            email: email,
+            timestamp: new Date().toISOString()
         });
+
+        res.status(201).json(sanitizedUser);
     } catch (err) {
+        logger.error('Ошибка регистрации пользователя:', err);
         res.status(500).json({
             error: `Ошибка создания пользователя: ${err.message}`,
         });
@@ -68,6 +140,19 @@ exports.registerAdmin = async (req, res) => {
     const { user } = req;
 
     try {
+        // БЕЗОПАСНОСТЬ: Проверяем права администратора
+        if (!user.isAdmin) {
+            logger.warn(`Попытка регистрации админа неадминистратором`, {
+                userId: user.id,
+                ip: req.ip,
+                timestamp: new Date().toISOString()
+            });
+
+            return res.status(403).json({
+                error: 'Доступ запрещен. Только администратор может регистрировать других администраторов.',
+            });
+        }
+
         const existingUser = await User.findOne({ where: { username } });
         if (existingUser) {
             return res
@@ -80,12 +165,6 @@ exports.registerAdmin = async (req, res) => {
             return res.status(400).json({ error: 'Email уже используется.' });
         }
 
-        if (!user.isAdmin) {
-            return res.status(403).json({
-                error: 'Доступ запрещен. Только администратор может регистрировать других администраторов.',
-            });
-        }
-
         const hashedPassword = await bcrypt.hash(password, 10);
         const admin = await User.create({
             username,
@@ -93,11 +172,21 @@ exports.registerAdmin = async (req, res) => {
             password: hashedPassword,
             isAdmin: true,
         });
+
+        // Возвращаем только безопасные данные
+        const sanitizedAdmin = sanitizeUserData(admin, true);
+
+        logger.info(`Администратор ${user.id} зарегистрировал нового админа ${admin.id}`, {
+            newAdminUsername: username,
+            timestamp: new Date().toISOString()
+        });
+
         res.status(201).json({
             message: 'Админ успешно зарегистрирован',
-            admin,
+            admin: sanitizedAdmin,
         });
     } catch (err) {
+        logger.error('Ошибка регистрации админа:', err);
         res.status(500).json({
             error: `Ошибка регистрации админа: ${err.message}`,
         });
@@ -109,7 +198,7 @@ exports.loginUser = async (req, res) => {
     const validationErrors = validationResult(req);
 
     if (!validationErrors.isEmpty()) {
-        logger.info(validationErrors);
+        logger.info('Ошибка валидации при входе:', validationErrors);
         return res.status(400).json({ errors: validationErrors.array() });
     }
 
@@ -117,11 +206,20 @@ exports.loginUser = async (req, res) => {
         const user = await User.findOne({ where: { email } });
 
         if (!user) {
+            logger.warn(`Попытка входа с несуществующим email: ${email}`, {
+                ip: req.ip,
+                timestamp: new Date().toISOString()
+            });
             return res.status(401).json({ errors: [{ msg: 'Неверный email' }] });
         }
 
         const match = await bcrypt.compare(password, user.password);
         if (!match) {
+            logger.warn(`Неудачная попытка входа для пользователя ${user.id}`, {
+                email: email,
+                ip: req.ip,
+                timestamp: new Date().toISOString()
+            });
             return res.status(401).json({ errors: [{ msg: 'Неверный пароль' }] });
         }
 
@@ -159,17 +257,25 @@ exports.loginUser = async (req, res) => {
             sameSite: 'strict',
         });
 
+        // Возвращаем только безопасные данные пользователя
+        const userResponse = {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            isAdmin: user.isAdmin,
+        };
+
+        logger.info(`Успешный вход пользователя ${user.id}`, {
+            username: user.username,
+            timestamp: new Date().toISOString()
+        });
+
         res.json({
             message: 'Успешная авторизация',
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                isAdmin: user.isAdmin,
-            },
+            user: userResponse,
         });
     } catch (err) {
-        logger.error(err.message);
+        logger.error('Ошибка входа:', err.message);
         res.status(500).json({ error: err.message });
     }
 };
@@ -182,7 +288,9 @@ exports.refreshToken = async (req, res) => {
         }
 
         const decoded = jwt.verify(refreshToken, JWT_SECRET);
-        const dbUser = await User.findByPk(decoded.id);
+        const dbUser = await User.findByPk(decoded.id, {
+            attributes: ['id', 'username', 'email', 'isAdmin'] // Только нужные поля
+        });
 
         if (!dbUser) {
             return res.status(404).json({ error: 'Пользователь не найден' });
@@ -216,36 +324,49 @@ exports.refreshToken = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
+        // Возвращаем только безопасные данные
+        const userResponse = {
+            id: dbUser.id,
+            username: dbUser.username,
+            email: dbUser.email,
+            isAdmin: dbUser.isAdmin,
+        };
+
         res.json({
             message: 'Токен обновлен',
             accessToken: newAccessToken,
-            user: {
-                id: dbUser.id,
-                username: dbUser.username,
-                email: dbUser.email,
-                isAdmin: dbUser.isAdmin,
-            },
+            user: userResponse,
         });
     } catch (err) {
+        logger.error('Ошибка обновления токена:', err);
         return res.status(500).json({ error: `Ошибка обновления токена: ${err.message}` });
     }
 };
-
 
 exports.updateUser = async (req, res) => {
     const { id } = req.params;
     const { username, email } = req.body;
     let avatarUrl;
 
-    if (req.file) {
-        avatarUrl = `${BASE_URL}/${path.posix.join(
-            'uploads',
-            'avatars',
-            req.file.filename,
-        )}`;
-    }
-
     try {
+        // БЕЗОПАСНОСТЬ: Проверяем права доступа
+        if (req.user.id !== parseInt(id) && !req.user.isAdmin) {
+            logger.warn(`Попытка изменения чужого профиля`, {
+                requesterId: req.user.id,
+                targetUserId: id,
+                ip: req.ip,
+                timestamp: new Date().toISOString()
+            });
+
+            return res.status(403).json({
+                error: 'Доступ запрещен. Вы можете редактировать только свой профиль.'
+            });
+        }
+
+        if (req.file) {
+            avatarUrl = path.posix.join('uploads', 'avatars', req.file.filename);
+        }
+
         const user = await User.findByPk(id);
 
         if (!user) {
@@ -258,11 +379,17 @@ exports.updateUser = async (req, res) => {
             avatarUrl: avatarUrl || user.avatarUrl,
         });
 
-        res.status(200).json({
-            ...user.toJSON(),
-            avatarUrl: user.avatarUrl ? `${BASE_URL}/${user.avatarUrl}` : null,
+        // Возвращаем только безопасные данные
+        const sanitizedUser = sanitizeUserData(user, req.user.isAdmin);
+
+        logger.info(`Обновлен профиль пользователя ${id}`, {
+            updatedBy: req.user.id,
+            timestamp: new Date().toISOString()
         });
+
+        res.status(200).json(sanitizedUser);
     } catch (err) {
+        logger.error('Ошибка обновления пользователя:', err);
         res.status(500).json({
             error: `Ошибка обновления пользователя: ${err.message}`,
         });
@@ -275,7 +402,15 @@ exports.updateUserRole = async (req, res) => {
     const requestingUser = req.user;
 
     try {
+        // БЕЗОПАСНОСТЬ: Только администраторы могут изменять роли
         if (!requestingUser.isAdmin) {
+            logger.warn(`Попытка изменения роли неадминистратором`, {
+                requesterId: requestingUser.id,
+                targetUserId: id,
+                ip: req.ip,
+                timestamp: new Date().toISOString()
+            });
+
             return res.status(403).json({
                 error: 'Доступ запрещен. Только администраторы могут изменять роли пользователей.',
             });
@@ -296,11 +431,21 @@ exports.updateUserRole = async (req, res) => {
         user.isAdmin = isAdmin;
         await user.save();
 
+        // Возвращаем только безопасные данные
+        const sanitizedUser = sanitizeUserData(user, true);
+
+        logger.info(`Изменена роль пользователя ${id}`, {
+            changedBy: requestingUser.id,
+            newRole: isAdmin ? 'admin' : 'user',
+            timestamp: new Date().toISOString()
+        });
+
         res.status(200).json({
             message: 'Роль пользователя успешно обновлена.',
-            user,
+            user: sanitizedUser,
         });
     } catch (err) {
+        logger.error('Ошибка обновления роли:', err);
         res.status(500).json({
             error: `Ошибка обновления роли пользователя: ${err.message}`,
         });
@@ -330,6 +475,7 @@ exports.updateAvatar = async (req, res) => {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
 
+        // Удаляем старый аватар
         if (user.avatarUrl) {
             const oldAvatarPath = path.join(
                 __dirname,
@@ -339,14 +485,11 @@ exports.updateAvatar = async (req, res) => {
                 user.avatarUrl.replace('uploads/avatars/', ''),
             );
 
-            fs.exists(oldAvatarPath, (exists) => {
-                if (exists) {
-                    fs.unlink(oldAvatarPath, (err) => {
-                        if (err) {
-                            console.error(
-                                'Ошибка при удалении старого аватара:',
-                                err,
-                            );
+            fs.access(oldAvatarPath, fs.constants.F_OK, (err) => {
+                if (!err) {
+                    fs.unlink(oldAvatarPath, (unlinkErr) => {
+                        if (unlinkErr) {
+                            console.error('Ошибка при удалении старого аватара:', unlinkErr);
                         }
                     });
                 }
@@ -355,11 +498,12 @@ exports.updateAvatar = async (req, res) => {
 
         await user.update({ avatarUrl });
 
-        res.status(200).json({
-            ...user.toJSON(),
-            avatarUrl: `${BASE_URL}/${avatarUrl}`,
-        });
+        // Возвращаем только безопасные данные
+        const sanitizedUser = sanitizeUserData(user, user.isAdmin);
+
+        res.status(200).json(sanitizedUser);
     } catch (err) {
+        logger.error('Ошибка обновления аватара:', err);
         res.status(500).json({
             error: `Ошибка обновления аватара: ${err.message}`,
         });
@@ -369,25 +513,19 @@ exports.updateAvatar = async (req, res) => {
 exports.getUserProfile = async (req, res) => {
     try {
         const user = await User.findByPk(req.user.id, {
-            attributes: [
-                'id',
-                'username',
-                'email',
-                'createdAt',
-                'avatarUrl',
-                'isAdmin',
-            ],
+            attributes: ['id', 'username', 'email', 'createdAt', 'avatarUrl', 'isAdmin']
         });
 
         if (!user) {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
 
-        res.json({
-            ...user.toJSON(),
-            avatarUrl: user.avatarUrl ? `${BASE_URL}/${user.avatarUrl}` : null,
-        });
+        // Возвращаем только безопасные данные
+        const sanitizedUser = sanitizeUserData(user, user.isAdmin);
+
+        res.json(sanitizedUser);
     } catch (err) {
+        logger.error('Ошибка получения профиля:', err);
         res.status(500).json({
             error: 'Ошибка получения профиля пользователя',
         });
@@ -419,14 +557,23 @@ exports.getUserReplies = async (req, res) => {
                 {
                     model: User,
                     as: 'user',
-                    attributes: ['id', 'username', 'avatarUrl'],
+                    attributes: SAFE_USER_ATTRIBUTES, // Только безопасные атрибуты
                 },
             ],
         });
 
-        res.status(200).json({ replies });
+        // Санитизируем данные пользователей в ответах
+        const sanitizedReplies = replies.map(reply => {
+            const replyObj = reply.toJSON();
+            if (replyObj.user) {
+                replyObj.user = sanitizeUserData(replyObj.user, false);
+            }
+            return replyObj;
+        });
+
+        res.status(200).json({ replies: sanitizedReplies });
     } catch (err) {
-        console.error('Error retrieving user replies:', err);
+        logger.error('Ошибка получения ответов:', err);
         res.status(500).json({
             error: `Ошибка получения ответов: ${err.message}`,
         });
@@ -434,9 +581,14 @@ exports.getUserReplies = async (req, res) => {
 };
 
 exports.logOutUser = (req, res) => {
+    if (req.user) {
+        logger.info(`Пользователь ${req.user.id} вышел из системы`, {
+            timestamp: new Date().toISOString()
+        });
+    }
+
     res.clearCookie('auth_token', {
         httpOnly: true,
-
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
     });

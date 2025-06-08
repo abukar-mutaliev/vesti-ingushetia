@@ -12,38 +12,25 @@
     .topbar {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 20px;
+        align-items: center;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        gap: 15px;
 
         h1 {
             font-size: 24px;
             color: #333;
-        }
-
-        .create {
-            background-color: #4caf50;
-            color: white;
-            padding: 5px 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-
-            &:hover {
-                background-color: #388e3c;
-            }
+            margin: 0;
         }
 
         @media (max-width: 768px) {
             flex-direction: column;
-            align-items: center;
-            gap: 10px;
+            align-items: stretch;
+            gap: 15px;
 
             h1 {
-                font-size: 20px;
-            }
-
-            .create {
-                width: 100%;
                 text-align: center;
+                font-size: 20px;
             }
         }
     }
@@ -75,7 +62,7 @@
             padding: 5px 10px;
             cursor: pointer;
             &:hover {
-                background-color: $primary-color-hover;
+                background-color: #1976d2;
             }
         }
 
@@ -87,7 +74,7 @@
             cursor: pointer;
 
             &:hover {
-                background-color: #f44;
+                background-color: #d32f2f;
             }
         }
 
@@ -121,7 +108,7 @@
 
                     .editButton,
                     .deleteButton {
-                        width: 108%;
+                        width: 100%;
                     }
                 }
             }
@@ -132,4 +119,276 @@
 .newsLink {
     text-decoration: none;
     color: #333333;
+}
+
+.buttonGroup {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.buttonIcon {
+    margin-right: 6px;
+    font-size: 14px;
+}
+
+// Базовые стили для всех кнопок - ОДИНАКОВЫЙ РАЗМЕР
+.baseButton {
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    min-width: 140px; // Фиксированная минимальная ширина
+    height: 44px; // Фиксированная высота
+    text-align: center;
+    white-space: nowrap;
+
+    &:hover {
+        transform: translateY(-2px);
+    }
+}
+
+.draftsButton {
+    @extend .baseButton;
+    position: relative;
+    background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+    color: white;
+
+    &:hover {
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.3);
+    }
+}
+
+.scheduledButton {
+    @extend .baseButton;
+    position: relative;
+    background: linear-gradient(135deg, #4a67c8 0%, #6c5ce7 100%);
+    color: white;
+    animation: pulse 2s infinite;
+
+    &:hover {
+        box-shadow: 0 6px 20px rgba(74, 103, 200, 0.4);
+        animation: none;
+    }
+}
+
+.create {
+    @extend .baseButton;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    font-weight: 600;
+
+    &:hover {
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+    }
+}
+
+.backButton {
+    @extend .baseButton;
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+
+    &:hover {
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.3);
+    }
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(74, 103, 200, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(74, 103, 200, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(74, 103, 200, 0); }
+}
+
+.badge {
+    background: #dc3545;
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 6px;
+    min-width: 18px;
+    text-align: center;
+}
+
+.scheduledBadge {
+    background: #ffc107;
+    color: #333;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 6px;
+    min-width: 18px;
+    text-align: center;
+}
+
+.draftsInfo {
+    margin-bottom: 20px;
+}
+
+.infoCard {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border: 1px solid #2196f3;
+    border-radius: 8px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.infoContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 15px;
+}
+
+.infoText {
+    color: #1565c0;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.infoButton {
+    background: #2196f3;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+
+    &:hover {
+        background: #1976d2;
+        transform: scale(1.05);
+    }
+}
+
+.dateColumn {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.emptyContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    color: #666;
+}
+
+.emptyIcon {
+    font-size: 48px;
+    color: #ddd;
+}
+
+.emptyContent p {
+    font-size: 18px;
+    margin: 0;
+}
+
+.emptyButton {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+    }
+}
+
+@media (max-width: 768px) {
+    .buttonGroup {
+        justify-content: center;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .baseButton {
+        min-width: 120px; // Чуть меньше на мобильных
+        height: 40px;
+        font-size: 13px;
+        padding: 10px 16px;
+    }
+
+    .infoContent {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+
+    .infoButton {
+        align-self: center;
+    }
+
+    .hideOnMobile {
+        display: none;
+    }
+
+    .dateColumn {
+        display: none;
+    }
+
+    .emptyContent {
+        padding: 40px 20px;
+    }
+
+    .emptyIcon {
+        font-size: 36px;
+    }
+
+    .emptyContent p {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .buttonGroup {
+        flex-direction: column;
+        width: 100%;
+        gap: 8px;
+    }
+
+    .baseButton {
+        width: 100%;
+        min-width: auto;
+        height: 44px;
+        justify-content: center;
+    }
+
+    .badge,
+    .scheduledBadge {
+        position: absolute;
+        top: -5px;
+        right: 8px;
+        margin-left: 0;
+    }
+
+    .draftsButton,
+    .scheduledButton {
+        position: relative;
+    }
 }

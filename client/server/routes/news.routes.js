@@ -25,8 +25,21 @@ const {
     deleteNewsValidator,
 } = require('../validation/newsValidation');
 
+// Создание новости (с поддержкой отложенной публикации)
 router.post(
     '/add',
+    authenticateAdmin,
+    csrfProtection,
+    upload,
+    createNewsValidator,
+    validate,
+    handleMulterErrors,
+    createNews,
+);
+
+// Создание отложенной публикации (альтернативный роут для ясности)
+router.post(
+    '/schedule',
     authenticateAdmin,
     csrfProtection,
     upload,
