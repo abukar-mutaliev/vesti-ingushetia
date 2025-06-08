@@ -9,7 +9,7 @@ async function checkTimezone() {
 
         // Проверяем настройки часового пояса в PostgreSQL
         const [dbTimezone] = await sequelize.query('SHOW timezone;');
-        logger.info(`🌍 Часовой пояс PostgreSQL: ${dbTimezone[0].TimeZone}`);
+        logger.info(`🌍 Часовой пояс PostgreSQL: ${JSON.stringify(dbTimezone[0])}`);
 
         const [dbTime] = await sequelize.query('SELECT NOW() as current_time;');
         logger.info(`🕒 Время в PostgreSQL: ${dbTime[0].current_time}`);
@@ -49,6 +49,21 @@ async function checkTimezone() {
         logger.info(`\n🧪 Тест времени:`);
         logger.info(`   - Сейчас JS: ${testTime.toISOString()}`);
         logger.info(`   - +2 мин JS: ${testTimeIn2Min.toISOString()}`);
+
+        // Дополнительные проверки
+        const [settings] = await sequelize.query(`
+            SELECT 
+                current_setting('timezone') as timezone,
+                current_timestamp as current_timestamp,
+                now() as now,
+                timezone('UTC', now()) as utc_now
+        `);
+        
+        logger.info(`\n🔍 Подробная диагностика PostgreSQL:`);
+        logger.info(`   - timezone: ${settings[0].timezone}`);
+        logger.info(`   - current_timestamp: ${settings[0].current_timestamp}`);
+        logger.info(`   - now(): ${settings[0].now}`);
+        logger.info(`   - UTC now: ${settings[0].utc_now}`);
 
     } catch (error) {
         logger.error('❌ Ошибка при проверке часового пояса:', error);
