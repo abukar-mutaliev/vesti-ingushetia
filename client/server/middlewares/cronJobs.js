@@ -2,6 +2,9 @@ const cron = require('node-cron');
 const { VideoAd } = require('../models');
 const { Op } = require('sequelize');
 
+// Инициализация планировщика новостей
+require('../schedulers/newsScheduler');
+
 cron.schedule('0 * * * *', async () => {
     try {
         const now = new Date();

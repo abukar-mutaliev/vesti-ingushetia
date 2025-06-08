@@ -8,9 +8,12 @@ class NewsScheduler {
     constructor() {
         this.isRunning = false;
         this.initScheduler();
+        this.initCleanup();
+        logger.info('NewsScheduler инициализирован');
     }
 
     initScheduler() {
+        // Проверка каждую минуту
         cron.schedule('* * * * *', () => {
             this.checkAndPublishScheduledNews();
         });
@@ -24,6 +27,9 @@ class NewsScheduler {
         this.isRunning = true;
 
         try {
+            // Проверяем подключение к базе данных
+            await sequelize.authenticate();
+            
             const now = new Date();
 
             const scheduledNews = await ScheduledNews.findAll({
