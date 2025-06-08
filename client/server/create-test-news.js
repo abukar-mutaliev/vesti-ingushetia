@@ -14,8 +14,8 @@ async function createTestScheduledNews() {
         const testNewsData = {
             title: 'ТЕСТОВАЯ АВТОПУБЛИКАЦИЯ',
             content: 'Это тестовая новость для проверки автоматической публикации. Создана в ' + now.toISOString(),
-            authorId: 1, // ID администратора
-            categoryIds: [1], // ID категории
+            authorId: 6, // ID администратора (admin)
+            categoryIds: [1], // ID категории "Новости"
             mediaFiles: []
         };
 
@@ -29,6 +29,8 @@ async function createTestScheduledNews() {
 
         logger.info(`🚀 Создана тестовая новость:`);
         logger.info(`   - Заголовок: "${testNewsData.title}"`);
+        logger.info(`   - Автор ID: ${testNewsData.authorId} (admin)`);
+        logger.info(`   - Категория ID: ${testNewsData.categoryIds[0]} (Новости)`);
         logger.info(`   - Текущее время: ${now.toISOString()}`);
         logger.info(`   - Запланировано на: ${scheduledTime.toISOString()}`);
         logger.info(`   - Время до публикации: 2 минуты`);
