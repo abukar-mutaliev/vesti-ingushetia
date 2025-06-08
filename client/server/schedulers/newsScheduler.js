@@ -13,7 +13,6 @@ class NewsScheduler {
     }
 
     initScheduler() {
-        // Проверка каждую минуту
         cron.schedule('* * * * *', () => {
             this.checkAndPublishScheduledNews();
         });
@@ -27,7 +26,6 @@ class NewsScheduler {
         this.isRunning = true;
 
         try {
-            // Проверяем подключение к базе данных
             await sequelize.authenticate();
             
             const now = new Date();
@@ -148,7 +146,6 @@ class NewsScheduler {
                             const tempFilename = `${Date.now()}-${file.filename}`;
                             const tempPath = path.join(tempDir, tempFilename);
 
-                            // Копируем файл во временную папку
                             fs.copyFileSync(file.path, tempPath);
 
                             return {
@@ -244,7 +241,7 @@ class NewsScheduler {
 
             const files = fs.readdirSync(tempDir);
             const now = Date.now();
-            const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 дней
+            const maxAge = 7 * 24 * 60 * 60 * 1000;
 
             for (const file of files) {
                 const filePath = path.join(tempDir, file);
