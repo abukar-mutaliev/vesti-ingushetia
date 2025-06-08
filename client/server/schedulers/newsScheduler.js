@@ -21,14 +21,20 @@ class NewsScheduler {
     }
 
     async checkAndPublishScheduledNews() {
-        if (this.isRunning) return;
+        if (this.isRunning) {
+            logger.info('Планировщик уже выполняется, пропускаем итерацию');
+            return;
+        }
 
         this.isRunning = true;
+        logger.info('🔄 Запуск проверки отложенных новостей...');
 
         try {
             await sequelize.authenticate();
+            logger.info('✅ Подключение к БД в планировщике успешно');
             
             const now = new Date();
+            logger.info(`⏰ Текущее время: ${now.toISOString()}`);
 
             const scheduledNews = await ScheduledNews.findAll({
                 where: {
@@ -39,18 +45,33 @@ class NewsScheduler {
                 }
             });
 
+            logger.info(`📊 Проверка завершена. Найдено новостей для публикации: ${scheduledNews.length}`);
+
             if (scheduledNews.length === 0) {
+                // Проверим сколько всего отложенных новостей
+                const allScheduled = await ScheduledNews.findAll({
+                    where: { status: 'scheduled' }
+                });
+                logger.info(`📝 Всего отложенных новостей: ${allScheduled.length}`);
+                
+                if (allScheduled.length > 0) {
+                    allScheduled.forEach(news => {
+                        logger.info(`   - "${news.title}" на ${news.scheduledDate.toISOString()}`);
+                    });
+                }
+                
                 this.isRunning = false;
                 return;
             }
 
-            logger.info(`Найдено ${scheduledNews.length} новостей для публикации`);
+            logger.info(`🚀 Найдено ${scheduledNews.length} новостей для публикации`);
 
             for (const scheduled of scheduledNews) {
                 try {
+                    logger.info(`📰 Публикация новости: "${scheduled.title}"`);
                     await this.publishScheduledNews(scheduled);
                 } catch (error) {
-                    logger.error(`Ошибка при публикации новости ID ${scheduled.id}:`, error);
+                    logger.error(`❌ Ошибка при публикации новости ID ${scheduled.id}:`, error);
 
                     await scheduled.update({
                         status: 'error',
@@ -60,9 +81,10 @@ class NewsScheduler {
                 }
             }
         } catch (error) {
-            logger.error('Ошибка в планировщике новостей:', error);
+            logger.error('💥 Ошибка в планировщике новостей:', error);
         } finally {
             this.isRunning = false;
+            logger.info('✅ Проверка планировщика завершена');
         }
     }
 
