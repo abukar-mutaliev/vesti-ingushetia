@@ -46,7 +46,7 @@ export const truncateHtmlToSentences = (html, sentenceLimit) => {
 
 // Простая функция для обрезки HTML по символам с сохранением структуры
 export const truncateHtmlByChars = (html, charLimit) => {
-    if (!html || html.length <= charLimit) {
+    if (!html) {
         return html;
     }
 
@@ -57,12 +57,12 @@ export const truncateHtmlByChars = (html, charLimit) => {
     // Получаем только текстовое содержимое
     const textContent = div.textContent || div.innerText || '';
     
-    // Если текст короче лимита, возвращаем оригинал
+    // Если текст короче или равен лимиту, возвращаем весь текст
     if (textContent.length <= charLimit) {
-        return html;
+        return textContent;
     }
     
     // Обрезаем текст и добавляем многоточие
     const truncatedText = textContent.substring(0, charLimit).trim();
-    return truncatedText + (truncatedText.length < textContent.length ? '...' : '');
+    return truncatedText + '...';
 };
