@@ -20,6 +20,7 @@ import {
     selectOverdueScheduledNews,
     selectUpcomingScheduledNews
 } from '@entities/news/model/scheduledNewsSelectors.js';
+import { truncateHtmlByChars } from '@shared/lib/TruncateHtml/truncateHtml.js';
 import { FaClock, FaTrash, FaEye, FaPlay, FaExclamationCircle, FaCalendarCheck } from 'react-icons/fa6';
 import { FaCalendarAlt, FaChartBar } from 'react-icons/fa';
 import styles from './ScheduledNewsManager.module.scss';
@@ -265,10 +266,7 @@ export const ScheduledNewsManager = ({ isAdmin = false }) => {
 
                             <div className={styles.content}>
                                 {news.content && news.content.length > 0 ? (
-                                    <>
-                                        {news.content.substring(0, 150)}
-                                        {news.content.length > 150 && '...'}
-                                    </>
+                                    truncateHtmlByChars(news.content, 150)
                                 ) : (
                                     'Содержание отсутствует'
                                 )}

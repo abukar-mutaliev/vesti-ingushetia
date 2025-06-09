@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { createNews, fetchAllNews } from '@entities/news/model/newsSlice.js';
 import { createScheduledNews, fetchMyScheduledNews } from '@entities/news/model/scheduledNewsSlice.js';
 import { useScheduledNews } from '@shared/hooks/useScheduledNews.js';
+import { truncateHtmlByChars } from '@shared/lib/TruncateHtml/truncateHtml.js';
 import { FaClock, FaTrash, FaEye, FaPlay } from 'react-icons/fa6';
 import { FaEdit, FaCalendarAlt } from 'react-icons/fa';
 import styles from './DraftsManager.module.scss';
@@ -282,10 +283,7 @@ export const DraftsManager = ({ onEditDraft }) => {
 
                             <div className={styles.content}>
                                 {item.newsContent && item.newsContent.length > 0 ? (
-                                    <>
-                                        {item.newsContent.substring(0, 150)}
-                                        {item.newsContent.length > 150 && '...'}
-                                    </>
+                                    truncateHtmlByChars(item.newsContent, 150)
                                 ) : (
                                     'Содержание отсутствует'
                                 )}

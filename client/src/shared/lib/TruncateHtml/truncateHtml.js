@@ -43,3 +43,26 @@ export const truncateHtmlToSentences = (html, sentenceLimit) => {
 
     return truncateToSentences(html, sentenceLimit);
 };
+
+// Простая функция для обрезки HTML по символам с сохранением структуры
+export const truncateHtmlByChars = (html, charLimit) => {
+    if (!html || html.length <= charLimit) {
+        return html;
+    }
+
+    // Создаем временный div для парсинга HTML
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    
+    // Получаем только текстовое содержимое
+    const textContent = div.textContent || div.innerText || '';
+    
+    // Если текст короче лимита, возвращаем оригинал
+    if (textContent.length <= charLimit) {
+        return html;
+    }
+    
+    // Обрезаем текст и добавляем многоточие
+    const truncatedText = textContent.substring(0, charLimit).trim();
+    return truncatedText + (truncatedText.length < textContent.length ? '...' : '');
+};
