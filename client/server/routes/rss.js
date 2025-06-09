@@ -6,9 +6,6 @@ const logger = require('../logger');
 
 router.get("/", async (req, res) => {
     try {
-        logger.info("Запрос RSS-фида");
-        logger.info(`Заголовки: User-Agent=${req.headers['user-agent']}`);
-
         const newsItems = await News.findAll({
             include: [
                 {
@@ -30,18 +27,12 @@ router.get("/", async (req, res) => {
             limit: 20,
         });
 
-        logger.info(`Найдено новостей: ${newsItems.length}`); // Отладка
-        if (newsItems.length > 0) {
-            newsItems.forEach((news, index) => {
-                logger.info(`Новость #${index + 1}: title=${news.title}, id=${news.id}, mediaFiles=${JSON.stringify(news.mediaFiles)}, publishDate=${news.publishDate}, author=${news.authorDetails?.username}`);
-            });
-        } else {
+        if (newsItems.length === 0) {
             logger.warn("Нет новостей для RSS-фида");
             return res.status(200).send('<rss version="2.0"><channel><title>Новости ГТРК Ингушетия</title><link>https://ingushetiatv.ru/</link><description>Нет новостей</description></channel></rss>');
         }
 
         const rssFeed = await generateRssFeed(newsItems, req);
-        logger.info(`Сгенерированный RSS (первые 200 символов): ${rssFeed.substring(0, 200)}...`); // Логируем начало RSS
 
         if (!rssFeed || rssFeed.trim() === '') {
             logger.error('Сгенерированный RSS пустой');
@@ -54,8 +45,6 @@ router.get("/", async (req, res) => {
         });
 
         res.send(rssFeed);
-
-        logger.info('RSS-фид успешно отправлен');
 
     } catch (error) {
         logger.error(`Ошибка генерации RSS: ${error.message}`);

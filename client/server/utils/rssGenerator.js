@@ -5,33 +5,27 @@ const path = require('path');
 const fs = require('fs');
 
 const stripHtml = (html = "") => {
-    logger.debug(`Входной текст для stripHtml: ${html.substring(0, 100)}...`);
-    let cleaned = html
+    return html
         .replace(/<[^>]*>/g, '')
-        .replace(/ /g, ' ')
+        .replace(/ /g, ' ')
         .replace(/&[a-z]+;/gi, ' ')
         .replace(/\s+/g, ' ')
         .replace(/[\t\r\n]+/g, ' ')
         .trim();
-
-    logger.debug(`Очищенный текст stripHtml: ${cleaned.substring(0, 100)}...`);
-    return cleaned;
 };
 
 const cleanYandexFullText = (html = "") => {
-    logger.debug(`Входной текст для cleanYandexFullText: ${html.substring(0, 100)}...`);
     let cleaned = html;
 
     cleaned = cleaned.replace(/<[^>]*>/g, '');
 
     cleaned = cleaned
-        .replace(/ /g, ' ')
+        .replace(/ /g, ' ')
         .replace(/&[a-z]+;/gi, ' ')
         .replace(/\s+/g, ' ')
         .replace(/[\t\r\n]+/g, ' ')
         .trim();
 
-    logger.debug(`Очищенный текст cleanYandexFullText: ${cleaned.substring(0, 100)}...`);
     return cleaned;
 };
 
@@ -57,13 +51,11 @@ const formatDateRFC822 = (date) => {
 
 const getLargestValidImage = async (mediaFiles, baseUrl) => {
     if (!mediaFiles || mediaFiles.length === 0) {
-        logger.info('Нет связанных mediaFiles');
         return null;
     }
 
     const images = mediaFiles.filter(m => m.type === 'image');
     if (images.length === 0) {
-        logger.info('Нет изображений в mediaFiles');
         return null;
     }
 
@@ -71,12 +63,9 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
         const imageUrl = image.url.startsWith('http') ? image.url : `${baseUrl}/${image.url}`;
         const imagePath = path.join(__dirname, '../../../uploads/images', path.basename(image.url));
 
-        logger.info(`Проверка изображения: ${imageUrl}, путь: ${imagePath}`);
-
         try {
             if (fs.existsSync(imagePath)) {
                 const metadata = await sharp(imagePath).metadata();
-                logger.info(`Размеры изображения ${imageUrl}: ${metadata.width}x${metadata.height}`);
 
                 if (metadata.width >= 400 && metadata.height >= 800) {
                     return {
@@ -84,26 +73,17 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
                         length: metadata.size,
                         type: 'image/jpeg'
                     };
-                } else {
-                    logger.warn(
-                        `Изображение ${imageUrl} не соответствует требованиям:
-                         ${metadata.width}x${metadata.height}`
-                    );
                 }
-            } else {
-                logger.warn(`Файл изображения не найден: ${imagePath}`);
             }
         } catch (error) {
             logger.warn(`Ошибка проверки изображения ${imageUrl}: ${error.message}`);
         }
     }
 
-    logger.info('Подходящее изображение не найдено, используется дефолтное');
     return null;
 };
 
 const generateRssFeed = async (newsItems, req) => {
-    logger.info(`Генерация RSS для ${newsItems.length} новостей`);
     const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
 
     const feed = {
@@ -118,8 +98,7 @@ const generateRssFeed = async (newsItems, req) => {
                 description: 'Последние новости с сайта ВЕСТИ ИНГУШЕТИИ',
                 language: 'ru',
                 lastBuildDate: formatDateRFC822(new Date()),
-                item: await Promise.all(newsItems.map(async (news, index) => {
-                    logger.info(`Обработка новости #${index + 1}: ${news.title || 'Без заголовка'}`);
+                item: await Promise.all(newsItems.map(async (news) => {
                     const fullText = news.description || news.content || '';
                     const item = {
                         title: news.title || 'Без заголовка',
@@ -132,14 +111,12 @@ const generateRssFeed = async (newsItems, req) => {
 
                     const image = await getLargestValidImage(news.mediaFiles, baseUrl);
                     if (image) {
-                        logger.info(`Добавлено изображение: ${image.url}`);
                         item.enclosure = {
                             '@_url': image.url,
                             '@_length': image.length,
                             '@_type': image.type
                         };
                     } else {
-                        logger.warn(`Изображение для новости ${news.title || 'Без заголовка'} не найдено, используется дефолтное`);
                         const defaultImagePath = path.join(__dirname, '../../public/default.png');
                         if (fs.existsSync(defaultImagePath)) {
                             const metadata = await sharp(defaultImagePath).metadata();
@@ -170,7 +147,8 @@ const generateRssFeed = async (newsItems, req) => {
     if (!xml || xml.trim() === '') {
         throw new Error('Сгенерированный XML пустой');
     }
-    logger.info(`Сгенерированный XML (первые 200 символов): ${xml.substring(0, 200)}...`);
+
+    logger.info('RSS фид успешно сгенерирован');
     return xml;
 };
 
