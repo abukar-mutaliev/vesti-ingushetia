@@ -346,11 +346,14 @@ exports.createNews = async (req, res) => {
         };
 
         if (publishDate) {
-            const date = new Date(publishDate);
-            if (!isNaN(date)) {
-                newsData.publishDate = date;
-            } else {
-                throw new Error('Неверный формат даты');
+            // Если это не отложенная публикация, обрабатываем publishDate
+            if (!scheduleForLater) {
+                const date = new Date(publishDate);
+                if (!isNaN(date)) {
+                    newsData.publishDate = date;
+                } else {
+                    throw new Error('Неверный формат даты');
+                }
             }
         }
 

@@ -194,7 +194,7 @@ export const DraftsManager = ({ onEditDraft }) => {
             ...news,
             id: `server-${news.id}`,
             newsTitle: news.title || 'Без заголовка',
-            newsContent: news.content || 'Содержание отсутствует',
+            newsContent: news.description || 'Содержание отсутствует',
             deferredDate: news.publishDate,
             createdAt: news.createdAt,
             status: news.status,

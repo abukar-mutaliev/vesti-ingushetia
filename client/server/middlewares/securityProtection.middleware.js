@@ -1,6 +1,7 @@
 // middlewares/securityProtection.middleware.js
 const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
+const logger = require('../logger');
 
 // Хранилище для отслеживания попыток входа
 const failedAttempts = new Map();
@@ -264,6 +265,56 @@ const getSecurityStats = (req, res) => {
     res.json(stats);
 };
 
+// Middleware для дополнительной безопасности
+const securityProtection = (req, res, next) => {
+    // Логирование подозрительных запросов
+    const userAgent = req.get('User-Agent') || '';
+    const suspiciousPatterns = [
+        /sqlmap/i,
+        /nmap/i,
+        /nikto/i,
+        /dirbuster/i,
+        /burpsuite/i
+    ];
+
+    const isSuspicious = suspiciousPatterns.some(pattern => pattern.test(userAgent));
+    
+    if (isSuspicious) {
+        logger.warn('Подозрительный User-Agent обнаружен', {
+            userAgent,
+            ip: req.ip,
+            url: req.url,
+            method: req.method
+        });
+    }
+
+    // Проверка на SQL injection паттерны в параметрах
+    const params = { ...req.query, ...req.body };
+    const sqlInjectionPatterns = [
+        /(\%27)|(\')|(\-\-)|(\%23)|(#)/i,
+        /((\%3D)|(=))[^\n]*((\%27)|(\')|(\-\-)|(\%3B)|(;))/i,
+        /\w*((\%27)|(\'))((\%6F)|o|(\%4F))((\%72)|r|(\%52))/i,
+        /((\%27)|(\'))union/i
+    ];
+
+    for (const [key, value] of Object.entries(params)) {
+        if (typeof value === 'string') {
+            const containsSqlInjection = sqlInjectionPatterns.some(pattern => pattern.test(value));
+            if (containsSqlInjection) {
+                logger.warn('Возможная SQL injection попытка', {
+                    parameter: key,
+                    value: value.substring(0, 100),
+                    ip: req.ip,
+                    userAgent
+                });
+                return res.status(400).json({ error: 'Недопустимые символы в запросе' });
+            }
+        }
+    }
+
+    next();
+};
+
 module.exports = {
     bruteForceProtection,
     suspiciousIPSlowdown,
@@ -272,5 +323,6 @@ module.exports = {
     detectSuspiciousPatterns,
     geoLocationCheck,
     logFailedRequests,
-    getSecurityStats
+    getSecurityStats,
+    securityProtection
 };
