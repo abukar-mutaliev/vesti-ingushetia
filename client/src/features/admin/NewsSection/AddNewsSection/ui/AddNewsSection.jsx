@@ -241,7 +241,12 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         // Добавляем информацию об отложенной публикации согласно серверному API
         if (isDeferred) {
             formData.append('scheduleForLater', 'true');
-            formData.append('publishDate', deferredDate); // Используем deferredDate как publishDate для отложенной публикации
+            
+            // Преобразуем локальное время в UTC
+            const localDate = new Date(deferredDate);
+            const utcDate = localDate.toISOString();
+            
+            formData.append('publishDate', utcDate); // Отправляем UTC время
         }
 
         newsMedia.flat().forEach((file) => {

@@ -296,7 +296,11 @@ exports.createNews = async (req, res) => {
                     categoryIds: JSON.parse(categoryIds || '[]'),
                     videoUrl,
                     publishDate: scheduledDate,
-                    mediaFiles: mediaFiles ? mediaFiles.images : []
+                    mediaFiles: mediaFiles && mediaFiles.images ? 
+                        mediaFiles.images.map(file => ({
+                            ...file,
+                            type: file.mimetype.startsWith('image/') ? 'image' : 'other'
+                        })) : []
                 };
 
                 // Создаем отложенную новость
