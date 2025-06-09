@@ -24,6 +24,14 @@ const formatMediaUrls = (newsItems) => {
         const newsObj = item.toJSON();
 
         if (newsObj.mediaFiles) {
+            // Временное логгирование для отладки
+            if (newsObj.title && newsObj.title.includes('ТЕСТОВАЯ')) {
+                logger.info(`🐛 Отладка медиа файлов для "${newsObj.title}" (ID: ${newsObj.id}):`);
+                newsObj.mediaFiles.forEach((media, index) => {
+                    logger.info(`   ${index + 1}. Media ID: ${media.id}, Type: ${media.type}, URL: ${media.url}`);
+                });
+            }
+
             newsObj.mediaFiles = newsObj.mediaFiles.map((media) => {
                 const mediaObj = { ...media };
                 if (/^https?:\/\//i.test(mediaObj.url)) {
@@ -35,6 +43,14 @@ const formatMediaUrls = (newsItems) => {
                 }
                 return mediaObj;
             });
+
+            // Логируем финальные URL
+            if (newsObj.title && newsObj.title.includes('ТЕСТОВАЯ')) {
+                logger.info(`🐛 Финальные URL после обработки:`);
+                newsObj.mediaFiles.forEach((media, index) => {
+                    logger.info(`   ${index + 1}. Финальный URL: ${media.url}`);
+                });
+            }
         }
 
         if (newsObj.authorDetails && newsObj.authorDetails.avatarUrl) {

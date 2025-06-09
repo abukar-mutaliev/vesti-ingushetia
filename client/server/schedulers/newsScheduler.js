@@ -178,8 +178,14 @@ class NewsScheduler {
                 }
 
                 if (mediaInstances.length > 0) {
+                    // Убеждаемся что у новости нет старых ассоциаций перед добавлением новых
+                    await news.setMediaFiles([], { transaction }); // Очищаем все существующие ассоциации
                     await news.addMediaFiles(mediaInstances, { transaction });
-                    logger.info(`✅ Добавлено ${mediaInstances.length} медиа файлов к новости`);
+                    logger.info(`✅ Добавлено ${mediaInstances.length} медиа файлов к новости (ID: ${news.id})`);
+                    
+                    // Логируем финальные URL для проверки
+                    const finalUrls = mediaInstances.map(m => m.url);
+                    logger.info(`📋 Финальные URL медиа файлов: ${JSON.stringify(finalUrls)}`);
                 } else {
                     logger.warn(`⚠️ Не удалось добавить ни одного медиа файла`);
                 }
