@@ -11,21 +11,17 @@ const BASE_URL = process.env.BASE_URL;
 const logger = require('../logger');
 const { validationResult } = require('express-validator');
 
-// БЕЗОПАСНОСТЬ: Определяем безопасные атрибуты пользователя
 const SAFE_USER_ATTRIBUTES = ['id', 'username', 'avatarUrl', 'createdAt'];
 const ADMIN_USER_ATTRIBUTES = ['id', 'username', 'email', 'avatarUrl', 'isAdmin', 'createdAt', 'updatedAt'];
 const FORBIDDEN_USER_FIELDS = ['password', 'passwordHash', 'resetToken', 'refreshToken'];
 
-/**
- * Фильтрует объект пользователя, удаляя чувствительные данные
- */
+
 const sanitizeUserData = (user, isAdmin = false) => {
     if (!user) return null;
 
     const userObj = user.toJSON ? user.toJSON() : user;
     const allowedFields = isAdmin ? ADMIN_USER_ATTRIBUTES : SAFE_USER_ATTRIBUTES;
 
-    // Создаем новый объект только с разрешенными полями
     const sanitized = {};
     allowedFields.forEach(field => {
         if (userObj.hasOwnProperty(field)) {
@@ -33,12 +29,10 @@ const sanitizeUserData = (user, isAdmin = false) => {
         }
     });
 
-    // Убеждаемся, что запрещенные поля удалены
     FORBIDDEN_USER_FIELDS.forEach(field => {
         delete sanitized[field];
     });
 
-    // Форматируем URL аватара
     if (sanitized.avatarUrl) {
         sanitized.avatarUrl = sanitized.avatarUrl.startsWith('http')
             ? sanitized.avatarUrl
@@ -48,12 +42,8 @@ const sanitizeUserData = (user, isAdmin = false) => {
     return sanitized;
 };
 
-/**
- * КРИТИЧНО: Получение всех пользователей - ТОЛЬКО для администраторов
- */
 exports.getAllUsers = async (req, res) => {
     try {
-        // БЕЗОПАСНОСТЬ: Проверяем права администратора
         if (!req.user || !req.user.isAdmin) {
             logger.warn(`Попытка неавторизованного доступа к списку пользователей`, {
                 ip: req.ip,
@@ -67,16 +57,13 @@ exports.getAllUsers = async (req, res) => {
             });
         }
 
-        // Получаем пользователей с безопасными атрибутами
         const users = await User.findAll({
-            attributes: ADMIN_USER_ATTRIBUTES, // Только разрешенные поля
+            attributes: ADMIN_USER_ATTRIBUTES,
             order: [['createdAt', 'DESC']]
         });
 
-        // Дополнительная санитизация данных
         const sanitizedUsers = users.map(user => sanitizeUserData(user, true));
 
-        // Логируем административный доступ
         logger.info(`Администратор ${req.user.id} получил список пользователей`, {
             timestamp: new Date().toISOString(),
             usersCount: sanitizedUsers.length,
@@ -117,7 +104,6 @@ exports.registerUser = async (req, res) => {
             avatarUrl,
         });
 
-        // Возвращаем только безопасные данные
         const sanitizedUser = sanitizeUserData(user, false);
 
         logger.info(`Зарегистрирован новый пользователь: ${username}`, {
@@ -140,7 +126,6 @@ exports.registerAdmin = async (req, res) => {
     const { user } = req;
 
     try {
-        // БЕЗОПАСНОСТЬ: Проверяем права администратора
         if (!user.isAdmin) {
             logger.warn(`Попытка регистрации админа неадминистратором`, {
                 userId: user.id,
@@ -173,7 +158,6 @@ exports.registerAdmin = async (req, res) => {
             isAdmin: true,
         });
 
-        // Возвращаем только безопасные данные
         const sanitizedAdmin = sanitizeUserData(admin, true);
 
         logger.info(`Администратор ${user.id} зарегистрировал нового админа ${admin.id}`, {
@@ -257,7 +241,6 @@ exports.loginUser = async (req, res) => {
             sameSite: 'strict',
         });
 
-        // Возвращаем только безопасные данные пользователя
         const userResponse = {
             id: user.id,
             username: user.username,
@@ -289,7 +272,7 @@ exports.refreshToken = async (req, res) => {
 
         const decoded = jwt.verify(refreshToken, JWT_SECRET);
         const dbUser = await User.findByPk(decoded.id, {
-            attributes: ['id', 'username', 'email', 'isAdmin'] // Только нужные поля
+            attributes: ['id', 'username', 'email', 'isAdmin']
         });
 
         if (!dbUser) {
@@ -324,7 +307,6 @@ exports.refreshToken = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
-        // Возвращаем только безопасные данные
         const userResponse = {
             id: dbUser.id,
             username: dbUser.username,
@@ -349,7 +331,6 @@ exports.updateUser = async (req, res) => {
     let avatarUrl;
 
     try {
-        // БЕЗОПАСНОСТЬ: Проверяем права доступа
         if (req.user.id !== parseInt(id) && !req.user.isAdmin) {
             logger.warn(`Попытка изменения чужого профиля`, {
                 requesterId: req.user.id,
@@ -379,7 +360,6 @@ exports.updateUser = async (req, res) => {
             avatarUrl: avatarUrl || user.avatarUrl,
         });
 
-        // Возвращаем только безопасные данные
         const sanitizedUser = sanitizeUserData(user, req.user.isAdmin);
 
         logger.info(`Обновлен профиль пользователя ${id}`, {
@@ -402,7 +382,6 @@ exports.updateUserRole = async (req, res) => {
     const requestingUser = req.user;
 
     try {
-        // БЕЗОПАСНОСТЬ: Только администраторы могут изменять роли
         if (!requestingUser.isAdmin) {
             logger.warn(`Попытка изменения роли неадминистратором`, {
                 requesterId: requestingUser.id,
@@ -431,7 +410,6 @@ exports.updateUserRole = async (req, res) => {
         user.isAdmin = isAdmin;
         await user.save();
 
-        // Возвращаем только безопасные данные
         const sanitizedUser = sanitizeUserData(user, true);
 
         logger.info(`Изменена роль пользователя ${id}`, {
@@ -475,7 +453,6 @@ exports.updateAvatar = async (req, res) => {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
 
-        // Удаляем старый аватар
         if (user.avatarUrl) {
             const oldAvatarPath = path.join(
                 __dirname,
@@ -498,7 +475,6 @@ exports.updateAvatar = async (req, res) => {
 
         await user.update({ avatarUrl });
 
-        // Возвращаем только безопасные данные
         const sanitizedUser = sanitizeUserData(user, user.isAdmin);
 
         res.status(200).json(sanitizedUser);
@@ -520,7 +496,6 @@ exports.getUserProfile = async (req, res) => {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
 
-        // Возвращаем только безопасные данные
         const sanitizedUser = sanitizeUserData(user, user.isAdmin);
 
         res.json(sanitizedUser);
@@ -557,12 +532,11 @@ exports.getUserReplies = async (req, res) => {
                 {
                     model: User,
                     as: 'user',
-                    attributes: SAFE_USER_ATTRIBUTES, // Только безопасные атрибуты
+                    attributes: SAFE_USER_ATTRIBUTES,
                 },
             ],
         });
 
-        // Санитизируем данные пользователей в ответах
         const sanitizedReplies = replies.map(reply => {
             const replyObj = reply.toJSON();
             if (replyObj.user) {

@@ -281,15 +281,12 @@ exports.createNews = async (req, res) => {
     const mediaFiles = req.files;
     const authorId = req.user.id;
 
-    // Проверяем, нужно ли создать отложенную публикацию
     if (scheduleForLater && publishDate) {
         const scheduledDate = new Date(publishDate);
         const now = new Date();
 
-        // Если дата публикации в будущем, создаем отложенную новость
         if (scheduledDate > now) {
             try {
-                // Подготавливаем данные для отложенной публикации
                 const newsData = {
                     title,
                     content,
@@ -303,7 +300,6 @@ exports.createNews = async (req, res) => {
                         })) : []
                 };
 
-                // Создаем отложенную новость
                 const scheduledNews = await newsScheduler.scheduleNews(
                     newsData,
                     scheduledDate,
@@ -334,7 +330,6 @@ exports.createNews = async (req, res) => {
         }
     }
 
-    // Если не отложенная публикация, создаем новость обычным способом
     let transaction;
     try {
         transaction = await sequelize.transaction();
@@ -346,7 +341,6 @@ exports.createNews = async (req, res) => {
         };
 
         if (publishDate) {
-            // Если это не отложенная публикация, обрабатываем publishDate
             if (!scheduleForLater) {
                 const date = new Date(publishDate);
                 if (!isNaN(date)) {
@@ -507,16 +501,33 @@ exports.updateNews = async (req, res) => {
 
             for (let media of mediaToDelete) {
                 if (media.type === 'image' || media.type === 'audio') {
-                    const mediaPath = path.join(
-                        __dirname,
-                        '../../',
-                        media.url.replace(/\/+/g, path.sep),
-                    );
-                    fs.unlink(mediaPath, (err) => {
-                        if (err) {
-                            console.error('Ошибка удаления медиафайла:', err);
+                    const pathVariants = [
+                        path.resolve(__dirname, '../../', media.url.replace(/\/+/g, path.sep)),
+                        path.resolve(__dirname, '../', media.url.replace(/\/+/g, path.sep)),
+                        path.resolve(__dirname, '../../uploads/images/', path.basename(media.url)),
+                        path.resolve(__dirname, '../uploads/images/', path.basename(media.url))
+                    ];
+
+                    let fileDeleted = false;
+                    
+                    for (const mediaPath of pathVariants) {
+                        try {
+                            if (fs.existsSync(mediaPath)) {
+                                await fs.promises.unlink(mediaPath);
+                                console.log(`✅ Медиа файл удален при обновлении: ${mediaPath}`);
+                                fileDeleted = true;
+                                break;
+                            }
+                        } catch (err) {
+                            if (err.code !== 'ENOENT') {
+                                console.error(`Ошибка удаления медиа файла ${mediaPath}:`, err);
+                            }
                         }
-                    });
+                    }
+
+                    if (!fileDeleted) {
+                        console.warn(`⚠️ Медиа файл не найден для удаления при обновлении: ${media.url}`);
+                    }
                 }
             }
 
@@ -624,17 +635,33 @@ exports.deleteNews = async (req, res) => {
 
         try {
             for (let media of news.mediaFiles) {
-                const mediaPath = path.resolve(__dirname, '../../', media.url);
-                try {
-                    await fs.promises.unlink(mediaPath);
-                } catch (err) {
-                    if (err.code === 'ENOENT') {
-                        console.warn(
-                            `Файл для удаления не найден: ${mediaPath}`,
-                        );
-                    } else {
-                        console.error('Ошибка удаления медиафайла:', err);
-                        throw err;
+                if (media.type === 'image' || media.type === 'audio') {
+                    const pathVariants = [
+                        path.resolve(__dirname, '../../', media.url.replace(/\/+/g, path.sep)),
+                        path.resolve(__dirname, '../', media.url.replace(/\/+/g, path.sep)),
+                        path.resolve(__dirname, '../../uploads/images/', path.basename(media.url)),
+                        path.resolve(__dirname, '../uploads/images/', path.basename(media.url))
+                    ];
+
+                    let fileDeleted = false;
+                    
+                    for (const mediaPath of pathVariants) {
+                        try {
+                            if (fs.existsSync(mediaPath)) {
+                                await fs.promises.unlink(mediaPath);
+                                console.log(`✅ Медиа файл удален при удалении: ${mediaPath}`);
+                                fileDeleted = true;
+                                break;
+                            }
+                        } catch (err) {
+                            if (err.code !== 'ENOENT') {
+                                console.error(`Ошибка удаления медиа файла ${mediaPath}:`, err);
+                            }
+                        }
+                    }
+
+                    if (!fileDeleted) {
+                        console.warn(`⚠️ Медиа файл не найден для удаления при удалении: ${media.url}`);
                     }
                 }
             }
@@ -663,6 +690,61 @@ exports.deleteNews = async (req, res) => {
         console.error('Внутренняя ошибка сервера:', err);
         return res.status(500).json({
             error: `Внутренняя ошибка сервера: ${err.message}`,
+        });
+    }
+};
+
+exports.cleanupOrphanedFiles = async (req, res) => {
+    try {
+        const uploadsDir = path.join(__dirname, '../uploads/images');
+        if (!fs.existsSync(uploadsDir)) {
+            return res.json({ 
+                message: 'Папка uploads/images не существует',
+                deletedCount: 0,
+                skippedCount: 0
+            });
+        }
+
+        const files = fs.readdirSync(uploadsDir);
+
+        const mediaUrls = await Media.findAll({
+            where: { type: 'image' },
+            attributes: ['url']
+        });
+
+        const usedFilenames = mediaUrls.map(media => path.basename(media.url));
+
+        let deletedCount = 0;
+        let skippedCount = 0;
+        const deletedFiles = [];
+
+        for (const file of files) {
+            if (!usedFilenames.includes(file)) {
+                const filePath = path.join(uploadsDir, file);
+                try {
+                    await fs.promises.unlink(filePath);
+                    deletedCount++;
+                    deletedFiles.push(file);
+                } catch (error) {
+                    console.error(`Ошибка удаления файла ${file}:`, error);
+                }
+            } else {
+                skippedCount++;
+            }
+        }
+
+        res.json({
+            message: 'Очистка неиспользуемых файлов завершена',
+            totalFiles: files.length,
+            deletedCount,
+            skippedCount,
+            deletedFiles: deletedFiles.slice(0, 10)
+        });
+
+    } catch (error) {
+        console.error('Ошибка при очистке файлов:', error);
+        res.status(500).json({
+            error: `Ошибка при очистке файлов: ${error.message}`
         });
     }
 };

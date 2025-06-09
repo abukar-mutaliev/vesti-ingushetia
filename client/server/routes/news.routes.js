@@ -9,6 +9,7 @@ const {
     getNewsByDate,
     updateNews,
     deleteNews,
+    cleanupOrphanedFiles,
 } = require('../controllers/news.controller');
 const { authenticateAdmin } = require('../middlewares/auth.middleware');
 const {
@@ -25,7 +26,6 @@ const {
     deleteNewsValidator,
 } = require('../validation/newsValidation');
 
-// Создание новости (с поддержкой отложенной публикации)
 router.post(
     '/add',
     authenticateAdmin,
@@ -37,7 +37,6 @@ router.post(
     createNews,
 );
 
-// Создание отложенной публикации (альтернативный роут для ясности)
 router.post(
     '/schedule',
     authenticateAdmin,
@@ -73,6 +72,13 @@ router.delete(
     deleteNewsValidator,
     validate,
     deleteNews,
+);
+
+router.post(
+    '/cleanup-files',
+    authenticateAdmin,
+    csrfProtection,
+    cleanupOrphanedFiles,
 );
 
 module.exports = router;

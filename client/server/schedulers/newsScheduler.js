@@ -281,8 +281,14 @@ class NewsScheduler {
     }
 
     initCleanup() {
+        // Очистка временных файлов каждую ночь в 2:00
         cron.schedule('0 2 * * *', () => {
             this.cleanupTempFiles();
+        });
+
+        // Очистка неиспользуемых медиа файлов каждую ночь в 3:00
+        cron.schedule('0 3 * * *', () => {
+            this.cleanupOrphanedFiles();
         });
     }
 
@@ -306,6 +312,54 @@ class NewsScheduler {
             }
         } catch (error) {
             logger.error('Ошибка очистки временных файлов:', error);
+        }
+    }
+
+    async cleanupOrphanedFiles() {
+        try {
+            logger.info('🧹 Начинаю очистку неиспользуемых медиа файлов...');
+            
+            const uploadsDir = path.join(__dirname, '../uploads/images');
+            if (!fs.existsSync(uploadsDir)) {
+                logger.info('Папка uploads/images не существует, пропускаем очистку');
+                return;
+            }
+
+            // Получаем все файлы в папке uploads/images
+            const files = fs.readdirSync(uploadsDir);
+            logger.info(`Найдено файлов в uploads/images: ${files.length}`);
+
+            // Получаем все URL из базы данных
+            const mediaUrls = await Media.findAll({
+                where: { type: 'image' },
+                attributes: ['url']
+            });
+
+            const usedFilenames = mediaUrls.map(media => path.basename(media.url));
+            logger.info(`Используемых файлов в БД: ${usedFilenames.length}`);
+
+            let deletedCount = 0;
+            let skippedCount = 0;
+
+            for (const file of files) {
+                if (!usedFilenames.includes(file)) {
+                    const filePath = path.join(uploadsDir, file);
+                    try {
+                        await fs.promises.unlink(filePath);
+                        deletedCount++;
+                        logger.info(`🗑️ Удален неиспользуемый файл: ${file}`);
+                    } catch (error) {
+                        logger.error(`Ошибка удаления файла ${file}:`, error);
+                    }
+                } else {
+                    skippedCount++;
+                }
+            }
+
+            logger.info(`✅ Очистка завершена. Удалено: ${deletedCount}, пропущено: ${skippedCount}`);
+
+        } catch (error) {
+            logger.error('Ошибка очистки неиспользуемых файлов:', error);
         }
     }
 }
