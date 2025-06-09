@@ -111,14 +111,18 @@ class NewsScheduler {
 
             if (newsData.mediaFiles && newsData.mediaFiles.length > 0) {
                 const mediaInstances = [];
+                logger.info(`📎 Обрабатываю ${newsData.mediaFiles.length} медиа файлов...`);
 
                 for (const mediaFile of newsData.mediaFiles) {
+                    logger.info(`🔍 Обрабатываю файл: ${JSON.stringify(mediaFile, null, 2)}`);
+                    
                     if (mediaFile.type === 'video' && mediaFile.url) {
                         const media = await Media.create({
                             url: mediaFile.url,
                             type: 'video'
                         }, { transaction });
                         mediaInstances.push(media);
+                        logger.info(`✅ Видео добавлено: ${mediaFile.url}`);
                     } else if (mediaFile.type === 'image') {
                         if (mediaFile.url) {
                             // Файл уже имеет готовый URL
@@ -127,34 +131,57 @@ class NewsScheduler {
                                 type: 'image'
                             }, { transaction });
                             mediaInstances.push(media);
+                            logger.info(`✅ Изображение добавлено по URL: ${mediaFile.url}`);
                         } else if (mediaFile.path && mediaFile.filename) {
                             // Файл находится во временной папке, нужно переместить
-                            const tempPath = path.join(__dirname, '../temp', mediaFile.filename);
-                            const finalPath = path.join(__dirname, '../uploads/images', mediaFile.filename);
+                            const tempPath = mediaFile.path;
+                            const finalFilename = mediaFile.filename.replace(/^\d+-/, ''); // убираем timestamp префикс
+                            const finalPath = path.join(__dirname, '../uploads/images', finalFilename);
+
+                            logger.info(`📦 Перемещаю файл: ${tempPath} -> ${finalPath}`);
 
                             if (fs.existsSync(tempPath)) {
                                 // Убеждаемся что папка uploads/images существует
                                 const uploadsDir = path.join(__dirname, '../uploads/images');
                                 if (!fs.existsSync(uploadsDir)) {
                                     fs.mkdirSync(uploadsDir, { recursive: true });
+                                    logger.info(`📁 Создана папка: ${uploadsDir}`);
                                 }
 
-                                fs.renameSync(tempPath, finalPath);
+                                // Если финальный файл уже существует, создаем уникальное имя
+                                let uniqueFinalPath = finalPath;
+                                let counter = 1;
+                                while (fs.existsSync(uniqueFinalPath)) {
+                                    const fileExt = path.extname(finalFilename);
+                                    const baseName = path.basename(finalFilename, fileExt);
+                                    const uniqueFilename = `${baseName}-${counter}${fileExt}`;
+                                    uniqueFinalPath = path.join(__dirname, '../uploads/images', uniqueFilename);
+                                    counter++;
+                                }
+
+                                fs.renameSync(tempPath, uniqueFinalPath);
+                                const finalUrl = `uploads/images/${path.basename(uniqueFinalPath)}`;
 
                                 const media = await Media.create({
-                                    url: `uploads/images/${mediaFile.filename}`,
+                                    url: finalUrl,
                                     type: 'image'
                                 }, { transaction });
                                 mediaInstances.push(media);
+                                logger.info(`✅ Изображение перемещено и добавлено: ${finalUrl}`);
                             } else {
-                                logger.warn(`Временный файл не найден: ${tempPath}`);
+                                logger.warn(`❌ Временный файл не найден: ${tempPath}`);
                             }
+                        } else {
+                            logger.warn(`⚠️ Неполные данные файла: ${JSON.stringify(mediaFile)}`);
                         }
                     }
                 }
 
                 if (mediaInstances.length > 0) {
                     await news.addMediaFiles(mediaInstances, { transaction });
+                    logger.info(`✅ Добавлено ${mediaInstances.length} медиа файлов к новости`);
+                } else {
+                    logger.warn(`⚠️ Не удалось добавить ни одного медиа файла`);
                 }
             }
 
@@ -186,12 +213,39 @@ class NewsScheduler {
                             const tempFilename = `${Date.now()}-${file.filename}`;
                             const tempPath = path.join(tempDir, tempFilename);
 
-                            const sourcePath = file.path || path.join(__dirname, '../uploads/images', file.filename);
+                            // Определяем путь к исходному файлу правильно
+                            let sourcePath;
+                            if (file.path && fs.existsSync(file.path)) {
+                                // Файл загружен и находится по абсолютному пути
+                                sourcePath = file.path;
+                            } else if (file.filename) {
+                                // Пробуем найти файл в папке uploads/images
+                                sourcePath = path.join(__dirname, '../uploads/images', file.filename);
+                            }
                             
-                            if (fs.existsSync(sourcePath)) {
+                            if (sourcePath && fs.existsSync(sourcePath)) {
                                 fs.copyFileSync(sourcePath, tempPath);
+                                logger.info(`📁 Файл скопирован во временную папку: ${file.filename} -> ${tempFilename}`);
+                                
+                                return {
+                                    type: 'image',
+                                    filename: tempFilename,
+                                    originalName: file.originalname || file.originalName,
+                                    path: tempPath
+                                };
                             } else {
                                 logger.warn(`Исходный файл не найден: ${sourcePath}`);
+                                // Если файл не найден, возвращаем URL напрямую (если есть)
+                                if (file.url) {
+                                    return {
+                                        type: 'image',
+                                        filename: file.filename,
+                                        originalName: file.originalname || file.originalName,
+                                        url: file.url
+                                    };
+                                }
+                                
+                                // Если ничего нет, пытаемся создать URL на основе filename
                                 return {
                                     type: 'image',
                                     filename: file.filename,
@@ -199,13 +253,6 @@ class NewsScheduler {
                                     url: `uploads/images/${file.filename}`
                                 };
                             }
-
-                            return {
-                                type: 'image',
-                                filename: tempFilename,
-                                originalName: file.originalname || file.originalName,
-                                path: tempPath
-                            };
                         }
                         return file;
                     })

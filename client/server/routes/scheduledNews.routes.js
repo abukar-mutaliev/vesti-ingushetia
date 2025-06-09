@@ -17,12 +17,15 @@ router.get('/my', authenticateToken, async (req, res) => {
             return {
                 id: item.id,
                 title: item.title,
+                content: newsData.content || '',
                 scheduledDate: item.scheduledDate,
+                publishDate: item.scheduledDate,
                 status: item.status,
                 createdAt: item.createdAt,
+                authorId: item.authorId,
                 preview: {
                     title: newsData.title,
-                    content: newsData.content.substring(0, 200) + '...',
+                    content: newsData.content ? newsData.content.substring(0, 200) + '...' : '',
                     categories: newsData.categoryIds || [],
                     hasMedia: (newsData.mediaFiles && newsData.mediaFiles.length > 0),
                     hasVideo: newsData.videoUrl ? true : false
@@ -51,13 +54,15 @@ router.get('/all', authenticateAdmin, async (req, res) => {
             return {
                 id: item.id,
                 title: item.title,
+                content: newsData.content || '',
                 scheduledDate: item.scheduledDate,
+                publishDate: item.scheduledDate,
                 status: item.status,
                 authorId: item.authorId,
                 createdAt: item.createdAt,
                 preview: {
                     title: newsData.title,
-                    content: newsData.content.substring(0, 200) + '...',
+                    content: newsData.content ? newsData.content.substring(0, 200) + '...' : '',
                 },
                 errorMessage: item.errorMessage,
                 lastAttempt: item.lastAttempt

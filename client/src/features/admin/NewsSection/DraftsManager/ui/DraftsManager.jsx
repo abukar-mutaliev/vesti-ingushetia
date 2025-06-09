@@ -194,8 +194,8 @@ export const DraftsManager = ({ onEditDraft }) => {
             ...news,
             id: `server-${news.id}`,
             newsTitle: news.title || 'Без заголовка',
-            newsContent: news.description || 'Содержание отсутствует',
-            deferredDate: news.publishDate,
+            newsContent: news.content || '',
+            deferredDate: news.publishDate || news.scheduledDate, // Используем publishDate в первую очередь
             createdAt: news.createdAt,
             status: news.status,
             isServerNews: true
@@ -349,7 +349,7 @@ export const DraftsManager = ({ onEditDraft }) => {
                         <h3>Предварительный просмотр</h3>
                         <h4>{selectedDraft.newsTitle || 'Без заголовка'}</h4>
                         <div dangerouslySetInnerHTML={{ 
-                            __html: selectedDraft.newsContent || 'Содержание отсутствует' 
+                            __html: selectedDraft.newsContent || 'Содержание отсутствует'
                         }} />
                         <button onClick={() => setSelectedDraft(null)}>Закрыть</button>
                     </div>
