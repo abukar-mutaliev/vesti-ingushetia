@@ -119,18 +119,36 @@ class NewsScheduler {
                             type: 'video'
                         }, { transaction });
                         mediaInstances.push(media);
-                    } else if (mediaFile.type === 'image' && mediaFile.path) {
-                        const tempPath = path.join(__dirname, '../temp', mediaFile.filename);
-                        const finalPath = path.join(__dirname, '../uploads/images', mediaFile.filename);
-
-                        if (fs.existsSync(tempPath)) {
-                            fs.renameSync(tempPath, finalPath);
-
+                    } else if (mediaFile.type === 'image') {
+                        if (mediaFile.url) {
+                            // Файл уже имеет готовый URL
                             const media = await Media.create({
-                                url: `uploads/images/${mediaFile.filename}`,
+                                url: mediaFile.url,
                                 type: 'image'
                             }, { transaction });
                             mediaInstances.push(media);
+                        } else if (mediaFile.path && mediaFile.filename) {
+                            // Файл находится во временной папке, нужно переместить
+                            const tempPath = path.join(__dirname, '../temp', mediaFile.filename);
+                            const finalPath = path.join(__dirname, '../uploads/images', mediaFile.filename);
+
+                            if (fs.existsSync(tempPath)) {
+                                // Убеждаемся что папка uploads/images существует
+                                const uploadsDir = path.join(__dirname, '../uploads/images');
+                                if (!fs.existsSync(uploadsDir)) {
+                                    fs.mkdirSync(uploadsDir, { recursive: true });
+                                }
+
+                                fs.renameSync(tempPath, finalPath);
+
+                                const media = await Media.create({
+                                    url: `uploads/images/${mediaFile.filename}`,
+                                    type: 'image'
+                                }, { transaction });
+                                mediaInstances.push(media);
+                            } else {
+                                logger.warn(`Временный файл не найден: ${tempPath}`);
+                            }
                         }
                     }
                 }
@@ -168,12 +186,24 @@ class NewsScheduler {
                             const tempFilename = `${Date.now()}-${file.filename}`;
                             const tempPath = path.join(tempDir, tempFilename);
 
-                            fs.copyFileSync(file.path, tempPath);
+                            const sourcePath = file.path || path.join(__dirname, '../uploads/images', file.filename);
+                            
+                            if (fs.existsSync(sourcePath)) {
+                                fs.copyFileSync(sourcePath, tempPath);
+                            } else {
+                                logger.warn(`Исходный файл не найден: ${sourcePath}`);
+                                return {
+                                    type: 'image',
+                                    filename: file.filename,
+                                    originalName: file.originalname || file.originalName,
+                                    url: `uploads/images/${file.filename}`
+                                };
+                            }
 
                             return {
                                 type: 'image',
                                 filename: tempFilename,
-                                originalName: file.originalname,
+                                originalName: file.originalname || file.originalName,
                                 path: tempPath
                             };
                         }

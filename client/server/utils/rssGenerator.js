@@ -148,7 +148,6 @@ const generateRssFeed = async (newsItems, req) => {
         throw new Error('Сгенерированный XML пустой');
     }
 
-    logger.info('RSS фид успешно сгенерирован');
     return xml;
 };
 

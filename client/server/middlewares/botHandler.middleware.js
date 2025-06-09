@@ -24,13 +24,11 @@ const formatMediaUrls = (newsItem, baseUrl) => {
 
 const getLargestValidImage = async (mediaFiles, baseUrl) => {
     if (!mediaFiles || mediaFiles.length === 0) {
-        logger.info('Нет связанных mediaFiles');
         return null;
     }
 
     const images = mediaFiles.filter(m => m.type === 'image');
     if (images.length === 0) {
-        logger.info('Нет изображений в mediaFiles');
         return null;
     }
 
@@ -38,12 +36,9 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
         const imageUrl = image.url.startsWith('http') ? image.url : `${baseUrl}/${image.url}`;
         const imagePath = path.join(__dirname, '../../../uploads/images', path.basename(image.url));
 
-        logger.info(`Проверка изображения: ${imageUrl}, путь: ${imagePath}`);
-
         try {
             if (fs.existsSync(imagePath)) {
                 const metadata = await sharp(imagePath).metadata();
-                logger.info(`Размеры изображения ${imageUrl}: ${metadata.width}x${metadata.height}`);
 
                 if (metadata.width >= 400 && metadata.height >= 800) {
                     return {
@@ -51,21 +46,13 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
                         length: metadata.size,
                         type: 'image/jpeg'
                     };
-                } else {
-                    logger.warn(
-                        `Изображение ${imageUrl} не соответствует требованиям:
-                         ${metadata.width}x${metadata.height}`
-                    );
                 }
-            } else {
-                logger.warn(`Файл изображения не найден: ${imagePath}`);
             }
         } catch (error) {
             logger.warn(`Ошибка проверки изображения ${imageUrl}: ${error.message}`);
         }
     }
 
-    logger.info('Подходящее изображение не найдено, используется дефолтное');
     return null;
 };
 
