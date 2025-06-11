@@ -294,32 +294,47 @@ exports.getNewsByDate = async (req, res) => {
 };
 
 
+// Добавьте это логирование в метод createNews для отладки изображений
+
 exports.createNews = async (req, res) => {
     const { title, content, categoryIds, videoUrl, publishDate, scheduleForLater } = req.body;
     const mediaFiles = req.files;
     const authorId = req.user.id;
 
-    console.log('📰 Создание новости:', {
+    // НОВОЕ: детальное логирование файлов
+    console.log('📰 Создание новости - детальная информация:', {
         userId: authorId,
-        newsId: undefined,
-        hasFiles: !!(mediaFiles && mediaFiles.images),
-        publishDate: publishDate,
+        title: title,
+        hasMediaFiles: !!mediaFiles,
+        mediaFilesKeys: mediaFiles ? Object.keys(mediaFiles) : null,
         scheduleForLater: scheduleForLater,
-        timestamp: new Date().toISOString()
+        publishDate: publishDate
     });
+
+    if (mediaFiles) {
+        console.log('📁 Анализ загруженных файлов:');
+        console.log('  Структура mediaFiles:', JSON.stringify(mediaFiles, null, 2));
+
+        if (mediaFiles.images) {
+            console.log(`  📷 Найдено ${mediaFiles.images.length} изображений:`);
+            mediaFiles.images.forEach((file, index) => {
+                console.log(`    ${index + 1}. ${file.originalname} (${file.mimetype}, ${file.size} bytes)`);
+                console.log(`       Path: ${file.path}`);
+                console.log(`       Filename: ${file.filename}`);
+            });
+        } else {
+            console.log('  ⚠️ Массив images отсутствует в mediaFiles');
+        }
+    } else {
+        console.log('📁 Файлы не были загружены');
+    }
 
     if (scheduleForLater && publishDate) {
         try {
-            let scheduledDate;
+            let scheduledDate = new Date(publishDate);
 
-            if (typeof publishDate === 'string') {
-                scheduledDate = new Date(publishDate);
-            } else {
-                scheduledDate = new Date(publishDate);
-            }
-
-            // Проверяем валидность даты
             if (isNaN(scheduledDate.getTime())) {
+                console.error('❌ Неверный формат даты:', publishDate);
                 return res.status(400).json({
                     errors: [{
                         type: "field",
@@ -339,13 +354,10 @@ exports.createNews = async (req, res) => {
             console.log(`   Текущее время UTC: ${now.toISOString()}`);
             console.log(`   Текущее московское: ${now.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`);
 
-            const minFutureTime = new Date(now.getTime() + 60 * 1000); // +1 минута от текущего UTC
+            const minFutureTime = new Date(now.getTime() + 60 * 1000);
 
             if (scheduledDate <= minFutureTime) {
-                console.log('❌ Дата в прошлом или слишком близко к настоящему');
-                console.log(`   Минимальное время: ${minFutureTime.toISOString()}`);
-                console.log(`   Полученное время: ${scheduledDate.toISOString()}`);
-
+                console.log('❌ Дата в прошлом или слишком близко');
                 return res.status(400).json({
                     errors: [{
                         type: "field",
@@ -353,33 +365,63 @@ exports.createNews = async (req, res) => {
                         msg: "Дата отложенной публикации должна быть в будущем",
                         path: "publishDate",
                         location: "body"
-                    }],
-                    details: {
-                        received: scheduledDate.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
-                        required: minFutureTime.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
-                        serverTime: now.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })
-                    }
+                    }]
                 });
             }
 
+            console.log('✅ Валидация времени прошла успешно');
+
+            // ИСПРАВЛЕНО: правильная обработка файлов для отложенных новостей
             const newsData = {
                 title,
                 content,
                 categoryIds: JSON.parse(categoryIds || '[]'),
                 videoUrl,
                 publishDate: scheduledDate,
-                mediaFiles: mediaFiles && mediaFiles.images ?
-                    mediaFiles.images.map(file => ({
-                        ...file,
-                        type: file.mimetype.startsWith('image/') ? 'image' : 'other'
-                    })) : []
+                mediaFiles: [] // Инициализируем пустым массивом
             };
 
+            // Обрабатываем изображения для отложенной публикации
+            if (mediaFiles && mediaFiles.images && mediaFiles.images.length > 0) {
+                console.log(`📷 Обработка ${mediaFiles.images.length} изображений для отложенной публикации`);
+
+                newsData.mediaFiles = mediaFiles.images.map(file => {
+                    console.log(`   Обрабатываем файл: ${file.originalname}`);
+                    return {
+                        type: file.mimetype.startsWith('image/') ? 'image' : 'other',
+                        filename: file.filename,
+                        originalname: file.originalname,
+                        path: file.path,
+                        mimetype: file.mimetype,
+                        size: file.size
+                    };
+                });
+
+                console.log(`✅ Подготовлено ${newsData.mediaFiles.length} файлов для планировщика`);
+            } else {
+                console.log('ℹ️ Изображения отсутствуют для отложенной публикации');
+            }
+
+            console.log('📋 Финальные данные для планировщика:', {
+                title: newsData.title,
+                categoryIds: newsData.categoryIds,
+                hasVideoUrl: !!newsData.videoUrl,
+                mediaFilesCount: newsData.mediaFiles.length,
+                publishDate: newsData.publishDate.toISOString()
+            });
+
+            console.log('🔄 Вызов newsScheduler.scheduleNews...');
             const scheduledNews = await newsScheduler.scheduleNews(
                 newsData,
                 scheduledDate,
                 authorId
             );
+
+            console.log('✅ Планировщик завершил работу успешно:', {
+                id: scheduledNews.id,
+                title: scheduledNews.title,
+                status: scheduledNews.status
+            });
 
             logger.info(`✅ Создана отложенная новость: ${title}`, {
                 authorId,
@@ -398,8 +440,17 @@ exports.createNews = async (req, res) => {
                     status: scheduledNews.status
                 }
             });
+
         } catch (error) {
+            console.error('❌ Ошибка в createNews при планировании:', {
+                error: error.message,
+                stack: error.stack,
+                publishDate,
+                authorId
+            });
+
             logger.error('❌ Ошибка создания отложенной новости:', error);
+
             return res.status(400).json({
                 errors: [{
                     type: "field",
@@ -410,6 +461,9 @@ exports.createNews = async (req, res) => {
             });
         }
     }
+
+    // НЕМЕДЛЕННАЯ ПУБЛИКАЦИЯ - тоже добавим логирование
+    console.log('📝 Немедленная публикация новости...');
 
     let transaction;
     try {
@@ -430,7 +484,9 @@ exports.createNews = async (req, res) => {
             }
         }
 
+        console.log('💾 Создание записи в базе данных...');
         const news = await News.create(newsData, { transaction });
+        console.log(`✅ Новость создана с ID: ${news.id}`);
 
         let parsedCategoryIds;
         try {
@@ -443,6 +499,7 @@ exports.createNews = async (req, res) => {
         }
 
         if (parsedCategoryIds.length > 0) {
+            console.log('🏷️ Добавление категорий...');
             const categories = await Category.findAll({
                 where: { id: parsedCategoryIds },
                 transaction,
@@ -453,52 +510,79 @@ exports.createNews = async (req, res) => {
             }
 
             await news.addCategories(categories, { transaction });
+            console.log(`✅ Добавлено ${categories.length} категорий`);
         } else {
             throw new Error('Необходимо выбрать хотя бы одну категорию');
         }
 
         const mediaInstances = [];
 
-        if (mediaFiles && mediaFiles.images) {
-            for (let file of mediaFiles.images) {
-                const imageUrl = path.posix.join(
-                    'uploads',
-                    'images',
-                    file.filename,
-                );
-                const media = await Media.create(
-                    {
+        // ИСПРАВЛЕНО: детальное логирование обработки изображений
+        if (mediaFiles && mediaFiles.images && mediaFiles.images.length > 0) {
+            console.log(`📷 Обработка ${mediaFiles.images.length} изображений для немедленной публикации...`);
+
+            for (let [index, file] of mediaFiles.images.entries()) {
+                console.log(`  Обрабатываем файл ${index + 1}:`, {
+                    originalname: file.originalname,
+                    filename: file.filename,
+                    mimetype: file.mimetype,
+                    size: file.size,
+                    path: file.path
+                });
+
+                try {
+                    const imageUrl = path.posix.join('uploads', 'images', file.filename);
+                    console.log(`    Создаем URL: ${imageUrl}`);
+
+                    const media = await Media.create({
                         url: imageUrl,
                         type: 'image',
-                    },
-                    { transaction },
-                );
-                mediaInstances.push(media);
+                    }, { transaction });
+
+                    mediaInstances.push(media);
+                    console.log(`    ✅ Медиа создано с ID: ${media.id}`);
+                } catch (mediaError) {
+                    console.error(`    ❌ Ошибка создания медиа для файла ${file.originalname}:`, mediaError);
+                    throw mediaError;
+                }
             }
+            console.log(`✅ Обработано ${mediaInstances.length} изображений`);
+        } else {
+            console.log('ℹ️ Изображения отсутствуют для немедленной публикации');
         }
 
         if (videoUrl) {
-            const media = await Media.create(
-                {
-                    url: videoUrl,
-                    type: 'video',
-                },
-                { transaction },
-            );
+            console.log('🎥 Добавление видео...');
+            const media = await Media.create({
+                url: videoUrl,
+                type: 'video',
+            }, { transaction });
             mediaInstances.push(media);
+            console.log('✅ Видео добавлено');
         }
 
         if (mediaInstances.length > 0) {
+            console.log(`🔗 Связывание ${mediaInstances.length} медиафайлов с новостью...`);
             await news.addMediaFiles(mediaInstances, { transaction });
+            console.log(`✅ Связано ${mediaInstances.length} медиафайлов`);
         }
 
+        console.log('💾 Коммит транзакции...');
         await transaction.commit();
 
+        console.log('📖 Получение созданной новости...');
         const createdNews = await News.findByPk(news.id, {
             include: [
                 { model: Category, as: 'categories' },
                 { model: Media, as: 'mediaFiles' }
             ],
+        });
+
+        console.log('✅ Финальная новость:', {
+            id: createdNews.id,
+            title: createdNews.title,
+            mediaFilesCount: createdNews.mediaFiles?.length || 0,
+            categoriesCount: createdNews.categories?.length || 0
         });
 
         logger.info(`✅ Создана новость: ${title}`, {
@@ -508,16 +592,26 @@ exports.createNews = async (req, res) => {
             immediate: !scheduleForLater
         });
 
+        console.log('✅ Новость успешно создана и возвращается клиенту');
         res.status(201).json(createdNews);
+
     } catch (err) {
-        if (transaction) await transaction.rollback();
-        console.error('❌ Ошибка создания новости:', err);
+        if (transaction) {
+            console.log('🔄 Откат транзакции...');
+            await transaction.rollback();
+        }
+
+        console.error('❌ Ошибка создания новости:', {
+            error: err.message,
+            stack: err.stack
+        });
+
         res.status(400).json({
             error: `Ошибка создания новости: ${err.message}`,
             errors: [{
                 location: "body",
                 msg: err.message,
-                path: "categoryIds",
+                path: "general",
                 type: "field"
             }]
         });

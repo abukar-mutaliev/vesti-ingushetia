@@ -221,7 +221,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         }, 1500);
     };
 
-    // Исправленный фрагмент handleSave в AddNewsSection.js
+
 
     const handleSave = () => {
         if (!validateForm()) return;
@@ -255,7 +255,6 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         if (isDeferred && deferredDate) {
             formData.append('scheduleForLater', 'true');
 
-            // ИСПРАВЛЕНО: используем правильную конвертацию времени
             const serverTime = MoscowTimeUtils.toServerTime(deferredDate);
             if (serverTime) {
                 formData.append('publishDate', serverTime);
@@ -272,26 +271,54 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 return;
             }
         } else if (publishDate && !isDeferred) {
-            // Для немедленной публикации с указанной датой
             const serverTime = MoscowTimeUtils.toServerTime(publishDate);
             if (serverTime) {
                 formData.append('publishDate', serverTime);
             }
         }
 
-        newsMedia.flat().forEach((file) => {
-            if (file.type.startsWith('image')) {
+        // ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ ФАЙЛОВ
+        console.log('📁 [CLIENT] Анализ файлов перед отправкой:');
+        console.log('   newsMedia структура:', newsMedia);
+        console.log('   newsMedia.flat():', newsMedia.flat());
+
+        const flatFiles = newsMedia.flat();
+        console.log(`   Всего файлов после flat(): ${flatFiles.length}`);
+
+        flatFiles.forEach((file, index) => {
+            if (file && file.type && file.type.startsWith('image')) {
+                console.log(`   📷 Файл ${index + 1}:`, {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    lastModified: file.lastModified
+                });
                 formData.append('images', file);
+            } else {
+                console.log(`   ⚠️ Файл ${index + 1} пропущен:`, file);
             }
         });
 
+        // ЛОГИРОВАНИЕ СОДЕРЖИМОГО FORMDATA
+        console.log('📤 [CLIENT] Содержимое FormData:');
+        for (let [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                console.log(`   ${key}: File(${value.name}, ${value.type}, ${value.size} bytes)`);
+            } else {
+                console.log(`   ${key}: ${value}`);
+            }
+        }
+
         const actionToDispatch = isDeferred ? createScheduledNews : createNews;
+
+        console.log(`🚀 [CLIENT] Отправка ${isDeferred ? 'отложенной' : 'немедленной'} новости...`);
 
         dispatch(actionToDispatch(formData))
             .unwrap()
             .then((response) => {
+                console.log('✅ [CLIENT] Успешный ответ:', response);
+
                 if (isDeferred) {
-                    // Показываем московское время в сообщении об успехе
                     const scheduledTime = response.scheduledNews?.scheduledDate || response.scheduledNews?.publishDate;
                     const moscowTime = scheduledTime
                         ? MoscowTimeUtils.formatMoscowTime(scheduledTime)
@@ -313,9 +340,8 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 }
             })
             .catch((error) => {
-                console.error('Ошибка при создании новости:', error);
+                console.error('❌ [CLIENT] Ошибка при создании новости:', error);
 
-                // Отладочная информация о времени при ошибке
                 if (isDeferred && deferredDate) {
                     MoscowTimeUtils.debugTime('Время при ошибке', deferredDate);
                 }
