@@ -86,12 +86,13 @@ class NewsScheduler {
         }
     }
 
+    // Исправленный метод publishScheduledNews в newsScheduler.js
+
     async publishScheduledNews(scheduledNewsItem) {
         const transaction = await sequelize.transaction();
 
         try {
             const newsData = JSON.parse(scheduledNewsItem.newsData);
-
             const publishTime = new Date(scheduledNewsItem.scheduledDate);
 
             console.log('📰 Публикация отложенной новости:', {
@@ -128,6 +129,7 @@ class NewsScheduler {
 
             const mediaInstances = [];
 
+            // Обработка видео
             if (newsData.videoUrl && newsData.videoUrl.trim() !== '') {
                 const videoUrl = newsData.videoUrl.trim();
 
@@ -143,80 +145,125 @@ class NewsScheduler {
                 }
             }
 
+            // ИСПРАВЛЕНО: правильная обработка изображений
             if (newsData.mediaFiles && newsData.mediaFiles.length > 0) {
+                console.log(`📷 Обработка ${newsData.mediaFiles.length} медиафайлов при публикации`);
+
                 for (const [index, mediaFile] of newsData.mediaFiles.entries()) {
                     try {
-                        if (mediaFile.type === 'video' && mediaFile.url) {
+                        if (mediaFile.type === 'image') {
+                            console.log(`📷 Обрабатываем изображение ${index + 1}:`, {
+                                filename: mediaFile.filename,
+                                originalName: mediaFile.originalName,
+                                path: mediaFile.path,
+                                url: mediaFile.url
+                            });
+
+                            let finalImageUrl = null;
+
+                            // Вариант 1: Если есть готовый URL (для старых данных)
+                            if (mediaFile.url && !mediaFile.path) {
+                                finalImageUrl = mediaFile.url;
+                                console.log(`   ✅ Используем существующий URL: ${finalImageUrl}`);
+                            }
+                            // Вариант 2: Если есть путь к временному файлу
+                            else if (mediaFile.path && fs.existsSync(mediaFile.path)) {
+                                const tempPath = mediaFile.path;
+
+                                // Генерируем финальное имя файла
+                                let finalFilename;
+                                if (mediaFile.filename) {
+                                    // Убираем временный префикс если есть
+                                    finalFilename = mediaFile.filename.replace(/^\d+-/, '');
+                                } else {
+                                    // Генерируем новое имя
+                                    const timestamp = Date.now();
+                                    const randomSuffix = Math.round(Math.random() * 1E9);
+                                    const extension = path.extname(mediaFile.originalName || '');
+                                    finalFilename = `images-${timestamp}-${randomSuffix}${extension}`;
+                                }
+
+                                // Путь к финальной папке
+                                const uploadsDir = path.join(__dirname, '../uploads/images');
+                                if (!fs.existsSync(uploadsDir)) {
+                                    fs.mkdirSync(uploadsDir, { recursive: true });
+                                }
+
+                                let finalPath = path.join(uploadsDir, finalFilename);
+
+                                // Проверяем уникальность имени файла
+                                let counter = 1;
+                                while (fs.existsSync(finalPath)) {
+                                    const fileExt = path.extname(finalFilename);
+                                    const baseName = path.basename(finalFilename, fileExt);
+                                    const uniqueFilename = `${baseName}-${counter}${fileExt}`;
+                                    finalPath = path.join(uploadsDir, uniqueFilename);
+                                    finalFilename = uniqueFilename;
+                                    counter++;
+                                }
+
+                                // Копируем файл из временной папки в постоянную
+                                fs.copyFileSync(tempPath, finalPath);
+                                finalImageUrl = `uploads/images/${finalFilename}`;
+
+                                console.log(`   ✅ Файл скопирован: ${tempPath} → ${finalPath}`);
+
+                                // Удаляем временный файл
+                                try {
+                                    fs.unlinkSync(tempPath);
+                                    console.log(`   🗑️ Временный файл удален: ${tempPath}`);
+                                } catch (err) {
+                                    console.warn(`   ⚠️ Не удалось удалить временный файл: ${tempPath}`, err.message);
+                                }
+                            }
+                            // Вариант 3: Файл по оригинальному имени в папке изображений
+                            else if (mediaFile.filename) {
+                                const imagePath = path.join(__dirname, '../uploads/images', mediaFile.filename);
+                                if (fs.existsSync(imagePath)) {
+                                    finalImageUrl = `uploads/images/${mediaFile.filename}`;
+                                    console.log(`   ✅ Найден файл в uploads: ${finalImageUrl}`);
+                                } else {
+                                    console.warn(`   ❌ Файл не найден: ${imagePath}`);
+                                    continue;
+                                }
+                            }
+                            // Вариант 4: Восстанавливаем по оригинальному имени
+                            else if (mediaFile.originalName) {
+                                console.warn(`   ⚠️ Пытаемся восстановить по originalName: ${mediaFile.originalName}`);
+
+                                // Создаем новое имя файла
+                                const timestamp = Date.now();
+                                const randomSuffix = Math.round(Math.random() * 1E9);
+                                const extension = path.extname(mediaFile.originalName);
+                                const generatedFilename = `images-${timestamp}-${randomSuffix}${extension}`;
+
+                                finalImageUrl = `uploads/images/${generatedFilename}`;
+                                console.log(`   ℹ️ Сгенерирован placeholder URL: ${finalImageUrl}`);
+                            }
+
+                            if (finalImageUrl) {
+                                const imageMedia = await Media.create({
+                                    url: finalImageUrl,
+                                    type: 'image'
+                                }, { transaction });
+
+                                mediaInstances.push(imageMedia);
+                                console.log(`   ✅ Изображение добавлено в БД: ${finalImageUrl} (ID: ${imageMedia.id})`);
+                            } else {
+                                console.error(`   ❌ Не удалось обработать изображение: ${JSON.stringify(mediaFile)}`);
+                            }
+
+                        } else if (mediaFile.type === 'video' && mediaFile.url) {
                             const videoUrl = mediaFile.url.trim();
                             const existingVideo = mediaInstances.find(m => m.type === 'video' && m.url === videoUrl);
 
-                            if (!existingVideo) {
-                                if (validateVideoUrl(videoUrl)) {
-                                    const videoMedia = await Media.create({
-                                        url: videoUrl,
-                                        type: 'video'
-                                    }, { transaction });
-                                    mediaInstances.push(videoMedia);
-                                    logger.info(`✅ Видео из медиафайлов добавлено: ${videoUrl} (ID: ${videoMedia.id})`);
-                                } else {
-                                    logger.warn(`⚠️ Некорректный URL видео из медиафайлов: ${videoUrl}`);
-                                }
-                            } else {
-                                logger.info(`ℹ️ Видео уже добавлено, пропускаем дубликат: ${videoUrl}`);
-                            }
-
-                        } else if (mediaFile.type === 'image') {
-                            let finalUrl = null;
-
-                            if (mediaFile.url && !mediaFile.path) {
-                                finalUrl = mediaFile.url;
-                                logger.info(`📷 Используем существующий URL: ${finalUrl}`);
-                            } else if (mediaFile.path && mediaFile.filename) {
-                                const tempPath = mediaFile.path;
-                                let finalFilename;
-
-                                if (mediaFile.filename.match(/^\d+-/)) {
-                                    finalFilename = mediaFile.filename.replace(/^\d+-/, '');
-                                } else {
-                                    finalFilename = mediaFile.filename;
-                                }
-
-                                const finalPath = path.join(__dirname, '../uploads/images', finalFilename);
-
-                                if (fs.existsSync(tempPath)) {
-                                    const uploadsDir = path.join(__dirname, '../uploads/images');
-                                    if (!fs.existsSync(uploadsDir)) {
-                                        fs.mkdirSync(uploadsDir, { recursive: true });
-                                    }
-
-                                    let uniqueFinalPath = finalPath;
-                                    let counter = 1;
-                                    while (fs.existsSync(uniqueFinalPath)) {
-                                        const fileExt = path.extname(finalFilename);
-                                        const baseName = path.basename(finalFilename, fileExt);
-                                        const uniqueFilename = `${baseName}-${counter}${fileExt}`;
-                                        uniqueFinalPath = path.join(__dirname, '../uploads/images', uniqueFilename);
-                                        counter++;
-                                    }
-
-                                    fs.copyFileSync(tempPath, uniqueFinalPath);
-                                    finalUrl = `uploads/images/${path.basename(uniqueFinalPath)}`;
-                                } else {
-                                    logger.warn(`❌ Временный файл не найден: ${tempPath}`);
-                                    continue;
-                                }
-                            } else {
-                                logger.warn(`⚠️ Неполные данные файла: ${JSON.stringify(mediaFile)}`);
-                                continue;
-                            }
-
-                            if (finalUrl) {
-                                const imageMedia = await Media.create({
-                                    url: finalUrl,
-                                    type: 'image'
+                            if (!existingVideo && validateVideoUrl(videoUrl)) {
+                                const videoMedia = await Media.create({
+                                    url: videoUrl,
+                                    type: 'video'
                                 }, { transaction });
-                                mediaInstances.push(imageMedia);
-                                logger.info(`✅ Изображение добавлено: ${finalUrl} (ID: ${imageMedia.id})`);
+                                mediaInstances.push(videoMedia);
+                                logger.info(`✅ Видео из медиафайлов добавлено: ${videoUrl} (ID: ${videoMedia.id})`);
                             }
                         }
                     } catch (error) {
@@ -234,13 +281,15 @@ class NewsScheduler {
 
             await transaction.commit();
 
+            // Удаляем отложенную новость после успешной публикации
             await scheduledNewsItem.destroy();
 
             logger.info(`✅ Отложенная новость "${newsData.title}" успешно опубликована`, {
                 newsId: news.id,
                 originalScheduledDate: scheduledNewsItem.scheduledDate,
                 actualPublishDate: news.publishDate,
-                createdAt: news.createdAt
+                createdAt: news.createdAt,
+                mediaFilesCount: mediaInstances.length
             });
 
             return news;
@@ -252,6 +301,7 @@ class NewsScheduler {
         }
     }
 
+    // Исправленный метод scheduleNews в newsScheduler.js
 
     async scheduleNews(newsData, scheduledDate, authorId) {
         try {
@@ -272,58 +322,104 @@ class NewsScheduler {
                 logger.info(`ℹ️ Видео URL отсутствует`);
             }
 
+            // ИСПРАВЛЕНО: улучшенная обработка медиафайлов
             if (newsData.mediaFiles && newsData.mediaFiles.length > 0) {
+                console.log(`📁 Обработка ${newsData.mediaFiles.length} медиафайлов для планировщика`);
+
                 const tempDir = path.join(__dirname, '../temp');
                 if (!fs.existsSync(tempDir)) {
                     fs.mkdirSync(tempDir, { recursive: true });
+                    console.log(`📁 Создана временная папка: ${tempDir}`);
                 }
 
                 processedNewsData.mediaFiles = await Promise.all(
-                    newsData.mediaFiles.map(async (file) => {
+                    newsData.mediaFiles.map(async (file, index) => {
+                        console.log(`📄 Обрабатываем файл ${index + 1}:`, {
+                            type: file.type,
+                            filename: file.filename,
+                            originalname: file.originalname,
+                            path: file.path
+                        });
+
                         if (file.type === 'image') {
-                            const tempFilename = `${Date.now()}-${file.filename}`;
+                            const timestamp = Date.now();
+                            const randomSuffix = Math.round(Math.random() * 1E9);
+                            const originalExt = path.extname(file.originalname || file.filename || '');
+                            const tempFilename = `scheduled-${timestamp}-${randomSuffix}${originalExt}`;
                             const tempPath = path.join(tempDir, tempFilename);
 
-                            let sourcePath;
+                            let sourcePath = null;
+
+                            // Определяем источник файла
                             if (file.path && fs.existsSync(file.path)) {
                                 sourcePath = file.path;
+                                console.log(`   📂 Источник: существующий путь ${sourcePath}`);
                             } else if (file.filename) {
-                                sourcePath = path.join(__dirname, '../uploads/images', file.filename);
+                                // Пробуем найти в папке uploads
+                                const uploadsPath = path.join(__dirname, '../uploads/images', file.filename);
+                                if (fs.existsSync(uploadsPath)) {
+                                    sourcePath = uploadsPath;
+                                    console.log(`   📂 Источник: uploads папка ${sourcePath}`);
+                                } else {
+                                    console.warn(`   ⚠️ Файл не найден в uploads: ${uploadsPath}`);
+                                }
                             }
 
-                            if (sourcePath && fs.existsSync(sourcePath)) {
-                                fs.copyFileSync(sourcePath, tempPath);
+                            if (sourcePath) {
+                                try {
+                                    // Копируем файл во временную папку
+                                    fs.copyFileSync(sourcePath, tempPath);
+                                    console.log(`   ✅ Файл скопирован во временную папку: ${tempPath}`);
 
-                                return {
-                                    type: 'image',
-                                    filename: tempFilename,
-                                    originalName: file.originalname || file.originalName,
-                                    path: tempPath
-                                };
-                            } else {
-                                logger.warn(`⚠️ Исходный файл не найден: ${sourcePath}`);
-                                if (file.url) {
+                                    return {
+                                        type: 'image',
+                                        filename: tempFilename, // Новое имя во временной папке
+                                        originalName: file.originalname || file.filename,
+                                        path: tempPath, // Путь к временному файлу
+                                        originalPath: sourcePath, // Исходный путь для справки
+                                        scheduled: true // Маркер что файл для планировщика
+                                    };
+                                } catch (copyError) {
+                                    console.error(`   ❌ Ошибка копирования файла:`, copyError);
+
+                                    // Fallback: сохраняем ссылку на оригинал
                                     return {
                                         type: 'image',
                                         filename: file.filename,
-                                        originalName: file.originalname || file.originalName,
-                                        url: file.url
+                                        originalName: file.originalname,
+                                        url: `uploads/images/${file.filename}`, // Прямая ссылка
+                                        fallback: true
                                     };
                                 }
+                            } else {
+                                console.warn(`   ⚠️ Источник файла не найден, создаем placeholder`);
 
+                                // Создаем placeholder запись
                                 return {
                                     type: 'image',
-                                    filename: file.filename,
-                                    originalName: file.originalname || file.originalName,
-                                    url: `uploads/images/${file.filename}`
+                                    filename: file.filename || tempFilename,
+                                    originalName: file.originalname || 'unknown',
+                                    placeholder: true,
+                                    url: `uploads/images/${file.filename || tempFilename}`
                                 };
                             }
                         }
+
+                        // Для других типов файлов (видео и т.д.)
                         return file;
                     })
                 );
+
+                const successfulFiles = processedNewsData.mediaFiles.filter(f => !f.placeholder);
+                const placeholderFiles = processedNewsData.mediaFiles.filter(f => f.placeholder);
+
+                console.log(`✅ Успешно обработано файлов: ${successfulFiles.length}`);
+                if (placeholderFiles.length > 0) {
+                    console.warn(`⚠️ Создано placeholder файлов: ${placeholderFiles.length}`);
+                }
             } else {
                 processedNewsData.mediaFiles = [];
+                console.log(`ℹ️ Медиафайлы отсутствуют`);
             }
 
             processedNewsData.authorId = authorId;
@@ -334,14 +430,12 @@ class NewsScheduler {
             }
 
             const now = new Date();
-            const minAllowedTime = new Date(now.getTime() + 30 * 1000); // +30 секунд буфер
+            const minAllowedTime = new Date(now.getTime() + 30 * 1000);
 
             if (finalScheduledDate <= minAllowedTime) {
                 console.log('❌ Дата планирования в прошлом:');
                 console.log(`   Планируемое время: ${finalScheduledDate.toISOString()}`);
                 console.log(`   Текущее время: ${now.toISOString()}`);
-                console.log(`   Минимально допустимое: ${minAllowedTime.toISOString()}`);
-
                 throw new Error('Дата планирования должна быть в будущем');
             }
 
@@ -360,7 +454,8 @@ class NewsScheduler {
                 scheduledDateUTC: finalScheduledDate.toISOString(),
                 scheduledDateMoscow: finalScheduledDate.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
                 authorId,
-                timeUntilPublication: Math.round((finalScheduledDate.getTime() - now.getTime()) / 1000 / 60) // минут до публикации
+                timeUntilPublication: Math.round((finalScheduledDate.getTime() - now.getTime()) / 1000 / 60),
+                mediaFilesCount: processedNewsData.mediaFiles.length
             });
 
             return scheduled;
@@ -388,36 +483,7 @@ class NewsScheduler {
         }
     }
 
-    async cancelScheduledNews(id, authorId) {
-        try {
-            const scheduled = await ScheduledNews.findOne({
-                where: {
-                    id,
-                    authorId,
-                    status: 'scheduled'
-                }
-            });
 
-            if (!scheduled) {
-                throw new Error('Отложенная новость не найдена');
-            }
-
-            const newsData = JSON.parse(scheduled.newsData);
-            if (newsData.mediaFiles) {
-                newsData.mediaFiles.forEach(file => {
-                    if (file.path && fs.existsSync(file.path)) {
-                        fs.unlinkSync(file.path);
-                    }
-                });
-            }
-
-            await scheduled.destroy();
-
-        } catch (error) {
-            logger.error('Ошибка отмены отложенной новости:', error);
-            throw error;
-        }
-    }
 
     initCleanup() {
         cron.schedule('0 2 * * *', () => {
@@ -429,27 +495,6 @@ class NewsScheduler {
         });
     }
 
-    async cleanupTempFiles() {
-        try {
-            const tempDir = path.join(__dirname, '../temp');
-            if (!fs.existsSync(tempDir)) return;
-
-            const files = fs.readdirSync(tempDir);
-            const now = Date.now();
-            const maxAge = 7 * 24 * 60 * 60 * 1000;
-
-            for (const file of files) {
-                const filePath = path.join(tempDir, file);
-                const stats = fs.statSync(filePath);
-
-                if (now - stats.mtime.getTime() > maxAge) {
-                    fs.unlinkSync(filePath);
-                }
-            }
-        } catch (error) {
-            logger.error('Ошибка очистки временных файлов:', error);
-        }
-    }
 
     async cleanupOrphanedFiles() {
         try {
@@ -489,6 +534,135 @@ class NewsScheduler {
 
         } catch (error) {
             logger.error('Ошибка очистки неиспользуемых файлов:', error);
+        }
+    }
+    // Добавьте эти методы в класс NewsScheduler
+
+// Очистка временных файлов при ошибке или отмене
+    async cleanupScheduledNewsFiles(scheduledNewsId) {
+        try {
+            const scheduledNews = await ScheduledNews.findByPk(scheduledNewsId);
+            if (!scheduledNews) return;
+
+            const newsData = JSON.parse(scheduledNews.newsData);
+            if (newsData.mediaFiles && newsData.mediaFiles.length > 0) {
+                console.log(`🗑️ Очистка файлов для отмененной новости ID: ${scheduledNewsId}`);
+
+                newsData.mediaFiles.forEach(file => {
+                    if (file.path && file.scheduled && fs.existsSync(file.path)) {
+                        try {
+                            fs.unlinkSync(file.path);
+                            console.log(`   ✅ Удален временный файл: ${file.path}`);
+                        } catch (err) {
+                            console.error(`   ❌ Ошибка удаления файла ${file.path}:`, err.message);
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            logger.error('Ошибка очистки файлов отложенной новости:', error);
+        }
+    }
+
+// Переопределяем метод отмены новости
+    async cancelScheduledNews(id, authorId) {
+        try {
+            const scheduled = await ScheduledNews.findOne({
+                where: {
+                    id,
+                    authorId,
+                    status: 'scheduled'
+                }
+            });
+
+            if (!scheduled) {
+                throw new Error('Отложенная новость не найдена');
+            }
+
+            // Очищаем файлы перед удалением
+            await this.cleanupScheduledNewsFiles(id);
+
+            await scheduled.destroy();
+
+            logger.info(`✅ Отложенная новость отменена: ${scheduled.title} (ID: ${id})`);
+
+        } catch (error) {
+            logger.error('Ошибка отмены отложенной новости:', error);
+            throw error;
+        }
+    }
+
+// Улучшенная очистка временных файлов по расписанию
+    async cleanupTempFiles() {
+        try {
+            const tempDir = path.join(__dirname, '../temp');
+            if (!fs.existsSync(tempDir)) return;
+
+            const files = fs.readdirSync(tempDir);
+            const now = Date.now();
+            const maxAge = 24 * 60 * 60 * 1000; // 24 часа
+            let deletedCount = 0;
+
+            console.log(`🧹 Очистка временных файлов: найдено ${files.length} файлов`);
+
+            for (const file of files) {
+                const filePath = path.join(tempDir, file);
+
+                try {
+                    const stats = fs.statSync(filePath);
+                    const fileAge = now - stats.mtime.getTime();
+
+                    if (fileAge > maxAge) {
+                        fs.unlinkSync(filePath);
+                        deletedCount++;
+                        console.log(`   🗑️ Удален устаревший файл: ${file}
+                         (возраст: ${Math.round(fileAge / 1000 / 60 / 60)} часов)`);
+                    }
+                } catch (err) {
+                    console.error(`   ❌ Ошибка обработки файла ${file}:`, err.message);
+                }
+            }
+
+            if (deletedCount > 0) {
+                logger.info(`✅ Очистка временных файлов завершена. Удалено: ${deletedCount}`);
+            }
+        } catch (error) {
+            logger.error('Ошибка очистки временных файлов:', error);
+        }
+    }
+
+// Проверка целостности файлов отложенных новостей
+    async checkScheduledNewsIntegrity() {
+        try {
+            const scheduledNews = await ScheduledNews.findAll({
+                where: { status: 'scheduled' }
+            });
+
+            console.log(`🔍 Проверка целостности ${scheduledNews.length} отложенных новостей`);
+
+            for (const news of scheduledNews) {
+                try {
+                    const newsData = JSON.parse(news.newsData);
+                    if (newsData.mediaFiles && newsData.mediaFiles.length > 0) {
+                        let missingFiles = 0;
+
+                        newsData.mediaFiles.forEach(file => {
+                            if (file.path && file.scheduled && !fs.existsSync(file.path)) {
+                                missingFiles++;
+                                console.warn(`   ⚠️ Отсутствует файл для новости "${news.title}": ${file.path}`);
+                            }
+                        });
+
+                        if (missingFiles > 0) {
+                            logger.warn(`Обнаружены отсутствующие файлы для новости ID ${news.id}: ${missingFiles} файлов`);
+                        }
+                    }
+                } catch (err) {
+                    logger.error(`Ошибка проверки новости ID ${news.id}:`, err.message);
+                }
+            }
+        } catch (error) {
+            logger.error('Ошибка проверки целостности отложенных новостей:', error);
         }
     }
 }
