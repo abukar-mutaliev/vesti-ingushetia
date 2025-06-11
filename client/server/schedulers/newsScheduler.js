@@ -90,16 +90,27 @@ class NewsScheduler {
         const transaction = await sequelize.transaction();
 
         try {
-
             const newsData = JSON.parse(scheduledNewsItem.newsData);
+
+            const publishTime = new Date(scheduledNewsItem.scheduledDate);
+
+            console.log('📰 Публикация отложенной новости:', {
+                title: newsData.title,
+                scheduledTime: scheduledNewsItem.scheduledDate,
+                publishTime: publishTime.toISOString(),
+                publishTimeMoscow: publishTime.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })
+            });
 
             const news = await News.create({
                 title: newsData.title,
                 content: newsData.content,
                 authorId: newsData.authorId,
-                publishDate: newsData.publishDate || new Date()
+                publishDate: publishTime,
             }, { transaction });
 
+            console.log(`✅ Новость создана с ID: ${news.id}`);
+            console.log(`   publishDate: ${news.publishDate}`);
+            console.log(`   createdAt: ${news.createdAt}`);
 
             if (newsData.categoryIds && newsData.categoryIds.length > 0) {
                 const categories = await Category.findAll({
@@ -109,6 +120,7 @@ class NewsScheduler {
 
                 if (categories.length > 0) {
                     await news.addCategories(categories, { transaction });
+                    console.log(`✅ Добавлено ${categories.length} категорий`);
                 } else {
                     logger.warn(`⚠️ Категории с ID [${newsData.categoryIds.join(', ')}] не найдены`);
                 }
@@ -132,16 +144,13 @@ class NewsScheduler {
             }
 
             if (newsData.mediaFiles && newsData.mediaFiles.length > 0) {
-
                 for (const [index, mediaFile] of newsData.mediaFiles.entries()) {
-
                     try {
                         if (mediaFile.type === 'video' && mediaFile.url) {
                             const videoUrl = mediaFile.url.trim();
-
                             const existingVideo = mediaInstances.find(m => m.type === 'video' && m.url === videoUrl);
-                            if (!existingVideo) {
 
+                            if (!existingVideo) {
                                 if (validateVideoUrl(videoUrl)) {
                                     const videoMedia = await Media.create({
                                         url: videoUrl,
@@ -162,11 +171,10 @@ class NewsScheduler {
                             if (mediaFile.url && !mediaFile.path) {
                                 finalUrl = mediaFile.url;
                                 logger.info(`📷 Используем существующий URL: ${finalUrl}`);
-
                             } else if (mediaFile.path && mediaFile.filename) {
                                 const tempPath = mediaFile.path;
-
                                 let finalFilename;
+
                                 if (mediaFile.filename.match(/^\d+-/)) {
                                     finalFilename = mediaFile.filename.replace(/^\d+-/, '');
                                 } else {
@@ -174,7 +182,6 @@ class NewsScheduler {
                                 }
 
                                 const finalPath = path.join(__dirname, '../uploads/images', finalFilename);
-
 
                                 if (fs.existsSync(tempPath)) {
                                     const uploadsDir = path.join(__dirname, '../uploads/images');
@@ -194,7 +201,6 @@ class NewsScheduler {
 
                                     fs.copyFileSync(tempPath, uniqueFinalPath);
                                     finalUrl = `uploads/images/${path.basename(uniqueFinalPath)}`;
-
                                 } else {
                                     logger.warn(`❌ Временный файл не найден: ${tempPath}`);
                                     continue;
@@ -221,8 +227,7 @@ class NewsScheduler {
 
             if (mediaInstances.length > 0) {
                 await news.addMediaFiles(mediaInstances, { transaction });
-
-                const finalMediaFiles = mediaInstances.map(m => `${m.type}: ${m.url}`);
+                console.log(`✅ Связано ${mediaInstances.length} медиафайлов`);
             } else {
                 logger.info(`ℹ️ Медиафайлы отсутствуют`);
             }
@@ -231,6 +236,12 @@ class NewsScheduler {
 
             await scheduledNewsItem.destroy();
 
+            logger.info(`✅ Отложенная новость "${newsData.title}" успешно опубликована`, {
+                newsId: news.id,
+                originalScheduledDate: scheduledNewsItem.scheduledDate,
+                actualPublishDate: news.publishDate,
+                createdAt: news.createdAt
+            });
 
             return news;
 
@@ -240,7 +251,6 @@ class NewsScheduler {
             throw error;
         }
     }
-
 
 
     async scheduleNews(newsData, scheduledDate, authorId) {

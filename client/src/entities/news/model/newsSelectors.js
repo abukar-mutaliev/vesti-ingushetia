@@ -6,7 +6,16 @@ export const selectSelectedDate = (state) => state.news.selectedDate;
 
 export const selectNewsList = createSelector(
     [selectNewsState],
-    (newsState) => newsState.newsList || [],
+    (newsState) => {
+        const newsList = newsState.newsList || [];
+
+        return [...newsList].sort((a, b) => {
+            const dateA = new Date(a.publishDate || a.createdAt);
+            const dateB = new Date(b.publishDate || b.createdAt);
+
+            return dateB.getTime() - dateA.getTime();
+        });
+    }
 );
 
 export const selectAllNewsWithVideos = createSelector(
@@ -48,11 +57,18 @@ export const selectNewsListByDate = createSelector(
         const selectedDateObj = new Date(selectedDate);
 
         return newsList
-        .filter(news => isSameDate(news.publishDate, selectedDateObj))
-        .sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate));
+            .filter(news => {
+                const newsDate = news.publishDate || news.createdAt;
+                return isSameDate(newsDate, selectedDateObj);
+            })
+            .slice()
+            .sort((a, b) => {
+                const dateA = new Date(a.publishDate || a.createdAt);
+                const dateB = new Date(b.publishDate || b.createdAt);
+                return dateB.getTime() - dateA.getTime();
+            });
     }
 );
-
 
 export const selectFilteredNews = createSelector(
     [selectNewsListByDate],
@@ -89,7 +105,6 @@ export const selectNewsPerPage = createSelector(
     [selectNewsState],
     (newsState) => newsState.newsPerPage,
 );
-
 
 export const selectFilteredNewsWithVideos = createSelector(
     [selectFilteredNews],
@@ -204,5 +219,24 @@ export const selectPageCountWithVideos = createSelector(
     [selectFilteredNewsWithVideos, selectNewsPerPage],
     (filteredNewsWithVideos, newsPerPage) => {
         return Math.ceil(filteredNewsWithVideos.length / newsPerPage);
+    }
+);
+
+export const selectNewsWithFormattedDates = createSelector(
+    [selectNewsList],
+    (newsList) => {
+        return newsList.map(news => ({
+            ...news,
+            displayDate: news.publishDate || news.createdAt,
+            formattedDisplayDate: new Date(news.publishDate || news.createdAt).toLocaleString('ru-RU', {
+                timeZone: 'Europe/Moscow',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }),
+            isScheduledNews: !!news.publishDate && new Date(news.publishDate).getTime() !== new Date(news.createdAt).getTime()
+        }));
     }
 );
