@@ -386,6 +386,8 @@ exports.createNews = async (req, res) => {
 
             if (scheduledDate <= minFutureTime) {
                 console.log('❌ Дата в прошлом или слишком близко');
+                // ИСПРАВЛЕНО: Очищаем загруженные файлы при ошибке
+                cleanupUploadedFiles(mediaFiles);
                 return res.status(400).json({
                     errors: [{
                         type: "field",
@@ -415,11 +417,16 @@ exports.createNews = async (req, res) => {
 
                 newsData.mediaFiles = mediaFiles.images.map(file => {
                     console.log(`   Обрабатываем файл: ${file.originalname}`);
+                    console.log(`     Путь: ${file.path}`);
+                    console.log(`     Filename: ${file.filename}`);
+                    console.log(`     MIME: ${file.mimetype}`);
+                    console.log(`     Размер: ${file.size}`);
+                    
                     return {
                         type: file.mimetype.startsWith('image/') ? 'image' : 'other',
                         filename: file.filename,
                         originalname: file.originalname,
-                        path: file.path,
+                        path: file.path, // ВАЖНО: сохраняем полный путь к файлу
                         mimetype: file.mimetype,
                         size: file.size
                     };
@@ -476,6 +483,9 @@ exports.createNews = async (req, res) => {
                 publishDate,
                 authorId
             });
+
+            // ИСПРАВЛЕНО: Очищаем загруженные файлы при ошибке
+            cleanupUploadedFiles(mediaFiles);
 
             logger.error('❌ Ошибка создания отложенной новости:', error);
 
@@ -812,8 +822,8 @@ exports.updateNews = async (req, res) => {
     } catch (err) {
         // Откатываем транзакцию если она активна
         if (transaction) {
-            await transaction.rollback();
             console.log('🔄 [UPDATE] Транзакция отменена из-за ошибки');
+            await transaction.rollback();
         }
 
         // Удаляем загруженные файлы при ошибке
@@ -895,9 +905,11 @@ async function handleVideoUpdate(news, videoUrl, transaction) {
     }
 }
 
-// 4. Функция очистки загруженных файлов при ошибке
+// 4. Функция очистки загруженных файлов при ошибке (ИСПРАВЛЕНО)
 function cleanupUploadedFiles(mediaFiles) {
     if (!mediaFiles || !mediaFiles.images) return;
+
+    console.log('🗑️ [CLEANUP] Очистка загруженных файлов при ошибке...');
 
     for (const file of mediaFiles.images) {
         try {
@@ -1112,6 +1124,49 @@ exports.cleanupOrphanedFiles = async (req, res) => {
         console.error('Ошибка при очистке файлов:', error);
         res.status(500).json({
             error: `Ошибка при очистке файлов: ${error.message}`
+        });
+    }
+};
+
+// Эндпоинт для диагностики отложенных новостей
+exports.debugScheduledNews = async (req, res) => {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: 'Доступ запрещен' });
+        }
+
+        const newsDebugger = require('../utils/scheduledNewsDebug');
+        
+        // Перехватываем console.log для отправки в ответе
+        const logs = [];
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        console.log = (...args) => {
+            logs.push({ type: 'log', message: args.join(' ') });
+            originalLog(...args);
+        };
+        
+        console.error = (...args) => {
+            logs.push({ type: 'error', message: args.join(' ') });
+            originalError(...args);
+        };
+
+        await newsDebugger.checkScheduledNews();
+
+        // Восстанавливаем console
+        console.log = originalLog;
+        console.error = originalError;
+
+        res.json({
+            message: 'Диагностика завершена',
+            logs: logs
+        });
+
+    } catch (error) {
+        console.error('Ошибка диагностики отложенных новостей:', error);
+        res.status(500).json({
+            error: `Ошибка диагностики: ${error.message}`
         });
     }
 };

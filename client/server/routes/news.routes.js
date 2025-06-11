@@ -10,6 +10,7 @@ const {
     updateNews,
     deleteNews,
     cleanupOrphanedFiles,
+    debugScheduledNews,
 } = require('../controllers/news.controller');
 const { authenticateAdmin } = require('../middlewares/auth.middleware');
 const {
@@ -103,6 +104,10 @@ router.post(
     cleanupOrphanedFiles,
 );
 
-
+router.get(
+    '/debug-scheduled',
+    authenticateAdmin,
+    debugScheduledNews,
+);
 
 module.exports = router;

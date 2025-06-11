@@ -156,25 +156,39 @@ class NewsScheduler {
                                 filename: mediaFile.filename,
                                 originalName: mediaFile.originalName,
                                 path: mediaFile.path,
-                                url: mediaFile.url
+                                url: mediaFile.url,
+                                fallback: mediaFile.fallback,
+                                placeholder: mediaFile.placeholder,
+                                scheduled: mediaFile.scheduled
                             });
 
                             let finalImageUrl = null;
 
-                            // Вариант 1: Если есть готовый URL (для старых данных)
-                            if (mediaFile.url && !mediaFile.path) {
-                                finalImageUrl = mediaFile.url;
-                                console.log(`   ✅ Используем существующий URL: ${finalImageUrl}`);
+                            // Вариант 1: Если есть готовый URL и это fallback
+                            if (mediaFile.fallback && mediaFile.url) {
+                                // Проверяем что файл существует по указанному пути
+                                const expectedPath = path.join(__dirname, '../uploads/images', path.basename(mediaFile.url));
+                                if (fs.existsSync(expectedPath)) {
+                                    finalImageUrl = mediaFile.url;
+                                    console.log(`   ✅ Используем fallback URL: ${finalImageUrl}`);
+                                } else {
+                                    console.warn(`   ⚠️ Fallback файл не найден: ${expectedPath}`);
+                                }
                             }
                             // Вариант 2: Если есть путь к временному файлу
-                            else if (mediaFile.path && fs.existsSync(mediaFile.path)) {
+                            else if (mediaFile.path && mediaFile.scheduled && fs.existsSync(mediaFile.path)) {
                                 const tempPath = mediaFile.path;
 
                                 // Генерируем финальное имя файла
                                 let finalFilename;
-                                if (mediaFile.filename) {
-                                    // Убираем временный префикс если есть
-                                    finalFilename = mediaFile.filename.replace(/^\d+-/, '');
+                                if (mediaFile.filename && mediaFile.filename.startsWith('scheduled-')) {
+                                    // Используем временное имя как основу
+                                    const timestamp = Date.now();
+                                    const randomSuffix = Math.round(Math.random() * 1E9);
+                                    const extension = path.extname(mediaFile.originalName || mediaFile.filename);
+                                    finalFilename = `images-${timestamp}-${randomSuffix}${extension}`;
+                                } else if (mediaFile.filename) {
+                                    finalFilename = mediaFile.filename;
                                 } else {
                                     // Генерируем новое имя
                                     const timestamp = Date.now();
@@ -217,28 +231,14 @@ class NewsScheduler {
                                 }
                             }
                             // Вариант 3: Файл по оригинальному имени в папке изображений
-                            else if (mediaFile.filename) {
+                            else if (mediaFile.filename && !mediaFile.placeholder) {
                                 const imagePath = path.join(__dirname, '../uploads/images', mediaFile.filename);
                                 if (fs.existsSync(imagePath)) {
                                     finalImageUrl = `uploads/images/${mediaFile.filename}`;
                                     console.log(`   ✅ Найден файл в uploads: ${finalImageUrl}`);
                                 } else {
                                     console.warn(`   ❌ Файл не найден: ${imagePath}`);
-                                    continue;
                                 }
-                            }
-                            // Вариант 4: Восстанавливаем по оригинальному имени
-                            else if (mediaFile.originalName) {
-                                console.warn(`   ⚠️ Пытаемся восстановить по originalName: ${mediaFile.originalName}`);
-
-                                // Создаем новое имя файла
-                                const timestamp = Date.now();
-                                const randomSuffix = Math.round(Math.random() * 1E9);
-                                const extension = path.extname(mediaFile.originalName);
-                                const generatedFilename = `images-${timestamp}-${randomSuffix}${extension}`;
-
-                                finalImageUrl = `uploads/images/${generatedFilename}`;
-                                console.log(`   ℹ️ Сгенерирован placeholder URL: ${finalImageUrl}`);
                             }
 
                             if (finalImageUrl) {
@@ -382,14 +382,39 @@ class NewsScheduler {
                                 } catch (copyError) {
                                     console.error(`   ❌ Ошибка копирования файла:`, copyError);
 
-                                    // Fallback: сохраняем ссылку на оригинал
-                                    return {
-                                        type: 'image',
-                                        filename: file.filename,
-                                        originalName: file.originalname,
-                                        url: `uploads/images/${file.filename}`, // Прямая ссылка
-                                        fallback: true
-                                    };
+                                    // ИСПРАВЛЕНО: Улучшенный fallback - копируем файл в uploads
+                                    try {
+                                        const uploadsDir = path.join(__dirname, '../uploads/images');
+                                        if (!fs.existsSync(uploadsDir)) {
+                                            fs.mkdirSync(uploadsDir, { recursive: true });
+                                        }
+
+                                        const fallbackFilename = `fallback-${timestamp}-${randomSuffix}${originalExt}`;
+                                        const fallbackPath = path.join(uploadsDir, fallbackFilename);
+                                        
+                                        fs.copyFileSync(sourcePath, fallbackPath);
+                                        console.log(`   ✅ Создан fallback файл: ${fallbackPath}`);
+
+                                        return {
+                                            type: 'image',
+                                            filename: fallbackFilename,
+                                            originalName: file.originalname || file.filename,
+                                            url: `uploads/images/${fallbackFilename}`,
+                                            fallback: true
+                                        };
+                                    } catch (fallbackError) {
+                                        console.error(`   ❌ Ошибка создания fallback файла:`, fallbackError);
+                                        
+                                        // Последний fallback - просто сохраняем информацию
+                                        return {
+                                            type: 'image',
+                                            filename: file.filename,
+                                            originalName: file.originalname,
+                                            url: `uploads/images/${file.filename}`,
+                                            fallback: true,
+                                            error: 'Файл может быть недоступен'
+                                        };
+                                    }
                                 }
                             } else {
                                 console.warn(`   ⚠️ Источник файла не найден, создаем placeholder`);
@@ -410,12 +435,20 @@ class NewsScheduler {
                     })
                 );
 
-                const successfulFiles = processedNewsData.mediaFiles.filter(f => !f.placeholder);
+                const successfulFiles = processedNewsData.mediaFiles.filter(f => !f.placeholder && !f.error);
+                const fallbackFiles = processedNewsData.mediaFiles.filter(f => f.fallback);
                 const placeholderFiles = processedNewsData.mediaFiles.filter(f => f.placeholder);
+                const errorFiles = processedNewsData.mediaFiles.filter(f => f.error);
 
                 console.log(`✅ Успешно обработано файлов: ${successfulFiles.length}`);
+                if (fallbackFiles.length > 0) {
+                    console.warn(`⚠️ Создано fallback файлов: ${fallbackFiles.length}`);
+                }
                 if (placeholderFiles.length > 0) {
                     console.warn(`⚠️ Создано placeholder файлов: ${placeholderFiles.length}`);
+                }
+                if (errorFiles.length > 0) {
+                    console.error(`❌ Файлов с ошибками: ${errorFiles.length}`);
                 }
             } else {
                 processedNewsData.mediaFiles = [];
