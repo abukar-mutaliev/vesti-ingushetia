@@ -8,7 +8,7 @@ import { createScheduledNews } from '@entities/news/model/scheduledNewsSlice.js'
 import { RichTextEditor } from '@shared/ui/RichTextEditor';
 import { FaDeleteLeft, FaClock } from 'react-icons/fa6';
 import { FaCalendarAlt } from 'react-icons/fa';
-import {MoscowTimeUtils} from "@shared/lib/TimeUtils/timeUtils.js";
+import { MoscowTimeUtils } from '@shared/lib/TimeUtils/timeUtils.js';
 
 const LOCAL_STORAGE_KEY = 'adminDashboard_addNewsSectionFormData';
 
@@ -69,7 +69,15 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             deferredDate,
         };
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(formData));
-    }, [newsTitle, newsContent, selectedCategoryIds, videoUrl, publishDate, isDeferred, deferredDate]);
+    }, [
+        newsTitle,
+        newsContent,
+        selectedCategoryIds,
+        videoUrl,
+        publishDate,
+        isDeferred,
+        deferredDate,
+    ]);
 
     useEffect(() => {
         validateField('media', newsMedia);
@@ -130,8 +138,10 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 if (isDeferred && !value) {
                     error = 'Укажите дату и время отложенной публикации.';
                 } else if (value) {
-                    if (!MoscowTimeUtils.isFutureDate(value)) {
-                        error = 'Дата публикации должна быть в будущем (московское время).';
+                    const validation =
+                        MoscowTimeUtils.validateScheduleDate(value);
+                    if (!validation.valid) {
+                        error = validation.error;
                     }
                 }
                 break;
@@ -146,7 +156,10 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
     const validateForm = () => {
         const isTitleValid = validateField('title', newsTitle);
         const isContentValid = validateField('content', newsContent);
-        const isCategoriesValid = validateField('categories', selectedCategoryIds);
+        const isCategoriesValid = validateField(
+            'categories',
+            selectedCategoryIds,
+        );
         const isVideoUrlValid = validateField('videoUrl', videoUrl);
         const isPublishDateValid = validateField('publishDate', publishDate);
         const isDeferredDateValid = validateField('deferredDate', deferredDate);
@@ -181,23 +194,25 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             publishDate,
             isDeferred,
             deferredDate,
-            newsMedia: newsMedia.flat().map(file => ({
+            newsMedia: newsMedia.flat().map((file) => ({
                 name: file.name,
                 type: file.type,
                 size: file.size,
-                lastModified: file.lastModified
+                lastModified: file.lastModified,
             })),
             createdAt: new Date().toISOString(),
-            status: isDeferred ? 'scheduled' : 'draft'
+            status: isDeferred ? 'scheduled' : 'draft',
         };
 
-        const existingDrafts = JSON.parse(localStorage.getItem('newsDrafts') || '[]');
+        const existingDrafts = JSON.parse(
+            localStorage.getItem('newsDrafts') || '[]',
+        );
         existingDrafts.push(draftData);
         localStorage.setItem('newsDrafts', JSON.stringify(existingDrafts));
 
-        setErrors(prev => ({
+        setErrors((prev) => ({
             ...prev,
-            submit: `Новость сохранена в ${isDeferred ? 'отложенные' : 'черновики'}.`
+            submit: `Новость сохранена в ${isDeferred ? 'отложенные' : 'черновики'}.`,
         }));
 
         setTimeout(() => {
@@ -206,7 +221,6 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         }, 1500);
     };
 
-
     const handleSave = () => {
         if (!validateForm()) return;
 
@@ -214,14 +228,17 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         formData.append('title', newsTitle);
         formData.append('content', newsContent);
 
-        const validCategoryIds = selectedCategoryIds.length > 0
-            ? selectedCategoryIds.map(id => Number(id)).filter(id => Number.isInteger(id) && id > 0)
-            : categories.map(cat => cat.id).slice(0, 1);
+        const validCategoryIds =
+            selectedCategoryIds.length > 0
+                ? selectedCategoryIds
+                      .map((id) => Number(id))
+                      .filter((id) => Number.isInteger(id) && id > 0)
+                : categories.map((cat) => cat.id).slice(0, 1);
 
         if (validCategoryIds.length === 0) {
-            setErrors(prev => ({
+            setErrors((prev) => ({
                 ...prev,
-                categories: 'Необходимо создать хотя бы одну категорию'
+                categories: 'Необходимо создать хотя бы одну категорию',
             }));
             return;
         }
@@ -236,16 +253,23 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             formData.append('publishDate', publishDate);
         }
 
+        // Добавляем информацию об отложенной публикации
         if (isDeferred) {
             formData.append('scheduleForLater', 'true');
 
             if (deferredDate) {
-                const moscowISOString = MoscowTimeUtils.toMoscowTimeForServer(deferredDate);
-                formData.append('publishDate', moscowISOString);
+                // ИСПРАВЛЕНО: используем утилиты для правильной конвертации времени
+                const serverTime = MoscowTimeUtils.toServerTime(deferredDate);
+                formData.append('publishDate', serverTime);
 
-                console.log('📅 Планирование новости:');
-                console.log(`   Выбранное время: ${deferredDate}`);
-                console.log(`   Московское время для сервера: ${moscowISOString}`);
+                console.log('📅 [CLIENT] Планирование новости:');
+                console.log(
+                    `   Выбранное пользователем время: ${deferredDate}`,
+                );
+                console.log(`   Отправляется на сервер: ${serverTime}`);
+                console.log(
+                    `   Московское время: ${MoscowTimeUtils.formatMoscowTime(serverTime)}`,
+                );
             }
         }
 
@@ -261,10 +285,17 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             .unwrap()
             .then((response) => {
                 if (isDeferred) {
-                    const scheduledMoscowTime = MoscowTimeUtils.formatMoscowTime(response.scheduledNews?.scheduledDate);
-                    setErrors(prev => ({
+                    // Отображаем московское время в сообщении
+                    const scheduledMoscowTime = response.scheduledNews
+                        ?.scheduledDate
+                        ? MoscowTimeUtils.formatMoscowTime(
+                              response.scheduledNews.scheduledDate,
+                          )
+                        : MoscowTimeUtils.formatMoscowTime(deferredDate);
+
+                    setErrors((prev) => ({
                         ...prev,
-                        submit: `Новость запланирована на ${scheduledMoscowTime}!`
+                        submit: `✅ Новость запланирована на ${scheduledMoscowTime} (московское время)!`,
                     }));
 
                     setTimeout(() => {
@@ -281,18 +312,20 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 console.error('Ошибка при создании новости:', error);
                 if (error.errors) {
                     const newErrors = {};
-                    error.errors.forEach(err => {
+                    error.errors.forEach((err) => {
                         newErrors[err.path] = err.msg;
                     });
-                    setErrors(prev => ({
+                    setErrors((prev) => ({
                         ...prev,
                         ...newErrors,
-                        submit: 'Пожалуйста, исправьте ошибки в форме.'
+                        submit: 'Пожалуйста, исправьте ошибки в форме.',
                     }));
                 } else {
-                    setErrors(prev => ({
+                    setErrors((prev) => ({
                         ...prev,
-                        submit: error.error || 'Произошла ошибка при сохранении новости.'
+                        submit:
+                            error.error ||
+                            'Произошла ошибка при сохранении новости.',
                     }));
                 }
             });
@@ -326,7 +359,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         setIsDeferred(checked);
         if (!checked) {
             setDeferredDate('');
-            setErrors(prev => ({ ...prev, deferredDate: '' }));
+            setErrors((prev) => ({ ...prev, deferredDate: '' }));
         }
     };
 
@@ -339,9 +372,11 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 return prev.filter((id) => id !== parseInt(value));
             }
         });
-        validateField('categories', checked
-            ? [...selectedCategoryIds, parseInt(value)]
-            : selectedCategoryIds.filter((id) => id !== parseInt(value))
+        validateField(
+            'categories',
+            checked
+                ? [...selectedCategoryIds, parseInt(value)]
+                : selectedCategoryIds.filter((id) => id !== parseInt(value)),
         );
     };
 
@@ -373,7 +408,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
     };
 
     const getMinDateTime = () => {
-        return MoscowTimeUtils.getMinMoscowDateTime();
+        return MoscowTimeUtils.getMinDateTime();
     };
 
     return (
@@ -400,11 +435,16 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 <label>Категории</label>
                 <div className={styles.checkboxGroup}>
                     {categories.map((category) => (
-                        <label key={category.id} className={styles.checkboxLabel}>
+                        <label
+                            key={category.id}
+                            className={styles.checkboxLabel}
+                        >
                             <input
                                 type="checkbox"
                                 value={category.id}
-                                checked={selectedCategoryIds.includes(category.id)}
+                                checked={selectedCategoryIds.includes(
+                                    category.id,
+                                )}
                                 onChange={handleCategoryChange}
                                 className={styles.checkboxInput}
                             />
@@ -458,23 +498,40 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                     {isDeferred && (
                         <div className={styles.deferredDateTime}>
                             <label>
-                                <FaCalendarAlt className={styles.calendarIcon} />
-                                Дата и время публикации
+                                <FaCalendarAlt
+                                    className={styles.calendarIcon}
+                                />
+                                Дата и время публикации (московское время)
                             </label>
                             <input
                                 type="datetime-local"
                                 value={deferredDate}
                                 min={getMinDateTime()}
                                 onChange={(e) =>
-                                    handleInputChange('deferredDate', e.target.value)
+                                    handleInputChange(
+                                        'deferredDate',
+                                        e.target.value,
+                                    )
                                 }
                                 className={styles.deferredInput}
                             />
                             {errors.deferredDate && (
-                                <p className={styles.error}>{errors.deferredDate}</p>
+                                <p className={styles.error}>
+                                    {errors.deferredDate}
+                                </p>
                             )}
                             <p className={styles.deferredInfo}>
-                                Новость будет автоматически опубликована в указанное время
+                                Новость будет автоматически опубликована в
+                                указанное московское время.
+                                {deferredDate && (
+                                    <span className={styles.timePreview}>
+                                        <br />
+                                        📅 Выбрано:{' '}
+                                        {MoscowTimeUtils.formatFull(
+                                            deferredDate,
+                                        )}
+                                    </span>
+                                )}
                             </p>
                         </div>
                     )}
@@ -529,7 +586,9 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 </p>
                 {errors.media && <p className={styles.error}>{errors.media}</p>}
                 {errors.submit && (
-                    <p className={`${styles.error} ${errors.submit.includes('сохранена') ? styles.success : ''}`}>
+                    <p
+                        className={`${styles.error} ${errors.submit.includes('сохранена') ? styles.success : ''}`}
+                    >
                         {errors.submit}
                     </p>
                 )}

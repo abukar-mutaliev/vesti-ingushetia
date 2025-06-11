@@ -32,21 +32,21 @@ export const EditNewsSection = ({ news, onCancel }) => {
         if (news) {
             setEditTitle(news.title || '');
             setEditContent(news.content || '');
-            setSelectedCategoryIds(
-                news.categories.map((category) => category.id),
-            );
+            setSelectedCategoryIds(news.categories.map((category) => category.id));
             setEditMedia(news.mediaFiles || []);
             const videoMedia = news.mediaFiles?.find((m) => m.type === 'video');
             setVideoUrl(videoMedia?.url || '');
 
+            // ИСПРАВЛЕНО: правильно отображаем время для редактирования
             if (news.publishDate) {
-                const localTimeForInput = MoscowTimeUtils.fromServerToLocal(
-                    news.publishDate,
-                );
+                console.log('🕐 [CLIENT] Загрузка времени для редактирования:');
+                console.log(`   Время с сервера: ${news.publishDate}`);
+
+                const localTimeForInput = MoscowTimeUtils.fromServerTime(news.publishDate);
                 setPublishDate(localTimeForInput);
-                console.log('🕐 Отображение времени публикации:');
-                console.log(`   Серверное время: ${news.publishDate}`);
-                console.log(`   Локальное для input: ${localTimeForInput}`);
+
+                console.log(`   Время для input: ${localTimeForInput}`);
+                console.log(`   Московское время: ${MoscowTimeUtils.formatMoscowTime(news.publishDate)}`);
             } else {
                 setPublishDate('');
             }
@@ -186,20 +186,21 @@ export const EditNewsSection = ({ news, onCancel }) => {
 
         if (videoUrl.trim()) formData.append('videoUrl', videoUrl.trim());
 
+        // ИСПРАВЛЕНО: правильно обрабатываем время публикации
         if (publishDate) {
-            const moscowISOString =
-                MoscowTimeUtils.toMoscowTimeForServer(publishDate);
-            formData.append('publishDate', moscowISOString);
+            console.log('🕐 [CLIENT] Сохранение времени публикации:');
+            console.log(`   Введенное время: ${publishDate}`);
+
+            const serverTime = MoscowTimeUtils.toServerTime(publishDate);
+            formData.append('publishDate', serverTime);
+
+            console.log(`   Отправляется на сервер: ${serverTime}`);
         }
 
-        formData.append(
-            'existingMedia',
-            JSON.stringify(editMedia.map((media) => media.id)),
-        );
+        formData.append('existingMedia', JSON.stringify(editMedia.map((media) => media.id)));
 
         newMedia.forEach((file) => {
-            if (file && file.type.startsWith('image'))
-                formData.append('images', file);
+            if (file && file.type.startsWith('image')) formData.append('images', file);
         });
 
         dispatch(updateNews({ id: news.id, newsData: formData }))
@@ -215,7 +216,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 if (error.errors) {
                     const newErrors = {};
                     error.errors.forEach((err) => {
-                        newErrors[err.path] = err.msg; // Запись ошибки по полю
+                        newErrors[err.path] = err.msg;
                     });
                     setErrors((prev) => ({
                         ...prev,
@@ -225,9 +226,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 } else {
                     setErrors((prev) => ({
                         ...prev,
-                        submit:
-                            error.message ||
-                            'Произошла ошибка при сохранении новости.',
+                        submit: error.message || 'Произошла ошибка при сохранении новости.',
                     }));
                 }
             });
@@ -333,7 +332,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                     <p className={styles.error}>{errors.videoUrl}</p>
                 )}
 
-                <label>Дата публикации (опционально)</label>
+                <label>Дата публикации (московское время, опционально)</label>
                 <input
                     type="datetime-local"
                     value={publishDate}
@@ -341,6 +340,11 @@ export const EditNewsSection = ({ news, onCancel }) => {
                         handleInputChange('publishDate', e.target.value)
                     }
                 />
+                {publishDate && (
+                    <p className={styles.timePreview}>
+                        📅 Выбрано: {MoscowTimeUtils.formatFull(publishDate)}
+                    </p>
+                )}
 
                 <label>Изображения</label>
                 {editMedia.length > 0 ? (

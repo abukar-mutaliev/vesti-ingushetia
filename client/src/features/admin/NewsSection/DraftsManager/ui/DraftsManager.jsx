@@ -7,6 +7,7 @@ import { truncateHtmlByChars } from '@shared/lib/TruncateHtml/truncateHtml.js';
 import { FaClock, FaTrash, FaEye, FaPlay } from 'react-icons/fa6';
 import { FaEdit, FaCalendarAlt } from 'react-icons/fa';
 import styles from './DraftsManager.module.scss';
+import {formatMoscowTime} from "@shared/lib/TimeUtils/timeUtils.js";
 
 export const DraftsManager = ({ onEditDraft }) => {
     const dispatch = useDispatch();
@@ -159,7 +160,7 @@ export const DraftsManager = ({ onEditDraft }) => {
     };
 
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleString('ru-RU', {
+        return formatMoscowTime(dateString, {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -167,6 +168,7 @@ export const DraftsManager = ({ onEditDraft }) => {
             minute: '2-digit'
         });
     };
+
 
     const getStatusColor = (status) => {
         switch (status) {

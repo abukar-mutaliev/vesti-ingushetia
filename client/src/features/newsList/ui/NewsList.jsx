@@ -18,6 +18,7 @@ import { NewsCard } from '@widgets/NewsCard';
 import ReactPaginate from 'react-paginate';
 import styles from './NewsList.module.scss';
 import { Loader } from '@shared/ui/Loader/index.js';
+import {formatMoscowTime} from "@shared/lib/TimeUtils/timeUtils.js";
 
 export const NewsList = React.memo(
     ({ newsList, selectedDate, onlyWithVideos = false, excludeLastNews = true }) => {
@@ -94,14 +95,12 @@ export const NewsList = React.memo(
 
         const formatDate = useCallback((dateString) => {
             if (!dateString) return 'ВСЕ НОВОСТИ';
-            const date = new Date(dateString);
-            return `НОВОСТИ ЗА ${date
-            .toLocaleDateString('ru-RU', {
+
+            return `НОВОСТИ ЗА ${formatMoscowTime(dateString, {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric',
-            })
-            .toUpperCase()}`;
+            }).toUpperCase()}`;
         }, []);
 
         const displayNewsList = getPaginatedNewsList();

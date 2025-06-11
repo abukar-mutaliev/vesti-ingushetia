@@ -14,6 +14,7 @@ import styles from './NewsDetail.module.scss';
 import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
 import { Helmet } from 'react-helmet-async';
 import defaultOgImage from '@assets/default.jpg';
+import {formatMoscowTime} from "@shared/lib/TimeUtils/timeUtils.js";
 
 export const NewsDetail = memo(
     ({ news, loading, newsId, userId, authorName }) => {
@@ -100,10 +101,10 @@ export const NewsDetail = memo(
         }, [news?.publishDate, news?.createdAt]);
 
         const formattedDate = useMemo(() => {
-            return displayDate.toLocaleDateString('ru-RU', {
+            return formatMoscowTime(displayDate, {
                 day: 'numeric',
                 month: 'long',
-                year: 'numeric',
+                year: 'numeric'
             });
         }, [displayDate]);
 
