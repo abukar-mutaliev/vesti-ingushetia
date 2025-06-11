@@ -1,3 +1,5 @@
+// src/shared/lib/timeUtils.js
+
 export class MoscowTimeUtils {
     static MOSCOW_TIMEZONE = 'Europe/Moscow';
     static MOSCOW_OFFSET_HOURS = 3; // UTC+3
@@ -37,7 +39,6 @@ export class MoscowTimeUtils {
 
         return isoString;
     }
-
 
     /**
      * Преобразует UTC время с сервера в локальное время для input datetime-local
@@ -229,5 +230,8 @@ export class MoscowTimeUtils {
     }
 }
 
-// Экспорт по умолчанию для удобства
 export default MoscowTimeUtils;
+
+export const formatMoscowTime = MoscowTimeUtils.formatMoscowTime.bind(MoscowTimeUtils);
+export const toServerTime = MoscowTimeUtils.toServerTime.bind(MoscowTimeUtils);
+export const fromServerTime = MoscowTimeUtils.fromServerTime.bind(MoscowTimeUtils);
