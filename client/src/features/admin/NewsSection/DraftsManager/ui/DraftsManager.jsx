@@ -272,7 +272,6 @@ export const DraftsManager = ({ onEditDraft }) => {
                                 >
                                     {item.status === 'scheduled' ? <FaClock /> : <FaEdit />}
                                     {getStatusText(item.status)}
-                                    {item.isServerNews && ' (Сервер)'}
                                 </span>
                                 {item.error && (
                                     <span className={styles.error}>Ошибка публикации</span>

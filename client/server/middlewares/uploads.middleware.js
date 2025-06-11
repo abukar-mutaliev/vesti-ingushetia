@@ -172,12 +172,14 @@ const advancedFileFilter = (req, file, cb) => {
     }
 };
 
+
 /**
- * Middleware для дополнительной проверки после загрузки
+ * Middleware для дополнительной проверки после загрузки (исправленная версия)
  */
 const postUploadValidation = async (req, res, next) => {
     try {
         if (!req.files && !req.file) {
+            console.log('📝 Нет файлов для валидации, пропускаем');
             return next();
         }
 
@@ -195,93 +197,94 @@ const postUploadValidation = async (req, res, next) => {
             files.push(req.file);
         }
 
+        console.log(`🔍 Валидация ${files.length} файлов`);
+
         for (const file of files) {
             try {
-                // Читаем первые байты файла для проверки сигнатуры
+                if (!fs.existsSync(file.path)) {
+                    console.error(`❌ Файл не найден: ${file.path}`);
+                    return res.status(400).json({
+                        error: `Файл ${file.originalname} не был загружен корректно`
+                    });
+                }
+
                 const buffer = fs.readFileSync(file.path);
 
-                // 1. Проверка магических байтов
                 if (!validateFileSignature(buffer, file.mimetype)) {
+                    console.error(`❌ Неверная сигнатура файла: ${file.originalname}`);
                     fs.unlinkSync(file.path);
                     return res.status(400).json({
                         error: `Файл ${file.originalname} не соответствует заявленному типу`
                     });
                 }
 
-                // 2. Сканирование содержимого на вредоносный код
                 if (!scanFileContent(buffer, file.originalname)) {
+                    console.error(`❌ Обнаружен вредоносный код в файле: ${file.originalname}`);
                     fs.unlinkSync(file.path);
                     return res.status(400).json({
                         error: `Файл ${file.originalname} содержит потенциально опасный код`
                     });
                 }
 
-                // 3. Дополнительная проверка размера (файл уже загружен)
                 const stats = fs.statSync(file.path);
                 const maxSize = file.fieldname === 'avatar' ? maxAvatarSize : maxImageSize;
 
                 if (stats.size > maxSize) {
+                    console.error(`❌ Файл слишком большой: ${file.originalname} (${stats.size} bytes)`);
                     fs.unlinkSync(file.path);
                     return res.status(400).json({
                         error: `Файл слишком большой: ${Math.round(stats.size / 1024 / 1024)}MB. Максимум: ${Math.round(maxSize / 1024 / 1024)}MB`
                     });
                 }
 
-                console.log(`[SECURITY] Файл успешно проверен: ${file.originalname}`, {
+                console.log(`✅ Файл прошел валидацию: ${file.originalname}`, {
                     fieldname: file.fieldname,
                     mimetype: file.mimetype,
                     size: stats.size,
-                    userId: req.user?.id,
-                    timestamp: new Date().toISOString()
+                    path: file.path
                 });
 
             } catch (error) {
-                console.error(`[SECURITY] Ошибка при проверке файла ${file.originalname}:`, error);
+                console.error(`❌ Ошибка при проверке файла ${file.originalname}:`, error);
 
-                // Удаляем файл при ошибке
                 if (fs.existsSync(file.path)) {
-                    fs.unlinkSync(file.path);
+                    try {
+                        fs.unlinkSync(file.path);
+                        console.log(`🗑️ Удален поврежденный файл: ${file.path}`);
+                    } catch (unlinkError) {
+                        console.error(`❌ Ошибка удаления файла: ${unlinkError.message}`);
+                    }
                 }
 
                 return res.status(400).json({
-                    error: `Ошибка при обработке файла ${file.originalname}`
+                    error: `Ошибка при обработке файла ${file.originalname}: ${error.message}`
                 });
             }
         }
 
+        console.log(`✅ Все файлы прошли валидацию`);
         next();
     } catch (error) {
-        console.error('[SECURITY] Ошибка в postUploadValidation:', error);
+        console.error('❌ Критическая ошибка в postUploadValidation:', error);
         return res.status(500).json({ error: 'Ошибка обработки файлов' });
     }
 };
 
-const uploadsMiddleware = multer({
-    storage,
-    limits: {
-        fileSize: maxImageSize,
-        files: 10, // максимум 10 файлов за раз
-        fields: 10, // максимум 10 полей
-        parts: 20  // максимум 20 частей
-    },
-    fileFilter: advancedFileFilter,
-}).fields([
-    { name: 'images', maxCount: 5 }, // уменьшено с 10 до 5
-    { name: 'avatar', maxCount: 1 },
-]);
-
 /**
- * Обработчик ошибок Multer с дополнительным логированием
+ * Обработчик ошибок Multer с улучшенным логированием
  */
 const handleMulterErrors = (err, req, res, next) => {
     if (err instanceof multer.MulterError) {
-        console.error('[SECURITY] Ошибка Multer:', {
+        console.error('❌ Ошибка Multer:', {
             error: err.message,
             code: err.code,
             field: err.field,
             userId: req.user?.id,
             ip: req.ip,
-            timestamp: new Date().toISOString()
+            userAgent: req.get('User-Agent'),
+            timestamp: new Date().toISOString(),
+            requestPath: req.path,
+            requestMethod: req.method
         });
 
         const errorMessages = {
@@ -295,40 +298,100 @@ const handleMulterErrors = (err, req, res, next) => {
         };
 
         const message = errorMessages[err.code] || `Ошибка загрузки: ${err.message}`;
-        return res.status(400).json({ error: message });
-
-    } else if (err) {
-        console.error('[SECURITY] Ошибка загрузки файлов:', {
-            error: err.message,
-            userId: req.user?.id,
-            ip: req.ip,
-            timestamp: new Date().toISOString()
+        return res.status(400).json({
+            error: message,
+            code: err.code
         });
 
-        return res.status(400).json({ error: err.message });
+    } else if (err) {
+        console.error('❌ Ошибка загрузки файлов:', {
+            error: err.message,
+            stack: err.stack,
+            userId: req.user?.id,
+            ip: req.ip,
+            timestamp: new Date().toISOString(),
+            requestPath: req.path,
+            requestMethod: req.method
+        });
+
+        return res.status(400).json({
+            error: err.message || 'Ошибка загрузки файлов'
+        });
     }
 
     next();
 };
 
 /**
- * Middleware для логирования всех попыток загрузки
+ * Middleware для детального логирования попыток загрузки
  */
 const logUploadAttempts = (req, res, next) => {
-    if (req.files || req.file) {
-        console.log('[SECURITY] Попытка загрузки файлов:', {
+    const hasFiles = !!(req.files || req.file);
+
+    if (hasFiles) {
+        let fileInfo = {};
+
+        if (req.files) {
+            Object.keys(req.files).forEach(fieldname => {
+                const files = req.files[fieldname];
+                fileInfo[fieldname] = Array.isArray(files)
+                    ? files.map(f => ({ name: f.originalname, size: f.size, type: f.mimetype }))
+                    : [{ name: files.originalname, size: files.size, type: files.mimetype }];
+            });
+        }
+
+        if (req.file) {
+            fileInfo.single = {
+                name: req.file.originalname,
+                size: req.file.size,
+                type: req.file.mimetype
+            };
+        }
+
+        console.log('📤 Попытка загрузки файлов:', {
             userId: req.user?.id || 'anonymous',
             ip: req.ip,
             userAgent: req.get('User-Agent'),
             endpoint: req.path,
+            method: req.method,
+            files: fileInfo,
             timestamp: new Date().toISOString()
         });
     }
+
     next();
+};
+
+const uploadsMiddleware = multer({
+    storage,
+    limits: {
+        fileSize: maxImageSize,
+        files: 10,
+        fields: 10,
+        parts: 20
+    },
+    fileFilter: advancedFileFilter,
+}).fields([
+    { name: 'images', maxCount: 5 },
+    { name: 'avatar', maxCount: 1 },
+]);
+
+const uploadWithValidation = (req, res, next) => {
+    logUploadAttempts(req, res, () => {
+
+        uploadsMiddleware(req, res, (uploadErr) => {
+            if (uploadErr) {
+                return handleMulterErrors(uploadErr, req, res, next);
+            }
+
+            postUploadValidation(req, res, next);
+        });
+    });
 };
 
 module.exports = {
     upload: uploadsMiddleware,
+    uploadWithValidation,
     handleMulterErrors,
     postUploadValidation,
     logUploadAttempts,
