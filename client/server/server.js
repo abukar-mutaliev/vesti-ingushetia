@@ -1,13 +1,6 @@
 require('dotenv').config();
 
-// КРИТИЧЕСКИ ВАЖНО: Устанавливаем временную зону в самом начале
 process.env.TZ = 'Europe/Moscow';
-
-// Логируем временную зону при запуске
-console.log(`🌍 Системная временная зона установлена: ${process.env.TZ}`);
-console.log(`🕐 Серверное время UTC: ${new Date().toISOString()}`);
-console.log(`🕐 Московское время: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`);
-console.log(`📊 Смещение временной зоны: ${new Date().getTimezoneOffset()} минут от UTC`);
 
 const helmet = require('helmet');
 const http = require('https');
@@ -44,6 +37,7 @@ const audioDir = path.join(uploadDir, 'audio');
 const avatarDir = path.join(uploadDir, 'avatars');
 const publicDir = path.join(__dirname, '../public');
 
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -56,7 +50,6 @@ const isBot = (req) => {
         userAgent.includes('googlebot');
 };
 
-// Middleware для логирования времени запросов
 app.use((req, res, next) => {
     const moscowTime = new Date().toLocaleString('ru-RU', {
         timeZone: 'Europe/Moscow',
@@ -68,8 +61,15 @@ app.use((req, res, next) => {
         second: '2-digit'
     });
 
-    // Логируем только важные запросы, не статику
-    if (!req.url.includes('/uploads/') && !req.url.includes('.js') && !req.url.includes('.css')) {
+    if (!req.url.includes('/uploads/') &&
+        !req.url.includes('.js') &&
+        !req.url.includes('.css') &&
+        !req.url.includes('.png') &&
+        !req.url.includes('.jpg') &&
+        !req.url.includes('.jpeg') &&
+        !req.url.includes('.gif') &&
+        !req.url.includes('.webp') &&
+        !req.url.includes('/favicon.ico')) {
         logger.info(`[${moscowTime}] ${req.method} ${req.url}`);
     }
     next();
@@ -80,7 +80,6 @@ app.use(cookieParser());
 
 const corsOptions = {
     origin: function (origin, callback) {
-        // В development режиме разрешаем localhost
         if (process.env.NODE_ENV === 'development') {
             const allowedDev = [
                 'https://localhost:5173',
@@ -160,11 +159,11 @@ app.use(
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: process.env.NODE_ENV === 'development' ? 10000000 : 100, // В разработке больше лимит
+    max: process.env.NODE_ENV === 'development' ? 10000000 : 100,
     message: 'Слишком много запросов с этого IP, попробуйте позже.',
     handler: (req, res, next) => {
         const moscowTime = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
-        logger.warn(`🚫 [${moscowTime}] Rate limit exceeded for IP: ${req.ip}`);
+        logger.warn(`🚫 [${moscowTime}] Rate limit exceeded for IP: ${req.ip} - URL: ${req.url}`);
         res.status(429).json({
             status: 'error',
             message: 'Слишком много запросов. Пожалуйста, попробуйте позже.',
@@ -172,9 +171,20 @@ const limiter = rateLimit({
         });
     },
     skip: (req, res) => {
-        return isBot(req) || req.path === '/api/users/csrf-token' ||
-            req.path.includes('/rss') || req.path === '/robots.txt' ||
-            req.path === '/sitemap.xml';
+        return isBot(req) ||
+            req.path === '/api/users/csrf-token' ||
+            req.path.includes('/rss') ||
+            req.path === '/robots.txt' ||
+            req.path === '/sitemap.xml' ||
+            req.path.startsWith('/uploads/') ||
+            req.path.includes('.js') ||
+            req.path.includes('.css') ||
+            req.path.includes('.png') ||
+            req.path.includes('.jpg') ||
+            req.path.includes('.jpeg') ||
+            req.path.includes('.gif') ||
+            req.path.includes('.webp') ||
+            req.path.includes('/favicon.ico');
     },
 });
 app.use(limiter);
@@ -186,9 +196,137 @@ app.use('/rss', (req, res) => {
 
 app.use(express.static(publicDir));
 
+const logStaticFileRequests = (req, res, next) => {
+    if (req.url.startsWith('/uploads/')) {
+
+        const requestedFile = path.join(__dirname, '../..', req.url);
+
+        if (!fs.existsSync(requestedFile)) {
+            const alternatives = [
+                path.join(uploadDir, req.url.replace('/uploads/', '')),
+                path.join(__dirname, '../uploads', req.url.replace('/uploads/', '')),
+                path.join(__dirname, '../../uploads', req.url.replace('/uploads/', '')),
+            ];
+
+            alternatives.forEach((alt, i) => {
+                const exists = fs.existsSync(alt);
+
+                if (exists && !res.headersSent) {
+                    console.log(`   🔄 Перенаправляем к найденному файлу: ${alt}`);
+                    return res.sendFile(alt);
+                }
+            });
+        }
+    }
+    next();
+};
+
+app.use(logStaticFileRequests);
+
+// НАСТРОЙКА СТАТИЧЕСКИХ ФАЙЛОВ
+app.use('/uploads/images', express.static(imagesDir, {
+    setHeaders: (res, filePath, stat) => {
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 часа
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    },
+}));
+
+app.use('/uploads/videoAd', express.static(videoAdDir, {
+    setHeaders: (res, filePath, stat) => {
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+    },
+}));
+
+app.use('/uploads/audio', express.static(audioDir, {
+    setHeaders: (res, filePath, stat) => {
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+    },
+}));
+
+app.use('/uploads/avatars', express.static(avatarDir, {
+    setHeaders: (res, filePath, stat) => {
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+    },
+}));
+
+app.use('/uploads', express.static(uploadDir, {
+    setHeaders: (res, filePath, stat) => {
+        console.log(`📂 [Static Uploads] Отдаем файл: ${filePath}`);
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    },
+}));
+
+app.get('/api/check-file/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(imagesDir, filename);
+
+    console.log(`🔍 Проверка файла: ${filename}`);
+    console.log(`   Полный путь: ${filePath}`);
+    console.log(`   Существует: ${fs.existsSync(filePath)}`);
+
+    if (fs.existsSync(filePath)) {
+        const stats = fs.statSync(filePath);
+        res.json({
+            exists: true,
+            size: stats.size,
+            modified: stats.mtime,
+            path: filePath,
+            url: `/uploads/images/${filename}`,
+            fullUrl: `${req.protocol}://${req.get('host')}/uploads/images/${filename}`
+        });
+    } else {
+        res.status(404).json({
+            exists: false,
+            path: filePath,
+            message: 'Файл не найден'
+        });
+    }
+});
+
+app.get('/api/list-uploads', (req, res) => {
+    try {
+        if (!fs.existsSync(imagesDir)) {
+            return res.json({
+                error: 'Папка uploads/images не существует',
+                directory: imagesDir
+            });
+        }
+
+        const files = fs.readdirSync(imagesDir);
+        const fileDetails = files.map(filename => {
+            const filePath = path.join(imagesDir, filename);
+            const stats = fs.statSync(filePath);
+            return {
+                filename,
+                size: stats.size,
+                modified: stats.mtime,
+                url: `/uploads/images/${filename}`,
+                fullUrl: `${req.protocol}://${req.get('host')}/uploads/images/${filename}`
+            };
+        }).slice(0, 50);
+
+        res.json({
+            directory: imagesDir,
+            totalFiles: files.length,
+            files: fileDetails
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: error.message,
+            directory: imagesDir
+        });
+    }
+});
+
 app.use((req, res, next) => {
     if (isBot(req) || req.path.includes('/rss') || req.path === '/robots.txt' ||
-        req.path === '/sitemap.xml') {
+        req.path === '/sitemap.xml' || req.path.startsWith('/uploads/')) {
         return next();
     }
 
@@ -285,7 +423,6 @@ app.get('/sitemap.xml', async (req, res) => {
     }
 });
 
-// Добавим эндпоинт для проверки времени сервера
 app.get('/api/server-time', (req, res) => {
     const now = new Date();
     res.json({
@@ -308,39 +445,6 @@ app.use('../uploads', (req, res, next) => {
     return res.status(400).send('Invalid path');
 });
 
-app.use(
-    '/uploads/images',
-    express.static(imagesDir, {
-        setHeaders: (res, path, stat) => {
-            res.setHeader('Cache-Control', 'no-store');
-        },
-    }),
-);
-app.use(
-    '/uploads/videoAd',
-    express.static(videoAdDir, {
-        setHeaders: (res, path, stat) => {
-            res.setHeader('Cache-Control', 'no-store');
-        },
-    }),
-);
-app.use(
-    '/uploads/audio',
-    express.static(audioDir, {
-        setHeaders: (res, path, stat) => {
-            res.setHeader('Cache-Control', 'no-store');
-        },
-    }),
-);
-app.use(
-    '/uploads/avatars',
-    express.static(avatarDir, {
-        setHeaders: (res, path, stat) => {
-            res.setHeader('Cache-Control', 'no-store');
-        },
-    }),
-);
-
 app.use((req, res, next) => {
     if (res.headersSent) {
         return;
@@ -355,7 +459,7 @@ app.use(express.static(distDir));
 
 app.use((err, req, res, next) => {
     if (err.code === 'EBADCSRFTOKEN') {
-        if (isBot(req) || req.path.includes('/rss')) {
+        if (isBot(req) || req.path.includes('/rss') || req.path.startsWith('/uploads/')) {
             return next();
         }
 
@@ -404,13 +508,6 @@ sequelize
             logger.info(`🌐 Базовый URL: ${process.env.BASE_URL}`);
             logger.info(`🔗 CORS разрешен для: ${allowedOrigins.join(', ')}`);
             logger.info(`📊 Режим: ${process.env.NODE_ENV}`);
-
-            // Проверяем настройки временной зоны
-            console.log('\n⏰ Проверка временных зон:');
-            console.log(`   UTC время: ${new Date().toISOString()}`);
-            console.log(`   Московское время: ${moscowTime}`);
-            console.log(`   Временная зона процесса: ${process.env.TZ}`);
-            console.log(`   Смещение: ${new Date().getTimezoneOffset()} минут от UTC\n`);
         });
     })
     .catch((err) => {

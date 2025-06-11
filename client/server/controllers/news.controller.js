@@ -20,53 +20,81 @@ const SAFE_USER_ATTRIBUTES = ['id', 'username', 'avatarUrl', 'createdAt'];
 
 const ADMIN_USER_ATTRIBUTES = ['id', 'username', 'email', 'avatarUrl', 'isAdmin', 'createdAt'];
 
+// 3. Исправленная функция formatMediaUrls в newsController.js
+
 const formatMediaUrls = (newsItems) => {
     return newsItems.map((item) => {
         const newsObj = item.toJSON();
 
         if (newsObj.mediaFiles) {
-            // Временное логгирование для отладки
-            if (newsObj.title && newsObj.title.includes('ТЕСТОВАЯ')) {
-                logger.info(`🐛 Отладка медиа файлов для "${newsObj.title}" (ID: ${newsObj.id}):`);
-                newsObj.mediaFiles.forEach((media, index) => {
-                    logger.info(`   ${index + 1}. Media ID: ${media.id}, Type: ${media.type}, URL: ${media.url}`);
-                });
-            }
+            console.log(`🔍 [formatMediaUrls] Обработка медиафайлов для новости "${newsObj.title}" (ID: ${newsObj.id}):`);
 
             newsObj.mediaFiles = newsObj.mediaFiles.map((media) => {
                 const mediaObj = { ...media };
+
+                console.log(`   📁 Исходный URL: ${mediaObj.url}`);
+
+                // Если это уже полный URL (http/https), оставляем как есть
                 if (/^https?:\/\//i.test(mediaObj.url)) {
-                    mediaObj.url = mediaObj.url;
-                } else {
-                    mediaObj.url = mediaObj.url.startsWith(baseUrl)
-                        ? mediaObj.url
-                        : `${baseUrl}/${mediaObj.url}`;
+                    console.log(`   ✅ Полный URL оставлен: ${mediaObj.url}`);
+                    return mediaObj;
                 }
+
+                // Если URL уже содержит базовый домен, оставляем как есть
+                if (mediaObj.url.includes(baseUrl)) {
+                    console.log(`   ✅ URL с baseUrl оставлен: ${mediaObj.url}`);
+                    return mediaObj;
+                }
+
+                // Формируем полный URL
+                let fullUrl;
+                if (mediaObj.url.startsWith('uploads/')) {
+                    // URL уже в правильном формате uploads/images/filename
+                    fullUrl = `${baseUrl}/${mediaObj.url}`;
+                } else if (mediaObj.url.startsWith('/uploads/')) {
+                    // URL начинается со слеша
+                    fullUrl = `${baseUrl}${mediaObj.url}`;
+                } else {
+                    // Предполагаем что это просто имя файла
+                    fullUrl = `${baseUrl}/uploads/images/${mediaObj.url}`;
+                }
+
+                mediaObj.url = fullUrl;
+                console.log(`   🔧 Преобразован в: ${mediaObj.url}`);
+
                 return mediaObj;
             });
 
-            // Логируем финальные URL
-            if (newsObj.title && newsObj.title.includes('ТЕСТОВАЯ')) {
-                logger.info(`🐛 Финальные URL после обработки:`);
-                newsObj.mediaFiles.forEach((media, index) => {
-                    logger.info(`   ${index + 1}. Финальный URL: ${media.url}`);
-                });
-            }
+            console.log(`   ✅ Финальные URL для новости "${newsObj.title}":`);
+            newsObj.mediaFiles.forEach((media, index) => {
+                console.log(`      ${index + 1}. ${media.type}: ${media.url}`);
+            });
         }
 
+        // Обрабатываем аватар автора
         if (newsObj.authorDetails && newsObj.authorDetails.avatarUrl) {
-            if (/^https?:\/\//i.test(newsObj.authorDetails.avatarUrl)) {
-                newsObj.authorDetails.avatarUrl = newsObj.authorDetails.avatarUrl;
+            const originalAvatarUrl = newsObj.authorDetails.avatarUrl;
+
+            if (/^https?:\/\//i.test(originalAvatarUrl)) {
+                // Уже полный URL
+                newsObj.authorDetails.avatarUrl = originalAvatarUrl;
+            } else if (originalAvatarUrl.includes(baseUrl)) {
+                // Уже содержит baseUrl
+                newsObj.authorDetails.avatarUrl = originalAvatarUrl;
             } else {
-                newsObj.authorDetails.avatarUrl = newsObj.authorDetails.avatarUrl.startsWith(baseUrl)
-                    ? newsObj.authorDetails.avatarUrl
-                    : `${baseUrl}/${newsObj.authorDetails.avatarUrl}`;
+                // Формируем полный URL для аватара
+                if (originalAvatarUrl.startsWith('/')) {
+                    newsObj.authorDetails.avatarUrl = `${baseUrl}${originalAvatarUrl}`;
+                } else {
+                    newsObj.authorDetails.avatarUrl = `${baseUrl}/${originalAvatarUrl}`;
+                }
             }
         }
 
         return newsObj;
     });
 };
+
 
 exports.getAllNews = async (req, res) => {
     try {
