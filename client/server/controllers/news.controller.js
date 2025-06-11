@@ -12,6 +12,7 @@ const fs = require('fs');
 const baseUrl = process.env.BASE_URL;
 const newsScheduler = require('../schedulers/newsScheduler');
 const logger = require('../logger');
+const MoscowTimeUtils = require('../utils/moscowTimeUtils');
 
 const path = require('path');
 
@@ -312,40 +313,51 @@ exports.createNews = async (req, res) => {
             let scheduledDate;
 
             if (typeof publishDate === 'string') {
-                if (!publishDate.includes('Z') && !publishDate.includes('+') && !publishDate.includes('T')) {
-                    scheduledDate = new Date(publishDate + ':00'); // Добавляем секунды
-                } else if (!publishDate.includes('Z') && publishDate.includes('T')) {
-                    scheduledDate = new Date(publishDate + ':00+03:00'); // Добавляем московскую зону
-                } else {
-                    scheduledDate = new Date(publishDate);
-                }
+                scheduledDate = new Date(publishDate);
             } else {
                 scheduledDate = new Date(publishDate);
             }
 
-            const now = new Date();
-
-            console.log('🕐 Анализ времени планирования:', {
-                raw: publishDate,
-                parsed: scheduledDate.toISOString(),
-                moscowTime: scheduledDate.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
-                now: now.toISOString(),
-                nowMoscow: now.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
-                isValid: !isNaN(scheduledDate.getTime()),
-                isFuture: scheduledDate > now
-            });
-
+            // Проверяем валидность даты
             if (isNaN(scheduledDate.getTime())) {
-                throw new Error('Неверный формат даты');
+                return res.status(400).json({
+                    errors: [{
+                        type: "field",
+                        msg: "Неверный формат даты",
+                        path: "publishDate",
+                        location: "body"
+                    }]
+                });
             }
 
-            const minFutureTime = new Date(now.getTime() + 60 * 1000);
+            const now = new Date();
+
+            console.log('🕐 Анализ времени планирования:');
+            console.log(`   Получено от клиента: ${publishDate}`);
+            console.log(`   Парсится как: ${scheduledDate.toISOString()}`);
+            console.log(`   Московское время: ${scheduledDate.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`);
+            console.log(`   Текущее время UTC: ${now.toISOString()}`);
+            console.log(`   Текущее московское: ${now.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`);
+
+            const minFutureTime = new Date(now.getTime() + 60 * 1000); // +1 минута от текущего UTC
+
             if (scheduledDate <= minFutureTime) {
+                console.log('❌ Дата в прошлом или слишком близко к настоящему');
+                console.log(`   Минимальное время: ${minFutureTime.toISOString()}`);
+                console.log(`   Полученное время: ${scheduledDate.toISOString()}`);
+
                 return res.status(400).json({
-                    error: 'Дата публикации должна быть как минимум на 1 минуту в будущем',
+                    errors: [{
+                        type: "field",
+                        value: publishDate,
+                        msg: "Дата отложенной публикации должна быть в будущем",
+                        path: "publishDate",
+                        location: "body"
+                    }],
                     details: {
                         received: scheduledDate.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
-                        required: minFutureTime.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })
+                        required: minFutureTime.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
+                        serverTime: now.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })
                     }
                 });
             }
@@ -355,7 +367,7 @@ exports.createNews = async (req, res) => {
                 content,
                 categoryIds: JSON.parse(categoryIds || '[]'),
                 videoUrl,
-                publishDate: scheduledDate, // Передаем корректную дату
+                publishDate: scheduledDate,
                 mediaFiles: mediaFiles && mediaFiles.images ?
                     mediaFiles.images.map(file => ({
                         ...file,
@@ -389,7 +401,12 @@ exports.createNews = async (req, res) => {
         } catch (error) {
             logger.error('❌ Ошибка создания отложенной новости:', error);
             return res.status(400).json({
-                error: `Ошибка создания отложенной новости: ${error.message}`
+                errors: [{
+                    type: "field",
+                    msg: `Ошибка создания отложенной новости: ${error.message}`,
+                    path: "publishDate",
+                    location: "body"
+                }]
             });
         }
     }
@@ -405,17 +422,7 @@ exports.createNews = async (req, res) => {
         };
 
         if (publishDate && !scheduleForLater) {
-            let finalDate;
-            if (typeof publishDate === 'string') {
-                if (!publishDate.includes('Z') && publishDate.includes('T')) {
-                    finalDate = new Date(publishDate + ':00+03:00');
-                } else {
-                    finalDate = new Date(publishDate);
-                }
-            } else {
-                finalDate = new Date(publishDate);
-            }
-
+            const finalDate = new Date(publishDate);
             if (!isNaN(finalDate.getTime())) {
                 newsData.publishDate = finalDate;
             } else {

@@ -241,7 +241,7 @@ class NewsScheduler {
         }
     }
 
-    // Исправленный метод scheduleNews в newsScheduler.js
+
 
     async scheduleNews(newsData, scheduledDate, authorId) {
         try {
@@ -318,16 +318,27 @@ class NewsScheduler {
 
             processedNewsData.authorId = authorId;
 
-            // ИСПРАВЛЕНИЕ: Убеждаемся что дата корректная
             const finalScheduledDate = new Date(scheduledDate);
             if (isNaN(finalScheduledDate.getTime())) {
                 throw new Error('Некорректная дата планирования');
             }
 
-            // Создаем запись в БД с корректной датой
+            const now = new Date();
+            const minAllowedTime = new Date(now.getTime() + 30 * 1000); // +30 секунд буфер
+
+            if (finalScheduledDate <= minAllowedTime) {
+                console.log('❌ Дата планирования в прошлом:');
+                console.log(`   Планируемое время: ${finalScheduledDate.toISOString()}`);
+                console.log(`   Текущее время: ${now.toISOString()}`);
+                console.log(`   Минимально допустимое: ${minAllowedTime.toISOString()}`);
+
+                throw new Error('Дата планирования должна быть в будущем');
+            }
+
+            // Создаем запись в БД
             const scheduled = await ScheduledNews.create({
                 title: newsData.title,
-                scheduledDate: finalScheduledDate, // Используем Date объект напрямую
+                scheduledDate: finalScheduledDate,
                 newsData: JSON.stringify(processedNewsData),
                 authorId: authorId,
                 status: 'scheduled'
@@ -338,7 +349,8 @@ class NewsScheduler {
                 title: newsData.title,
                 scheduledDateUTC: finalScheduledDate.toISOString(),
                 scheduledDateMoscow: finalScheduledDate.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
-                authorId
+                authorId,
+                timeUntilPublication: Math.round((finalScheduledDate.getTime() - now.getTime()) / 1000 / 60) // минут до публикации
             });
 
             return scheduled;

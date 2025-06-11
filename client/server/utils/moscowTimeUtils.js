@@ -1,196 +1,113 @@
 
-export class MoscowTimeUtils {
+class MoscowTimeUtils {
     static MOSCOW_TIMEZONE = 'Europe/Moscow';
     static MOSCOW_OFFSET_HOURS = 3; // UTC+3
 
     /**
-     * ИСПРАВЛЕНО: Преобразует datetime-local в правильное время для сервера
-     * @param {string} localDateTime - строка из input datetime-local
-     * @returns {string} ISO строка для сервера
+     * Получить текущее время
      */
-    static toServerTime(localDateTime) {
-        if (!localDateTime) return null;
-
-        console.log('🕐 [CLIENT] Конвертация времени для сервера:');
-        console.log(`   Введенное время: ${localDateTime}`);
-
-        try {
-            let normalizedDateTime = localDateTime;
-            if (localDateTime.includes('T') && !localDateTime.includes(':00', localDateTime.lastIndexOf(':'))) {
-                if (localDateTime.split('T')[1].split(':').length === 2) {
-                    normalizedDateTime += ':00';
-                }
-            }
-
-            const moscowTime = new Date(normalizedDateTime + '+03:00');
-
-            if (isNaN(moscowTime.getTime())) {
-                throw new Error('Неверный формат времени');
-            }
-
-            const utcTime = moscowTime.toISOString();
-
-            console.log(`   Московское время: ${this.formatMoscowTime(moscowTime)}`);
-            console.log(`   UTC для сервера: ${utcTime}`);
-
-            return utcTime;
-        } catch (error) {
-            console.error('Ошибка конвертации времени:', error);
-            return null;
-        }
+    static now() {
+        return new Date();
     }
 
     /**
-     * ИСПРАВЛЕНО: Преобразует UTC время с сервера для datetime-local input
-     * @param {string} serverDateTime - UTC время с сервера
-     * @returns {string} строка для input datetime-local
+     * Получить текущее московское время в виде строки
      */
-    static fromServerTime(serverDateTime) {
-        if (!serverDateTime) return '';
-
-        console.log('🕐 [CLIENT] Конвертация времени с сервера:');
-        console.log(`   UTC с сервера: ${serverDateTime}`);
-
-        try {
-            const utcDate = new Date(serverDateTime);
-
-            if (isNaN(utcDate.getTime())) {
-                throw new Error('Неверный формат даты с сервера');
-            }
-
-            const moscowTime = new Date(utcDate.toLocaleString("en-US", {timeZone: this.MOSCOW_TIMEZONE}));
-
-            const year = moscowTime.getFullYear();
-            const month = String(moscowTime.getMonth() + 1).padStart(2, '0');
-            const day = String(moscowTime.getDate()).padStart(2, '0');
-            const hours = String(moscowTime.getHours()).padStart(2, '0');
-            const minutes = String(moscowTime.getMinutes()).padStart(2, '0');
-
-            const localString = `${year}-${month}-${day}T${hours}:${minutes}`;
-
-            console.log(`   Московское время: ${this.formatMoscowTime(utcDate)}`);
-            console.log(`   Для input: ${localString}`);
-
-            return localString;
-        } catch (error) {
-            console.error('Ошибка конвертации времени с сервера:', error);
-            return '';
-        }
+    static nowMoscow() {
+        return new Date().toLocaleString('ru-RU', {
+            timeZone: this.MOSCOW_TIMEZONE,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
     }
 
     /**
-     * Форматирует дату для отображения в московском времени
-     * @param {string|Date} dateString - дата для форматирования
-     * @param {object} options - опции форматирования
-     * @returns {string} отформатированная дата
+     * Форматировать дату в московском времени
      */
-    static formatMoscowTime(dateString, options = {}) {
-        if (!dateString) return '';
+    static formatMoscowTime(date, options = {}) {
+        if (!date) return 'не указано';
 
-        try {
-            const defaultOptions = {
-                timeZone: this.MOSCOW_TIMEZONE,
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                ...options
-            };
+        const defaultOptions = {
+            timeZone: this.MOSCOW_TIMEZONE,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            ...options
+        };
 
-            return new Date(dateString).toLocaleString('ru-RU', defaultOptions);
-        } catch (error) {
-            console.error('Ошибка форматирования времени:', error);
-            return 'Неверная дата';
-        }
+        return new Date(date).toLocaleString('ru-RU', defaultOptions);
     }
 
     /**
-     * ИСПРАВЛЕНО: Получает минимальное время для datetime-local (текущее московское + 5 минут)
-     * @returns {string} минимальное время для input
+     * Парсить строку даты в объект Date
      */
-    static getMinDateTime() {
+    static parseDateTime(dateTimeString) {
+        if (!dateTimeString) return null;
+
+        const date = new Date(dateTimeString);
+        if (isNaN(date.getTime())) {
+            throw new Error('Неверный формат даты');
+        }
+
+        return date;
+    }
+
+    /**
+     * Проверить что дата в будущем
+     */
+    static isValidFutureDate(dateTimeString) {
         try {
+            const date = this.parseDateTime(dateTimeString);
             const now = new Date();
-            const moscowNow = new Date(now.toLocaleString("en-US", {timeZone: this.MOSCOW_TIMEZONE}));
-
-            moscowNow.setMinutes(moscowNow.getMinutes() + 5);
-
-            const year = moscowNow.getFullYear();
-            const month = String(moscowNow.getMonth() + 1).padStart(2, '0');
-            const day = String(moscowNow.getDate()).padStart(2, '0');
-            const hours = String(moscowNow.getHours()).padStart(2, '0');
-            const minutes = String(moscowNow.getMinutes()).padStart(2, '0');
-
-            return `${year}-${month}-${day}T${hours}:${minutes}`;
-        } catch (error) {
-            console.error('Ошибка получения минимального времени:', error);
-            const now = new Date();
-            now.setMinutes(now.getMinutes() + 5);
-            return now.toISOString().slice(0, 16);
-        }
-    }
-
-    /**
-     * Проверяет что дата в будущем (в московском времени)
-     * @param {string} dateString - дата для проверки
-     * @returns {boolean} true если дата в будущем
-     */
-    static isFutureDate(dateString) {
-        if (!dateString) return false;
-
-        try {
-            const inputDate = new Date(dateString + '+03:00'); // Считаем как московское время
-            const nowMoscow = new Date(new Date().toLocaleString("en-US", {timeZone: this.MOSCOW_TIMEZONE}));
-
-            return inputDate > nowMoscow;
-        } catch (error) {
+            return date && date > now;
+        } catch {
             return false;
         }
     }
 
     /**
-     * Получает текущее московское время для отображения
-     * @returns {string} текущее московское время
+     * Логировать сравнение времени
      */
-    static now() {
-        return this.formatMoscowTime(new Date());
+    static logTimeComparison(label, date) {
+        const moscowTime = this.formatMoscowTime(date);
+        const utcTime = new Date(date).toISOString();
+
+        console.log(`🕐 ${label}:`);
+        console.log(`   UTC: ${utcTime}`);
+        console.log(`   Москва: ${moscowTime}`);
+
+        return { utcTime, moscowTime };
     }
 
     /**
-     * Форматирует дату для краткого отображения
-     * @param {string|Date} dateString - дата для форматирования
-     * @returns {string} краткая дата
+     * Получить подробную информацию о времени для отладки
      */
-    static formatShort(dateString) {
-        return this.formatMoscowTime(dateString, {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+    static getTimeDebugInfo(date = new Date()) {
+        const utcTime = date.toISOString();
+        const moscowTime = this.formatMoscowTime(date);
+        const localTime = date.toString();
+        const timestamp = date.getTime();
+        const offsetMinutes = date.getTimezoneOffset();
+
+        return {
+            utcTime,
+            moscowTime,
+            localTime,
+            timestamp,
+            offsetMinutes,
+            offsetHours: offsetMinutes / 60,
+            timezone: process.env.TZ
+        };
     }
 
     /**
-     * Форматирует дату для полного отображения
-     * @param {string|Date} dateString - дата для форматирования
-     * @returns {string} полная дата
-     */
-    static formatFull(dateString) {
-        return this.formatMoscowTime(dateString, {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-
-    /**
-     * ИСПРАВЛЕНО: Проверяет валидность введенной даты планирования
-     * @param {string} dateString - дата для проверки
-     * @returns {object} результат валидации
+     * Валидировать дату планирования
      */
     static validateScheduleDate(dateString) {
         if (!dateString) {
@@ -198,135 +115,65 @@ export class MoscowTimeUtils {
         }
 
         try {
-            const moscowDate = new Date(dateString + '+03:00');
+            const date = this.parseDateTime(dateString);
+            const now = new Date();
 
-            if (isNaN(moscowDate.getTime())) {
-                return { valid: false, error: 'Неверный формат даты' };
-            }
-
-            const nowMoscow = new Date(new Date().toLocaleString("en-US", {timeZone: this.MOSCOW_TIMEZONE}));
-            const minFutureTime = new Date(nowMoscow.getTime() + 60 * 1000); // +1 минута
-
-            if (moscowDate <= minFutureTime) {
+            // Проверяем что дата в будущем (минимум 1 минута)
+            const minFutureTime = new Date(now.getTime() + 60 * 1000); // +1 минута
+            if (date <= minFutureTime) {
                 return {
                     valid: false,
                     error: 'Дата должна быть как минимум на 1 минуту в будущем',
-                    current: this.formatMoscowTime(nowMoscow),
-                    entered: this.formatMoscowTime(moscowDate)
+                    received: this.formatMoscowTime(date),
+                    current: this.formatMoscowTime(now)
                 };
             }
 
-            const maxFutureTime = new Date(nowMoscow.getTime() + 365 * 24 * 60 * 60 * 1000); // +1 год
-            if (moscowDate > maxFutureTime) {
+            // Проверяем что дата не слишком далеко в будущем (максимум 1 год)
+            const maxFutureTime = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // +1 год
+            if (date > maxFutureTime) {
                 return {
                     valid: false,
-                    error: 'Дата не может быть более чем через год'
+                    error: 'Дата не может быть более чем через год',
+                    received: this.formatMoscowTime(date),
+                    maxAllowed: this.formatMoscowTime(maxFutureTime)
                 };
             }
 
             return {
                 valid: true,
-                moscowTime: this.formatMoscowTime(moscowDate)
+                date,
+                moscowTime: this.formatMoscowTime(date),
+                utcTime: date.toISOString()
             };
         } catch (error) {
             return {
                 valid: false,
-                error: `Ошибка: ${error.message}`
+                error: `Ошибка парсинга даты: ${error.message}`
             };
         }
     }
 
     /**
-     * Получает относительное время (например, "2 часа назад")
-     * @param {string|Date} dateString - дата
-     * @returns {string} относительное время
+     * Преобразовать UTC время в московское для отображения
      */
-    static getRelativeTime(dateString) {
-        if (!dateString) return '';
+    static utcToMoscowDisplay(utcDateString) {
+        if (!utcDateString) return '';
 
         try {
-            const date = new Date(dateString);
-            const now = new Date();
-            const diffMs = now.getTime() - date.getTime();
-            const diffMinutes = Math.floor(diffMs / (1000 * 60));
-            const diffHours = Math.floor(diffMinutes / 60);
-            const diffDays = Math.floor(diffHours / 24);
-
-            if (diffMinutes < 1) return 'только что';
-            if (diffMinutes < 60) return `${diffMinutes} мин назад`;
-            if (diffHours < 24) return `${diffHours} ч назад`;
-            if (diffDays < 7) return `${diffDays} дн назад`;
-
-            return this.formatMoscowTime(dateString, {
-                month: 'short',
-                day: 'numeric'
-            });
-        } catch (error) {
-            return 'неизвестно';
+            const date = new Date(utcDateString);
+            return this.formatMoscowTime(date);
+        } catch {
+            return 'Неверный формат даты';
         }
     }
 
     /**
-     * НОВЫЙ: Проверяет корректность времени между клиентом и сервером
-     * @param {string} clientTime - время с клиента
-     * @param {string} serverTime - время с сервера
-     * @returns {object} информация о синхронизации
+     * Получить московское время для логов
      */
-    static checkTimeSync(clientTime, serverTime) {
-        try {
-            const client = new Date(clientTime);
-            const server = new Date(serverTime);
-
-            const diffMs = Math.abs(client.getTime() - server.getTime());
-            const diffMinutes = Math.floor(diffMs / (1000 * 60));
-
-            return {
-                inSync: diffMinutes < 2,
-                difference: diffMinutes,
-                clientMoscow: this.formatMoscowTime(client),
-                serverMoscow: this.formatMoscowTime(server)
-            };
-        } catch (error) {
-            return {
-                inSync: false,
-                error: error.message
-            };
-        }
-    }
-
-    /**
-     * НОВЫЙ: Отладочная информация о времени
-     * @param {string} label - метка для отладки
-     * @param {string|Date} date - дата для анализа
-     * @returns {object} отладочная информация
-     */
-    static debugTime(label, date = new Date()) {
-        const dateObj = new Date(date);
-
-        const info = {
-            label,
-            input: date,
-            utc: dateObj.toISOString(),
-            moscow: this.formatMoscowTime(dateObj),
-            local: dateObj.toString(),
-            timestamp: dateObj.getTime(),
-            userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            userOffset: dateObj.getTimezoneOffset()
-        };
-
-        console.group(`🕐 ${label}`);
-        console.table(info);
-        console.groupEnd();
-
-        return info;
+    static getLogTimestamp() {
+        return `[${this.nowMoscow()}]`;
     }
 }
 
-export default MoscowTimeUtils;
-
-export const formatMoscowTime = MoscowTimeUtils.formatMoscowTime.bind(MoscowTimeUtils);
-export const toServerTime = MoscowTimeUtils.toServerTime.bind(MoscowTimeUtils);
-export const fromServerTime = MoscowTimeUtils.fromServerTime.bind(MoscowTimeUtils);
-export const validateScheduleDate = MoscowTimeUtils.validateScheduleDate.bind(MoscowTimeUtils);
-export const getMinDateTime = MoscowTimeUtils.getMinDateTime.bind(MoscowTimeUtils);
-export const debugTime = MoscowTimeUtils.debugTime.bind(MoscowTimeUtils);
+module.exports = MoscowTimeUtils;
