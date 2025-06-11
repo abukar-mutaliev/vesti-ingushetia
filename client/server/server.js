@@ -1,4 +1,14 @@
 require('dotenv').config();
+
+// КРИТИЧЕСКИ ВАЖНО: Устанавливаем временную зону в самом начале
+process.env.TZ = 'Europe/Moscow';
+
+// Логируем временную зону при запуске
+console.log(`🌍 Системная временная зона установлена: ${process.env.TZ}`);
+console.log(`🕐 Серверное время UTC: ${new Date().toISOString()}`);
+console.log(`🕐 Московское время: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`);
+console.log(`📊 Смещение временной зоны: ${new Date().getTimezoneOffset()} минут от UTC`);
+
 const helmet = require('helmet');
 const http = require('https');
 const logger = require('./logger');
@@ -24,8 +34,7 @@ const credentials = {
     ca: ca,
 };
 
-const uploadDir =
-    process.env.UPLOAD_DIR || path.resolve(__dirname, '..', '../uploads');
+const uploadDir = process.env.UPLOAD_DIR || path.resolve(__dirname, '..', '../uploads');
 
 const allowedOrigins = process.env.CORS_ORIGIN.split(',');
 
@@ -35,10 +44,8 @@ const audioDir = path.join(uploadDir, 'audio');
 const avatarDir = path.join(uploadDir, 'avatars');
 const publicDir = path.join(__dirname, '../public');
 
-
 const app = express();
 const PORT = process.env.PORT || 5000;
-
 
 const isBot = (req) => {
     const userAgent = req.headers['user-agent']?.toLowerCase() || '';
@@ -49,20 +56,52 @@ const isBot = (req) => {
         userAgent.includes('googlebot');
 };
 
-app.use(express.json());
-app.use(cookieParser());
-
+// Middleware для логирования времени запросов
 app.use((req, res, next) => {
-    logger.info(`Получен запрос: ${req.method} ${req.url}`);
+    const moscowTime = new Date().toLocaleString('ru-RU', {
+        timeZone: 'Europe/Moscow',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+
+    // Логируем только важные запросы, не статику
+    if (!req.url.includes('/uploads/') && !req.url.includes('.js') && !req.url.includes('.css')) {
+        logger.info(`[${moscowTime}] ${req.method} ${req.url}`);
+    }
     next();
 });
 
+app.use(express.json());
+app.use(cookieParser());
+
 const corsOptions = {
     origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
+        // В development режиме разрешаем localhost
+        if (process.env.NODE_ENV === 'development') {
+            const allowedDev = [
+                'https://localhost:5173',
+                'http://localhost:5173',
+                'https://127.0.0.1:5173',
+                'http://127.0.0.1:5173',
+                ...allowedOrigins
+            ];
+            if (!origin || allowedDev.includes(origin)) {
+                callback(null, true);
+            } else {
+                console.warn(`🚫 CORS заблокирован для: ${origin}`);
+                callback(new Error('Blocked by CORS'));
+            }
         } else {
-            callback(new Error('Blocked by CORS'));
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                console.warn(`🚫 CORS заблокирован для: ${origin}`);
+                callback(new Error('Blocked by CORS'));
+            }
         }
     },
     methods: ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE'],
@@ -78,33 +117,36 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-
 app.use(
     helmet({
         crossOriginResourcePolicy: { policy: 'cross-origin' },
         contentSecurityPolicy: {
             directives: {
-                defaultSrc: ["'self'", 'https://ingushetiatv.ru'],
-                connectSrc: ["'self'", 'https://ingushetiatv.ru'],
-                imgSrc: ["'self'", 'data:', 'blob:', 'https://ingushetiatv.ru'],
-                mediaSrc: ["'self'", 'https://ingushetiatv.ru'],
+                defaultSrc: ["'self'", 'https://ingushetiatv.ru', process.env.BASE_URL],
+                connectSrc: ["'self'", 'https://ingushetiatv.ru', process.env.BASE_URL],
+                imgSrc: ["'self'", 'data:', 'blob:', 'https://ingushetiatv.ru', process.env.BASE_URL],
+                mediaSrc: ["'self'", 'https://ingushetiatv.ru', process.env.BASE_URL],
                 scriptSrc: [
                     "'self'",
                     "'unsafe-inline'",
                     'https://ingushetiatv.ru',
+                    process.env.BASE_URL,
                 ],
                 styleSrc: [
                     "'self'",
                     "'unsafe-inline'",
                     'https://ingushetiatv.ru',
+                    process.env.BASE_URL,
                 ],
-                fontSrc: ["'self'", 'https://ingushetiatv.ru', 'data:'],
+                fontSrc: ["'self'", 'https://ingushetiatv.ru', 'data:', process.env.BASE_URL],
                 frameSrc: [
                     "'self'",
                     'https://www.youtube.com',
                     'https://www.youtu.be',
                     'https://www.youtube-nocookie.com',
                     'https://rutube.ru',
+                    'https://rutube.ru/play/embed',
+                    process.env.BASE_URL,
                 ],
                 objectSrc: ["'none'"],
             },
@@ -118,9 +160,11 @@ app.use(
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10000000,
+    max: process.env.NODE_ENV === 'development' ? 10000000 : 100, // В разработке больше лимит
     message: 'Слишком много запросов с этого IP, попробуйте позже.',
     handler: (req, res, next) => {
+        const moscowTime = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+        logger.warn(`🚫 [${moscowTime}] Rate limit exceeded for IP: ${req.ip}`);
         res.status(429).json({
             status: 'error',
             message: 'Слишком много запросов. Пожалуйста, попробуйте позже.',
@@ -142,7 +186,6 @@ app.use('/rss', (req, res) => {
 
 app.use(express.static(publicDir));
 
-
 app.use((req, res, next) => {
     if (isBot(req) || req.path.includes('/rss') || req.path === '/robots.txt' ||
         req.path === '/sitemap.xml') {
@@ -160,6 +203,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/robots.txt', (req, res) => {
+    const domain = process.env.NODE_ENV === 'production' ? 'ingushetiatv.ru' : req.get('host');
     const robotsTxt = `User-agent: *
 Allow: /
 Disallow: /admin/
@@ -178,9 +222,9 @@ Allow: /rss
 Disallow: /login
 Disallow: /register
 Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content
-Host: ${req.get('host')}
+Host: ${domain}
 
-Sitemap: https://${req.get('host')}/sitemap.xml
+Sitemap: https://${domain}/sitemap.xml
 `;
     res.type('text/plain');
     res.send(robotsTxt);
@@ -199,13 +243,14 @@ app.get('/sitemap.xml', async (req, res) => {
             attributes: ['id']
         });
 
-        const domain = 'ingushetiatv.ru';
+        const domain = process.env.NODE_ENV === 'production' ? 'ingushetiatv.ru' : req.get('host');
+        const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'https';
 
         let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
         xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
         xml += '  <url>\n';
-        xml += `    <loc>https://${domain}/</loc>\n`;
+        xml += `    <loc>${protocol}://${domain}/</loc>\n`;
         xml += '    <changefreq>daily</changefreq>\n';
         xml += '    <priority>1.0</priority>\n';
         xml += '  </url>\n';
@@ -215,7 +260,7 @@ app.get('/sitemap.xml', async (req, res) => {
             const lastMod = item.updatedAt || pubDate;
 
             xml += '  <url>\n';
-            xml += `    <loc>https://${domain}/news/${item.id}</loc>\n`;
+            xml += `    <loc>${protocol}://${domain}/news/${item.id}</loc>\n`;
             xml += `    <lastmod>${new Date(lastMod).toISOString().split('T')[0]}</lastmod>\n`;
             xml += '    <changefreq>monthly</changefreq>\n';
             xml += '    <priority>0.8</priority>\n';
@@ -224,7 +269,7 @@ app.get('/sitemap.xml', async (req, res) => {
 
         categories.forEach(category => {
             xml += '  <url>\n';
-            xml += `    <loc>https://${domain}/category/${category.id}</loc>\n`;
+            xml += `    <loc>${protocol}://${domain}/category/${category.id}</loc>\n`;
             xml += '    <changefreq>weekly</changefreq>\n';
             xml += '    <priority>0.7</priority>\n';
             xml += '  </url>\n';
@@ -238,6 +283,17 @@ app.get('/sitemap.xml', async (req, res) => {
         logger.error(`Ошибка при генерации sitemap: ${error.message}`);
         res.status(500).send('Ошибка генерации sitemap');
     }
+});
+
+// Добавим эндпоинт для проверки времени сервера
+app.get('/api/server-time', (req, res) => {
+    const now = new Date();
+    res.json({
+        utc: now.toISOString(),
+        moscow: now.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
+        timezone: process.env.TZ,
+        offset: now.getTimezoneOffset()
+    });
 });
 
 app.use('/api', router);
@@ -291,12 +347,11 @@ app.use((req, res, next) => {
     }
     next();
 });
+
 const distDir = path.join(__dirname, '../dist');
 
 app.use(botHandler);
-
 app.use(express.static(distDir));
-
 
 app.use((err, req, res, next) => {
     if (err.code === 'EBADCSRFTOKEN') {
@@ -318,7 +373,8 @@ app.use((err, req, res, next) => {
         });
     }
 
-    logger.error(`Ошибка: ${err.message}`);
+    const moscowTime = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+    logger.error(`[${moscowTime}] Ошибка: ${err.message}`);
     res.status(500).json({ error: 'Внутренняя ошибка сервера' });
 });
 
@@ -331,13 +387,33 @@ app.get('*', (req, res) => {
 sequelize
     .sync()
     .then(() => {
-        logger.info('Все модели были синхронизированы с базой данных.');
+        const moscowTime = new Date().toLocaleString('ru-RU', {
+            timeZone: 'Europe/Moscow',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+
+        logger.info(`[${moscowTime}] Все модели были синхронизированы с базой данных.`);
+
         http.createServer(credentials, app).listen(PORT, () => {
-            logger.info(`HTTPS сервер запущен на порту ${PORT}`);
+            logger.info(`[${moscowTime}] HTTPS сервер запущен на порту ${PORT}`);
+            logger.info(`🌐 Базовый URL: ${process.env.BASE_URL}`);
+            logger.info(`🔗 CORS разрешен для: ${allowedOrigins.join(', ')}`);
+            logger.info(`📊 Режим: ${process.env.NODE_ENV}`);
+
+            // Проверяем настройки временной зоны
+            console.log('\n⏰ Проверка временных зон:');
+            console.log(`   UTC время: ${new Date().toISOString()}`);
+            console.log(`   Московское время: ${moscowTime}`);
+            console.log(`   Временная зона процесса: ${process.env.TZ}`);
+            console.log(`   Смещение: ${new Date().getTimezoneOffset()} минут от UTC\n`);
         });
     })
     .catch((err) => {
-        logger.error(
-            'Ошибка при синхронизации моделей с базой данных: ' + err.message,
-        );
+        const moscowTime = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+        logger.error(`[${moscowTime}] Ошибка при синхронизации моделей с базой данных: ${err.message}`);
     });

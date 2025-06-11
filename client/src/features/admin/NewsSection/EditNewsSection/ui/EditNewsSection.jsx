@@ -7,6 +7,7 @@ import { updateNews, fetchAllNews } from '@entities/news/model/newsSlice.js';
 import { RichTextEditor } from '@shared/ui/RichTextEditor';
 import { FaDeleteLeft } from 'react-icons/fa6';
 import { ConfirmDeleteModal } from '@shared/ui/ConfirmDeleteModal';
+import { MoscowTimeUtils } from '@shared/lib/TimeUtils/timeUtils.js';
 
 export const EditNewsSection = ({ news, onCancel }) => {
     const dispatch = useDispatch();
@@ -24,22 +25,31 @@ export const EditNewsSection = ({ news, onCancel }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
-    // Обновленное регулярное выражение
-    const videoUrlRegex = /^(https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|rutube\.ru\/video\/)[\w\d-]+(?:\/)?(?:\?.*)?)$/i;
+    const videoUrlRegex =
+        /^(https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|rutube\.ru\/video\/)[\w\d-]+(?:\/)?(?:\?.*)?)$/i;
 
     useEffect(() => {
         if (news) {
             setEditTitle(news.title || '');
             setEditContent(news.content || '');
-            setSelectedCategoryIds(news.categories.map((category) => category.id));
+            setSelectedCategoryIds(
+                news.categories.map((category) => category.id),
+            );
             setEditMedia(news.mediaFiles || []);
             const videoMedia = news.mediaFiles?.find((m) => m.type === 'video');
             setVideoUrl(videoMedia?.url || '');
-            setPublishDate(
-                news.publishDate
-                    ? new Date(news.publishDate).toISOString().slice(0, 16)
-                    : '',
-            );
+
+            if (news.publishDate) {
+                const localTimeForInput = MoscowTimeUtils.fromServerToLocal(
+                    news.publishDate,
+                );
+                setPublishDate(localTimeForInput);
+                console.log('🕐 Отображение времени публикации:');
+                console.log(`   Серверное время: ${news.publishDate}`);
+                console.log(`   Локальное для input: ${localTimeForInput}`);
+            } else {
+                setPublishDate('');
+            }
         }
         dispatch(fetchCategories());
     }, [news, dispatch]);
@@ -50,17 +60,18 @@ export const EditNewsSection = ({ news, onCancel }) => {
         const hasVideoUrl = videoUrl.trim() !== '';
         const isVideoUrlValid = videoUrl ? videoUrlRegex.test(videoUrl) : false;
 
-        const isMediaValid = hasExistingMedia || hasNewMedia || (hasVideoUrl && isVideoUrlValid);
+        const isMediaValid =
+            hasExistingMedia || hasNewMedia || (hasVideoUrl && isVideoUrlValid);
 
         if (!isMediaValid) {
-            setErrors(prevErrors => ({
+            setErrors((prevErrors) => ({
                 ...prevErrors,
-                media: 'Необходимо добавить хотя бы одно изображение или ссылку на видео.'
+                media: 'Необходимо добавить хотя бы одно изображение или ссылку на видео.',
             }));
         } else {
-            setErrors(prevErrors => ({
+            setErrors((prevErrors) => ({
                 ...prevErrors,
-                media: undefined
+                media: undefined,
             }));
         }
     }, [editMedia, newMedia, videoUrl, videoUrlRegex]);
@@ -69,19 +80,25 @@ export const EditNewsSection = ({ news, onCancel }) => {
         let error = '';
         switch (fieldName) {
             case 'title':
-                if (!value.trim()) error = 'Поле заголовка обязательно для заполнения.';
-                else if (value.trim().length < 5) error = 'Заголовок должен содержать не менее 5 символов.';
+                if (!value.trim())
+                    error = 'Поле заголовка обязательно для заполнения.';
+                else if (value.trim().length < 5)
+                    error = 'Заголовок должен содержать не менее 5 символов.';
                 break;
             case 'content':
-                if (!value.trim()) error = 'Поле содержания обязательно для заполнения.';
-                else if (value.trim().length < 20) error = 'Содержание должно содержать не менее 20 символов.';
+                if (!value.trim())
+                    error = 'Поле содержания обязательно для заполнения.';
+                else if (value.trim().length < 20)
+                    error = 'Содержание должно содержать не менее 20 символов.';
                 break;
             case 'categories':
-                if (value.length === 0) error = 'Выберите хотя бы одну категорию.';
+                if (value.length === 0)
+                    error = 'Выберите хотя бы одну категорию.';
                 break;
             case 'videoUrl':
                 if (value && !videoUrlRegex.test(value)) {
-                    error = 'Видео ссылка должна быть URL от Rutube или YouTube.';
+                    error =
+                        'Видео ссылка должна быть URL от Rutube или YouTube.';
                 }
                 break;
 
@@ -98,7 +115,10 @@ export const EditNewsSection = ({ news, onCancel }) => {
     const validateForm = () => {
         const isTitleValid = validateField('title', editTitle);
         const isContentValid = validateField('content', editContent);
-        const isCategoriesValid = validateField('categories', selectedCategoryIds);
+        const isCategoriesValid = validateField(
+            'categories',
+            selectedCategoryIds,
+        );
         const isVideoUrlValid = validateField('videoUrl', videoUrl);
 
         const hasExistingMedia = editMedia.length > 0;
@@ -106,17 +126,18 @@ export const EditNewsSection = ({ news, onCancel }) => {
         const hasVideoUrl = videoUrl.trim() !== '';
 
         // Обновлено: учитываем валидность videoUrl
-        const isMediaValid = hasExistingMedia || hasNewMedia || (hasVideoUrl && isVideoUrlValid);
+        const isMediaValid =
+            hasExistingMedia || hasNewMedia || (hasVideoUrl && isVideoUrlValid);
 
         if (!isMediaValid) {
-            setErrors(prevErrors => ({
+            setErrors((prevErrors) => ({
                 ...prevErrors,
-                media: 'Необходимо добавить хотя бы одно изображение или ссылку на видео.'
+                media: 'Необходимо добавить хотя бы одно изображение или ссылку на видео.',
             }));
         } else {
-            setErrors(prevErrors => ({
+            setErrors((prevErrors) => ({
                 ...prevErrors,
-                media: undefined
+                media: undefined,
             }));
         }
 
@@ -164,7 +185,12 @@ export const EditNewsSection = ({ news, onCancel }) => {
         formData.append('categoryIds', JSON.stringify(selectedCategoryIds));
 
         if (videoUrl.trim()) formData.append('videoUrl', videoUrl.trim());
-        if (publishDate) formData.append('publishDate', publishDate);
+
+        if (publishDate) {
+            const moscowISOString =
+                MoscowTimeUtils.toMoscowTimeForServer(publishDate);
+            formData.append('publishDate', moscowISOString);
+        }
 
         formData.append(
             'existingMedia',
@@ -172,9 +198,9 @@ export const EditNewsSection = ({ news, onCancel }) => {
         );
 
         newMedia.forEach((file) => {
-            if (file && file.type.startsWith('image')) formData.append('images', file);
+            if (file && file.type.startsWith('image'))
+                formData.append('images', file);
         });
-
 
         dispatch(updateNews({ id: news.id, newsData: formData }))
             .unwrap()
@@ -199,7 +225,9 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 } else {
                     setErrors((prev) => ({
                         ...prev,
-                        submit: error.message || 'Произошла ошибка при сохранении новости.',
+                        submit:
+                            error.message ||
+                            'Произошла ошибка при сохранении новости.',
                     }));
                 }
             });
@@ -208,7 +236,9 @@ export const EditNewsSection = ({ news, onCancel }) => {
     const handleCategoryChange = (e) => {
         const { value, checked } = e.target;
         setSelectedCategoryIds((prev) =>
-            checked ? [...prev, parseInt(value)] : prev.filter((id) => id !== parseInt(value)),
+            checked
+                ? [...prev, parseInt(value)]
+                : prev.filter((id) => id !== parseInt(value)),
         );
     };
 
@@ -227,7 +257,9 @@ export const EditNewsSection = ({ news, onCancel }) => {
     };
 
     const confirmDeleteMedia = () => {
-        setEditMedia((prevMedia) => prevMedia.filter((_, i) => i !== mediaToDelete));
+        setEditMedia((prevMedia) =>
+            prevMedia.filter((_, i) => i !== mediaToDelete),
+        );
         setMediaToDelete(null);
         setIsModalOpen(false);
     };
@@ -236,6 +268,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
         setHasAttemptedSubmit(false);
         onCancel();
     };
+
 
     return (
         <div className={styles.editNewsSection}>
@@ -265,12 +298,16 @@ export const EditNewsSection = ({ news, onCancel }) => {
                 <label>Категории</label>
                 <div className={styles.checkboxGroup}>
                     {categories.map((category) => (
-
-                        <label key={category.id} className={styles.checkboxLabel}>
+                        <label
+                            key={category.id}
+                            className={styles.checkboxLabel}
+                        >
                             <input
                                 type="checkbox"
                                 value={category.id}
-                                checked={selectedCategoryIds.includes(category.id)}
+                                checked={selectedCategoryIds.includes(
+                                    category.id,
+                                )}
                                 onChange={handleCategoryChange}
                                 className={styles.checkboxInput}
                             />
@@ -292,7 +329,9 @@ export const EditNewsSection = ({ news, onCancel }) => {
                         handleInputChange('videoUrl', e.target.value)
                     }
                 />
-                {errors.videoUrl && <p className={styles.error}>{errors.videoUrl}</p>}
+                {errors.videoUrl && (
+                    <p className={styles.error}>{errors.videoUrl}</p>
+                )}
 
                 <label>Дата публикации (опционально)</label>
                 <input
@@ -319,7 +358,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
                                 className={styles.deleteButton}
                                 onClick={() => handleDeleteMedia(index)}
                             >
-                                <FaDeleteLeft size={20}/>
+                                <FaDeleteLeft size={20} />
                             </button>
                         </div>
                     ))
@@ -346,19 +385,25 @@ export const EditNewsSection = ({ news, onCancel }) => {
                     + Добавить еще файлы
                 </button>
                 {errors.media && <p className={styles.error}>{errors.media}</p>}
-                {errors.submit && <p className={styles.error}>{errors.submit}</p>}
+                {errors.submit && (
+                    <p className={styles.error}>{errors.submit}</p>
+                )}
 
                 <div className={styles.buttons}>
                     <button
                         className={styles.saveButton}
                         onClick={handleSave}
                         disabled={
-                            hasAttemptedSubmit && Object.values(errors).some((error) => error)
+                            hasAttemptedSubmit &&
+                            Object.values(errors).some((error) => error)
                         }
                     >
                         Сохранить
                     </button>
-                    <button className={styles.cancelButton} onClick={handleCancel}>
+                    <button
+                        className={styles.cancelButton}
+                        onClick={handleCancel}
+                    >
                         Отмена
                     </button>
                 </div>

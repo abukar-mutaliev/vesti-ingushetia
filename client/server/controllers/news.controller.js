@@ -12,6 +12,7 @@ const fs = require('fs');
 const baseUrl = process.env.BASE_URL;
 const newsScheduler = require('../schedulers/newsScheduler');
 const logger = require('../logger');
+const MoscowTimeUtils = require('../utils/moscowTimeUtils');
 
 const path = require('path');
 
@@ -309,7 +310,7 @@ exports.createNews = async (req, res) => {
                     categoryIds: JSON.parse(categoryIds || '[]'),
                     videoUrl,
                     publishDate: scheduledDate,
-                    mediaFiles: mediaFiles && mediaFiles.images ? 
+                    mediaFiles: mediaFiles && mediaFiles.images ?
                         mediaFiles.images.map(file => ({
                             ...file,
                             type: file.mimetype.startsWith('image/') ? 'image' : 'other'

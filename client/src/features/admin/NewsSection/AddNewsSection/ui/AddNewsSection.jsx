@@ -8,6 +8,7 @@ import { createScheduledNews } from '@entities/news/model/scheduledNewsSlice.js'
 import { RichTextEditor } from '@shared/ui/RichTextEditor';
 import { FaDeleteLeft, FaClock } from 'react-icons/fa6';
 import { FaCalendarAlt } from 'react-icons/fa';
+import {MoscowTimeUtils} from "@shared/lib/TimeUtils/timeUtils.js";
 
 const LOCAL_STORAGE_KEY = 'adminDashboard_addNewsSectionFormData';
 
@@ -129,12 +130,8 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 if (isDeferred && !value) {
                     error = 'Укажите дату и время отложенной публикации.';
                 } else if (value) {
-                    const date = new Date(value);
-                    const now = new Date();
-                    if (isNaN(date)) {
-                        error = 'Неверный формат даты.';
-                    } else if (date <= now) {
-                        error = 'Дата публикации должна быть в будущем.';
+                    if (!MoscowTimeUtils.isFutureDate(value)) {
+                        error = 'Дата публикации должна быть в будущем (московское время).';
                     }
                 }
                 break;
@@ -209,6 +206,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         }, 1500);
     };
 
+
     const handleSave = () => {
         if (!validateForm()) return;
 
@@ -238,15 +236,17 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             formData.append('publishDate', publishDate);
         }
 
-        // Добавляем информацию об отложенной публикации согласно серверному API
         if (isDeferred) {
             formData.append('scheduleForLater', 'true');
-            
-            // Преобразуем локальное время в UTC
-            const localDate = new Date(deferredDate);
-            const utcDate = localDate.toISOString();
-            
-            formData.append('publishDate', utcDate); // Отправляем UTC время
+
+            if (deferredDate) {
+                const moscowISOString = MoscowTimeUtils.toMoscowTimeForServer(deferredDate);
+                formData.append('publishDate', moscowISOString);
+
+                console.log('📅 Планирование новости:');
+                console.log(`   Выбранное время: ${deferredDate}`);
+                console.log(`   Московское время для сервера: ${moscowISOString}`);
+            }
         }
 
         newsMedia.flat().forEach((file) => {
@@ -261,9 +261,10 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             .unwrap()
             .then((response) => {
                 if (isDeferred) {
+                    const scheduledMoscowTime = MoscowTimeUtils.formatMoscowTime(response.scheduledNews?.scheduledDate);
                     setErrors(prev => ({
                         ...prev,
-                        submit: `Новость запланирована на ${new Date(deferredDate).toLocaleString('ru-RU')}!`
+                        submit: `Новость запланирована на ${scheduledMoscowTime}!`
                     }));
 
                     setTimeout(() => {
@@ -372,9 +373,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
     };
 
     const getMinDateTime = () => {
-        const now = new Date();
-        now.setMinutes(now.getMinutes() + 5);
-        return now.toISOString().slice(0, 16);
+        return MoscowTimeUtils.getMinMoscowDateTime();
     };
 
     return (

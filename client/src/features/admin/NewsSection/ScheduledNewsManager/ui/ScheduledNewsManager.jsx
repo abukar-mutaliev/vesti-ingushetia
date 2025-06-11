@@ -24,6 +24,7 @@ import { truncateHtmlByChars } from '@shared/lib/TruncateHtml/truncateHtml.js';
 import { FaClock, FaTrash, FaEye, FaPlay, FaExclamationCircle, FaCalendarCheck } from 'react-icons/fa6';
 import { FaCalendarAlt, FaChartBar } from 'react-icons/fa';
 import styles from './ScheduledNewsManager.module.scss';
+import {MoscowTimeUtils} from "@shared/lib/TimeUtils/timeUtils.js";
 
 export const ScheduledNewsManager = ({ isAdmin = false }) => {
     const dispatch = useDispatch();
@@ -100,7 +101,7 @@ export const ScheduledNewsManager = ({ isAdmin = false }) => {
     };
 
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleString('ru-RU', {
+        return MoscowTimeUtils.formatMoscowTime(dateString, {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -108,6 +109,7 @@ export const ScheduledNewsManager = ({ isAdmin = false }) => {
             minute: '2-digit'
         });
     };
+
 
     const getStatusColor = (status) => {
         switch (status) {
