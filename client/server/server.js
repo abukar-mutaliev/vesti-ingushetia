@@ -27,7 +27,7 @@ const credentials = {
     ca: ca,
 };
 
-const uploadDir = process.env.UPLOAD_DIR || path.resolve(__dirname, '..', '../uploads');
+const uploadDir = process.env.UPLOAD_DIR || path.resolve(__dirname, '../uploads');
 
 const allowedOrigins = process.env.CORS_ORIGIN.split(',');
 
@@ -198,24 +198,31 @@ app.use(express.static(publicDir));
 
 const logStaticFileRequests = (req, res, next) => {
     if (req.url.startsWith('/uploads/')) {
-
-        const requestedFile = path.join(__dirname, '../..', req.url);
+        const requestedFile = path.resolve(__dirname, '..', req.url);
+        
+        console.log(`🔍 [Static] Запрос файла: ${req.url}`);
+        console.log(`   Ожидаемый путь: ${requestedFile}`);
+        console.log(`   Файл существует: ${fs.existsSync(requestedFile)}`);
 
         if (!fs.existsSync(requestedFile)) {
             const alternatives = [
-                path.join(uploadDir, req.url.replace('/uploads/', '')),
-                path.join(__dirname, '../uploads', req.url.replace('/uploads/', '')),
-                path.join(__dirname, '../../uploads', req.url.replace('/uploads/', '')),
+                path.resolve(uploadDir, req.url.replace('/uploads/', '')),
+                path.resolve(__dirname, '../uploads', req.url.replace('/uploads/', '')),
+                path.resolve(__dirname, '../../uploads', req.url.replace('/uploads/', '')),
             ];
 
-            alternatives.forEach((alt, i) => {
+            console.log(`   🔍 Проверяем альтернативы:`);
+            for (const alt of alternatives) {
                 const exists = fs.existsSync(alt);
-
+                console.log(`      ${alt} - ${exists ? '✅' : '❌'}`);
+                
                 if (exists && !res.headersSent) {
                     console.log(`   🔄 Перенаправляем к найденному файлу: ${alt}`);
                     return res.sendFile(alt);
                 }
-            });
+            }
+            
+            console.log(`   ❌ Файл не найден во всех альтернативах`);
         }
     }
     next();

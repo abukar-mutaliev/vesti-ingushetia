@@ -10,7 +10,6 @@ const {
     updateNews,
     deleteNews,
     cleanupOrphanedFiles,
-    debugScheduledNews,
 } = require('../controllers/news.controller');
 const { authenticateAdmin } = require('../middlewares/auth.middleware');
 const {
@@ -71,6 +70,8 @@ router.get('/all', getAllNews);
 
 router.get('/date', getNewsByDateValidator, validate, getNewsByDate);
 
+
+
 router.get('/:id', getNewsByIdValidator, validate, getNewsById);
 
 router.put(
@@ -102,12 +103,6 @@ router.post(
     authenticateAdmin,
     csrfProtection,
     cleanupOrphanedFiles,
-);
-
-router.get(
-    '/debug-scheduled',
-    authenticateAdmin,
-    debugScheduledNews,
 );
 
 module.exports = router;
