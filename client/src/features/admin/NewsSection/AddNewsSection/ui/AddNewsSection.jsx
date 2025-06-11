@@ -221,6 +221,8 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         }, 1500);
     };
 
+    // Исправленный фрагмент handleSave в AddNewsSection.js
+
     const handleSave = () => {
         if (!validateForm()) return;
 
@@ -231,8 +233,8 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         const validCategoryIds =
             selectedCategoryIds.length > 0
                 ? selectedCategoryIds
-                      .map((id) => Number(id))
-                      .filter((id) => Number.isInteger(id) && id > 0)
+                    .map((id) => Number(id))
+                    .filter((id) => Number.isInteger(id) && id > 0)
                 : categories.map((cat) => cat.id).slice(0, 1);
 
         if (validCategoryIds.length === 0) {
@@ -249,27 +251,31 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             formData.append('videoUrl', videoUrl.trim());
         }
 
-        if (publishDate) {
-            formData.append('publishDate', publishDate);
-        }
-
-        // Добавляем информацию об отложенной публикации
-        if (isDeferred) {
+        // Обработка времени публикации
+        if (isDeferred && deferredDate) {
             formData.append('scheduleForLater', 'true');
 
-            if (deferredDate) {
-                // ИСПРАВЛЕНО: используем утилиты для правильной конвертации времени
-                const serverTime = MoscowTimeUtils.toServerTime(deferredDate);
+            // ИСПРАВЛЕНО: используем правильную конвертацию времени
+            const serverTime = MoscowTimeUtils.toServerTime(deferredDate);
+            if (serverTime) {
                 formData.append('publishDate', serverTime);
 
                 console.log('📅 [CLIENT] Планирование новости:');
-                console.log(
-                    `   Выбранное пользователем время: ${deferredDate}`,
-                );
+                console.log(`   Выбранное время: ${deferredDate}`);
+                console.log(`   Московское время: ${MoscowTimeUtils.formatMoscowTime(serverTime)}`);
                 console.log(`   Отправляется на сервер: ${serverTime}`);
-                console.log(
-                    `   Московское время: ${MoscowTimeUtils.formatMoscowTime(serverTime)}`,
-                );
+            } else {
+                setErrors((prev) => ({
+                    ...prev,
+                    deferredDate: 'Ошибка обработки времени публикации'
+                }));
+                return;
+            }
+        } else if (publishDate && !isDeferred) {
+            // Для немедленной публикации с указанной датой
+            const serverTime = MoscowTimeUtils.toServerTime(publishDate);
+            if (serverTime) {
+                formData.append('publishDate', serverTime);
             }
         }
 
@@ -285,17 +291,15 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             .unwrap()
             .then((response) => {
                 if (isDeferred) {
-                    // Отображаем московское время в сообщении
-                    const scheduledMoscowTime = response.scheduledNews
-                        ?.scheduledDate
-                        ? MoscowTimeUtils.formatMoscowTime(
-                              response.scheduledNews.scheduledDate,
-                          )
+                    // Показываем московское время в сообщении об успехе
+                    const scheduledTime = response.scheduledNews?.scheduledDate || response.scheduledNews?.publishDate;
+                    const moscowTime = scheduledTime
+                        ? MoscowTimeUtils.formatMoscowTime(scheduledTime)
                         : MoscowTimeUtils.formatMoscowTime(deferredDate);
 
                     setErrors((prev) => ({
                         ...prev,
-                        submit: `✅ Новость запланирована на ${scheduledMoscowTime} (московское время)!`,
+                        submit: `✅ Новость запланирована на ${moscowTime} (московское время)!`,
                     }));
 
                     setTimeout(() => {
@@ -310,6 +314,12 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             })
             .catch((error) => {
                 console.error('Ошибка при создании новости:', error);
+
+                // Отладочная информация о времени при ошибке
+                if (isDeferred && deferredDate) {
+                    MoscowTimeUtils.debugTime('Время при ошибке', deferredDate);
+                }
+
                 if (error.errors) {
                     const newErrors = {};
                     error.errors.forEach((err) => {

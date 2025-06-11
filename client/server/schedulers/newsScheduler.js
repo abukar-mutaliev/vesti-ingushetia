@@ -1,4 +1,3 @@
-
 const cron = require('node-cron');
 const { News, Category, Media, sequelize, ScheduledNews } = require('../models');
 const path = require('path');
@@ -242,8 +241,17 @@ class NewsScheduler {
         }
     }
 
+    // Исправленный метод scheduleNews в newsScheduler.js
+
     async scheduleNews(newsData, scheduledDate, authorId) {
         try {
+            console.log('🗓️ Планирование новости:', {
+                title: newsData.title,
+                authorId,
+                scheduledDateRaw: scheduledDate,
+                scheduledDateISO: new Date(scheduledDate).toISOString(),
+                scheduledDateMoscow: new Date(scheduledDate).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })
+            });
 
             const processedNewsData = { ...newsData };
 
@@ -310,18 +318,28 @@ class NewsScheduler {
 
             processedNewsData.authorId = authorId;
 
+            // ИСПРАВЛЕНИЕ: Убеждаемся что дата корректная
+            const finalScheduledDate = new Date(scheduledDate);
+            if (isNaN(finalScheduledDate.getTime())) {
+                throw new Error('Некорректная дата планирования');
+            }
 
+            // Создаем запись в БД с корректной датой
             const scheduled = await ScheduledNews.create({
                 title: newsData.title,
-                scheduledDate: new Date(scheduledDate),
+                scheduledDate: finalScheduledDate, // Используем Date объект напрямую
                 newsData: JSON.stringify(processedNewsData),
                 authorId: authorId,
                 status: 'scheduled'
             });
 
-            logger.info(`✅ Новость запланирована на ${scheduledDate}: "${newsData.title}" (ID: ${scheduled.id})`);
-
-            const savedData = JSON.parse(scheduled.newsData);
+            logger.info(`✅ Новость запланирована:`, {
+                id: scheduled.id,
+                title: newsData.title,
+                scheduledDateUTC: finalScheduledDate.toISOString(),
+                scheduledDateMoscow: finalScheduledDate.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
+                authorId
+            });
 
             return scheduled;
 

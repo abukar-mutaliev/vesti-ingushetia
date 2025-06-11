@@ -12,7 +12,6 @@ const fs = require('fs');
 const baseUrl = process.env.BASE_URL;
 const newsScheduler = require('../schedulers/newsScheduler');
 const logger = require('../logger');
-const MoscowTimeUtils = require('../utils/moscowTimeUtils');
 
 const path = require('path');
 
@@ -293,57 +292,105 @@ exports.getNewsByDate = async (req, res) => {
     }
 };
 
+
 exports.createNews = async (req, res) => {
     const { title, content, categoryIds, videoUrl, publishDate, scheduleForLater } = req.body;
     const mediaFiles = req.files;
     const authorId = req.user.id;
 
+    console.log('📰 Создание новости:', {
+        userId: authorId,
+        newsId: undefined,
+        hasFiles: !!(mediaFiles && mediaFiles.images),
+        publishDate: publishDate,
+        scheduleForLater: scheduleForLater,
+        timestamp: new Date().toISOString()
+    });
+
     if (scheduleForLater && publishDate) {
-        const scheduledDate = new Date(publishDate);
-        const now = new Date();
+        try {
+            let scheduledDate;
 
-        if (scheduledDate > now) {
-            try {
-                const newsData = {
-                    title,
-                    content,
-                    categoryIds: JSON.parse(categoryIds || '[]'),
-                    videoUrl,
-                    publishDate: scheduledDate,
-                    mediaFiles: mediaFiles && mediaFiles.images ?
-                        mediaFiles.images.map(file => ({
-                            ...file,
-                            type: file.mimetype.startsWith('image/') ? 'image' : 'other'
-                        })) : []
-                };
+            if (typeof publishDate === 'string') {
+                if (!publishDate.includes('Z') && !publishDate.includes('+') && !publishDate.includes('T')) {
+                    scheduledDate = new Date(publishDate + ':00'); // Добавляем секунды
+                } else if (!publishDate.includes('Z') && publishDate.includes('T')) {
+                    scheduledDate = new Date(publishDate + ':00+03:00'); // Добавляем московскую зону
+                } else {
+                    scheduledDate = new Date(publishDate);
+                }
+            } else {
+                scheduledDate = new Date(publishDate);
+            }
 
-                const scheduledNews = await newsScheduler.scheduleNews(
-                    newsData,
-                    scheduledDate,
-                    authorId
-                );
+            const now = new Date();
 
-                logger.info(`Создана отложенная новость: ${title}`, {
-                    authorId,
-                    scheduledDate,
-                    newsId: scheduledNews.id
-                });
+            console.log('🕐 Анализ времени планирования:', {
+                raw: publishDate,
+                parsed: scheduledDate.toISOString(),
+                moscowTime: scheduledDate.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
+                now: now.toISOString(),
+                nowMoscow: now.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
+                isValid: !isNaN(scheduledDate.getTime()),
+                isFuture: scheduledDate > now
+            });
 
-                return res.status(201).json({
-                    message: 'Новость запланирована для отложенной публикации',
-                    scheduledNews: {
-                        id: scheduledNews.id,
-                        title: scheduledNews.title,
-                        scheduledDate: scheduledNews.scheduledDate,
-                        status: scheduledNews.status
+            if (isNaN(scheduledDate.getTime())) {
+                throw new Error('Неверный формат даты');
+            }
+
+            const minFutureTime = new Date(now.getTime() + 60 * 1000);
+            if (scheduledDate <= minFutureTime) {
+                return res.status(400).json({
+                    error: 'Дата публикации должна быть как минимум на 1 минуту в будущем',
+                    details: {
+                        received: scheduledDate.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
+                        required: minFutureTime.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })
                     }
                 });
-            } catch (error) {
-                logger.error('Ошибка создания отложенной новости:', error);
-                return res.status(400).json({
-                    error: `Ошибка создания отложенной новости: ${error.message}`
-                });
             }
+
+            const newsData = {
+                title,
+                content,
+                categoryIds: JSON.parse(categoryIds || '[]'),
+                videoUrl,
+                publishDate: scheduledDate, // Передаем корректную дату
+                mediaFiles: mediaFiles && mediaFiles.images ?
+                    mediaFiles.images.map(file => ({
+                        ...file,
+                        type: file.mimetype.startsWith('image/') ? 'image' : 'other'
+                    })) : []
+            };
+
+            const scheduledNews = await newsScheduler.scheduleNews(
+                newsData,
+                scheduledDate,
+                authorId
+            );
+
+            logger.info(`✅ Создана отложенная новость: ${title}`, {
+                authorId,
+                scheduledDate: scheduledDate.toISOString(),
+                scheduledDateMoscow: scheduledDate.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
+                newsId: scheduledNews.id
+            });
+
+            return res.status(201).json({
+                message: 'Новость запланирована для отложенной публикации',
+                scheduledNews: {
+                    id: scheduledNews.id,
+                    title: scheduledNews.title,
+                    scheduledDate: scheduledNews.scheduledDate,
+                    scheduledDateMoscow: new Date(scheduledNews.scheduledDate).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
+                    status: scheduledNews.status
+                }
+            });
+        } catch (error) {
+            logger.error('❌ Ошибка создания отложенной новости:', error);
+            return res.status(400).json({
+                error: `Ошибка создания отложенной новости: ${error.message}`
+            });
         }
     }
 
@@ -357,14 +404,22 @@ exports.createNews = async (req, res) => {
             authorId,
         };
 
-        if (publishDate) {
-            if (!scheduleForLater) {
-                const date = new Date(publishDate);
-                if (!isNaN(date)) {
-                    newsData.publishDate = date;
+        if (publishDate && !scheduleForLater) {
+            let finalDate;
+            if (typeof publishDate === 'string') {
+                if (!publishDate.includes('Z') && publishDate.includes('T')) {
+                    finalDate = new Date(publishDate + ':00+03:00');
                 } else {
-                    throw new Error('Неверный формат даты');
+                    finalDate = new Date(publishDate);
                 }
+            } else {
+                finalDate = new Date(publishDate);
+            }
+
+            if (!isNaN(finalDate.getTime())) {
+                newsData.publishDate = finalDate;
+            } else {
+                throw new Error('Неверный формат даты');
             }
         }
 
@@ -439,16 +494,17 @@ exports.createNews = async (req, res) => {
             ],
         });
 
-        logger.info(`Создана новость: ${title}`, {
+        logger.info(`✅ Создана новость: ${title}`, {
             authorId,
             newsId: news.id,
+            publishDate: newsData.publishDate,
             immediate: !scheduleForLater
         });
 
         res.status(201).json(createdNews);
     } catch (err) {
         if (transaction) await transaction.rollback();
-        console.error('Ошибка создания новости:', err);
+        console.error('❌ Ошибка создания новости:', err);
         res.status(400).json({
             error: `Ошибка создания новости: ${err.message}`,
             errors: [{
@@ -461,7 +517,6 @@ exports.createNews = async (req, res) => {
     }
 };
 
-// 1. Полностью переписанный метод updateNews с надежной обработкой медиафайлов
 exports.updateNews = async (req, res) => {
     const { id } = req.params;
     let { title, content, categoryIds, videoUrl, existingMedia, publishDate } = req.body;
