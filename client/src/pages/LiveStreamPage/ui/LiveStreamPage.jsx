@@ -1,68 +1,55 @@
-import { useEffect, useRef } from 'react';
+import { useState } from 'react';
 import styles from './LiveStreamPage.module.scss';
-import Hls from 'hls.js';
+import SmotrimStream from './SmotrimStream';
 
 const LiveStreamPage = () => {
-    const videoRef = useRef(null);
-    const hlsStreamUrl =
-        'https://live-gtrkingushetia.cdnvideo.ru/gtrkingushetia/gtrkingushetia.sdp/playlist.m3u8';
+    const [activeStream, setActiveStream] = useState('russia1');
 
-    useEffect(() => {
-        const video = videoRef.current;
-
-        if (Hls.isSupported()) {
-            const hls = new Hls();
-            hls.loadSource(hlsStreamUrl);
-            hls.attachMedia(video);
-
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                video.play();
-            });
-
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) {
-                    switch (data.type) {
-                        case Hls.ErrorTypes.NETWORK_ERROR:
-                            console.error('Сетевая ошибка');
-                            hls.startLoad();
-                            break;
-                        case Hls.ErrorTypes.MEDIA_ERROR:
-                            console.error('Ошибка медиа');
-                            hls.recoverMediaError();
-                            break;
-                        default:
-                            hls.destroy();
-                            break;
-                    }
-                }
-            });
-
-            return () => {
-                hls.destroy();
-            };
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = hlsStreamUrl;
-            video.addEventListener('loadedmetadata', () => {
-                video.play();
-            });
-        } else {
-            console.error('Ваш браузер не поддерживает HLS');
+    // Конфигурация доступных трансляций
+    const streams = {
+        russia1: {
+            name: 'Россия 1. Назрань',
+            component: 'smotrim',
+            streamId: '0ef99435-a317-425d-8413-baad29f19bd3'
+        },
+        russia24: {
+            name: 'Россия 24. Назрань',
+            component: 'smotrim',
+            streamId: 'fbe71f00-0d62-42a9-9b30-257276b8f887'
         }
-    }, [hlsStreamUrl]);
+    };
+
+    const renderActiveStream = () => {
+        const stream = streams[activeStream];
+
+        if (stream.component === 'smotrim') {
+            return (
+                <SmotrimStream
+                    streamId={stream.streamId}
+                />
+            );
+        }
+
+        return null;
+    };
 
     return (
         <div className={styles.liveStreamPage}>
-            <video
-                ref={videoRef}
-                controls
-                autoPlay
-                muted
-                width="100%"
-                height="500"
-                className={styles.videoPlayer}
-            >
-                Ваш браузер не поддерживает тег video.
-            </video>
+            <div className={styles.streamSelector}>
+                {Object.entries(streams).map(([key, stream]) => (
+                    <button
+                        key={key}
+                        className={`${styles.streamButton} ${activeStream === key ? styles.active : ''}`}
+                        onClick={() => setActiveStream(key)}
+                    >
+                        {stream.name}
+                    </button>
+                ))}
+            </div>
+
+            <div className={styles.liveStreamContainer}>
+                {renderActiveStream()}
+            </div>
         </div>
     );
 };
