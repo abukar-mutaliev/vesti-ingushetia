@@ -456,6 +456,16 @@ app.get('/api/server-time', (req, res) => {
     });
 });
 
+// Простой тестовый маршрут
+app.get('/test', (req, res) => {
+    res.json({
+        message: 'Тестовый маршрут работает!',
+        timestamp: new Date().toISOString(),
+        url: req.url,
+        method: req.method
+    });
+});
+
 // Тестовая страница для проверки iframe
 app.get('/test-iframe', (req, res) => {
     console.log('=== ЗАПРОС К /test-iframe ===');
@@ -604,6 +614,24 @@ app.use((err, req, res, next) => {
     const moscowTime = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
     logger.error(`[${moscowTime}] Ошибка: ${err.message}`);
     res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+});
+
+// Тестовый маршрут для проверки работы сервера напрямую
+app.get('/server-test', (req, res) => {
+    res.json({
+        message: 'Node.js сервер работает!',
+        port: PORT,
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString(),
+        headers: req.headers,
+        url: req.url,
+        routes: [
+            '/test-iframe',
+            '/test',
+            '/api/server-time',
+            '/api/*'
+        ]
+    });
 });
 
 app.get('*', (req, res) => {
