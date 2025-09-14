@@ -21,6 +21,8 @@ const SmotrimStream = ({ streamId }) => {
                 src={iframeSrc}
                 className={styles.liveStreamIframe}
                 title="Трансляция"
+                allow="autoplay; encrypted-media; fullscreen"
+                sandbox="allow-same-origin allow-scripts allow-presentation allow-forms"
             />
             </div>
         </div>

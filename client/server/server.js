@@ -75,6 +75,14 @@ app.use((req, res, next) => {
     next();
 });
 
+// Добавляем заголовки для поддержки iframe
+app.use((req, res, next) => {
+    res.setHeader('X-Frame-Options', 'ALLOWALL');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    next();
+});
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -155,7 +163,7 @@ app.use(
                 objectSrc: ["'none'"],
             },
         },
-        referrerPolicy: { policy: 'no-referrer' },
+        referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
         featurePolicy: {
             geolocation: ["'none'"],
         },
@@ -443,6 +451,70 @@ app.get('/api/server-time', (req, res) => {
         timezone: process.env.TZ,
         offset: now.getTimezoneOffset()
     });
+});
+
+// Тестовая страница для проверки iframe
+app.get('/test-iframe', (req, res) => {
+    const html = `
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест iframe Smotrim.ru</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-info {
+            background: #f0f0f0;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        iframe {
+            width: 100%;
+            max-width: 800px;
+            height: 450px;
+            border: 1px solid #ccc;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Тест iframe Smotrim.ru</h1>
+    <div class="test-info">
+        <h3>Информация о тесте:</h3>
+        <p><strong>URL:</strong> ${req.protocol}://${req.get('host')}</p>
+        <p><strong>User-Agent:</strong> ${req.headers['user-agent']}</p>
+        <p><strong>Referrer:</strong> ${req.headers.referrer || 'Нет'}</p>
+        <p><strong>Origin:</strong> ${req.headers.origin || 'Нет'}</p>
+    </div>
+
+    <h2>Россия 1. Назрань</h2>
+    <iframe
+        src="https://player.smotrim.ru/iframe/live/uid/0ef99435-a317-425d-8413-baad29f19bd3/start_zoom/true/showZoomBtn/false/isPlay/false/"
+        allowfullscreen
+        frameborder="0"
+        allow="autoplay; encrypted-media; fullscreen"
+        sandbox="allow-same-origin allow-scripts allow-presentation allow-forms"
+    ></iframe>
+
+    <h2>Россия 24. Назрань</h2>
+    <iframe
+        src="https://player.smotrim.ru/iframe/live/uid/fbe71f00-0d62-42a9-9b30-257276b8f887/start_zoom/true/showZoomBtn/false/isPlay/false/"
+        allowfullscreen
+        frameborder="0"
+        allow="autoplay; encrypted-media; fullscreen"
+        sandbox="allow-same-origin allow-scripts allow-presentation allow-forms"
+    ></iframe>
+</body>
+</html>`;
+    res.send(html);
 });
 
 app.use('/api', router);
