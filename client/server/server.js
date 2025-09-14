@@ -80,6 +80,9 @@ app.use((req, res, next) => {
     res.setHeader('X-Frame-Options', 'ALLOWALL');
     res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
     next();
 });
 
@@ -455,6 +458,12 @@ app.get('/api/server-time', (req, res) => {
 
 // Тестовая страница для проверки iframe
 app.get('/test-iframe', (req, res) => {
+    console.log('=== ЗАПРОС К /test-iframe ===');
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Protocol:', req.protocol);
+    console.log('Host:', req.get('host'));
+    console.log('Full URL:', `${req.protocol}://${req.get('host')}${req.url}`);
+
     const html = `
 <!DOCTYPE html>
 <html lang="ru">
@@ -483,6 +492,14 @@ app.get('/test-iframe', (req, res) => {
             display: block;
             margin: 0 auto;
         }
+        .error-message {
+            color: red;
+            font-weight: bold;
+            padding: 10px;
+            background: #ffe6e6;
+            border: 1px solid #ffcccc;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -494,6 +511,29 @@ app.get('/test-iframe', (req, res) => {
         <p><strong>Referrer:</strong> ${req.headers.referrer || 'Нет'}</p>
         <p><strong>Origin:</strong> ${req.headers.origin || 'Нет'}</p>
     </div>
+
+    <div class="error-message">
+        ⚠️ Если iframe ниже не работает, это означает, что Smotrim.ru блокирует embedding с этого домена.
+        Попробуйте открыть iframe напрямую: <a href="https://player.smotrim.ru/iframe/live/uid/0ef99435-a317-425d-8413-baad29f19bd3/start_zoom/true/showZoomBtn/false/isPlay/false/" target="_blank">Ссылка</a>
+    </div>
+
+    <h3>Альтернативный тест без sandbox:</h3>
+    <iframe
+        src="https://player.smotrim.ru/iframe/live/uid/0ef99435-a317-425d-8413-baad29f19bd3/"
+        allowfullscreen
+        frameborder="0"
+        width="640"
+        height="360"
+        style="border: 1px solid #ccc; display: block; margin: 0 auto;"
+    ></iframe>
+
+    <h3>Тест с минимальными параметрами:</h3>
+    <iframe
+        src="https://player.smotrim.ru/iframe/live/uid/0ef99435-a317-425d-8413-baad29f19bd3"
+        width="640"
+        height="360"
+        style="border: 1px solid #ccc; display: block; margin: 0 auto;"
+    ></iframe>
 
     <h2>Россия 1. Назрань</h2>
     <iframe
