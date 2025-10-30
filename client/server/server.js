@@ -91,13 +91,27 @@ app.use(cookieParser());
 
 const corsOptions = {
     origin: function (origin, callback) {
+        // Разрешенные домены для интеграций
+        const integrationDomains = [
+            'https://ya.ru',
+            'https://yandex.ru',
+            'https://powerpoint.officeapps.live.com',
+            'https://officeapps.live.com',
+            'https://view.officeapps.live.com',
+            'https://docs.google.com',
+            'https://www.google.com',
+            'https://rutube.ru',
+            'https://player.smotrim.ru'
+        ];
+
         if (process.env.NODE_ENV === 'development') {
             const allowedDev = [
                 'https://localhost:5173',
                 'http://localhost:5173',
                 'https://127.0.0.1:5173',
                 'http://127.0.0.1:5173',
-                ...allowedOrigins
+                ...allowedOrigins,
+                ...integrationDomains
             ];
             if (!origin || allowedDev.includes(origin)) {
                 callback(null, true);
@@ -106,11 +120,18 @@ const corsOptions = {
                 callback(new Error('Blocked by CORS'));
             }
         } else {
-            if (!origin || allowedOrigins.includes(origin)) {
+            // В продакшене более строгие правила
+            const allowedProd = [
+                ...allowedOrigins,
+                ...integrationDomains
+            ];
+
+            if (!origin || allowedProd.includes(origin)) {
                 callback(null, true);
             } else {
                 console.warn(`🚫 CORS заблокирован для: ${origin}`);
-                callback(new Error('Blocked by CORS'));
+                // В продакшене возвращаем ошибку вместо блокировки
+                callback(new Error('CORS policy violation'));
             }
         }
     },
@@ -640,9 +661,18 @@ app.get('*', (req, res) => {
     }
 });
 
-sequelize
-    .sync()
-    .then(() => {
+const startServer = async (retryCount = 0) => {
+    const maxRetries = 5;
+    const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 30000); // Экспоненциальная задержка, максимум 30 секунд
+
+    try {
+        // Проверяем подключение к БД
+        await sequelize.authenticate();
+        const currentTime = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+        logger.info(`[${currentTime}] Подключение к базе данных установлено успешно.`);
+
+        // Синхронизируем модели
+        await sequelize.sync();
         const moscowTime = new Date().toLocaleString('ru-RU', {
             timeZone: 'Europe/Moscow',
             year: 'numeric',
@@ -655,14 +685,34 @@ sequelize
 
         logger.info(`[${moscowTime}] Все модели были синхронизированы с базой данных.`);
 
+        // Запускаем сервер
         http.createServer(credentials, app).listen(PORT, () => {
             logger.info(`[${moscowTime}] HTTPS сервер запущен на порту ${PORT}`);
             logger.info(`🌐 Базовый URL: ${process.env.BASE_URL}`);
             logger.info(`🔗 CORS разрешен для: ${allowedOrigins.join(', ')}`);
             logger.info(`📊 Режим: ${process.env.NODE_ENV}`);
         });
-    })
-    .catch((err) => {
+
+    } catch (err) {
         const moscowTime = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
-        logger.error(`[${moscowTime}] Ошибка при синхронизации моделей с базой данных: ${err.message}`);
-    });
+        logger.error(`[${moscowTime}] Ошибка при подключении к базе данных (попытка ${retryCount + 1}/${maxRetries + 1}): ${err.message}`);
+
+        if (retryCount < maxRetries) {
+            logger.info(`[${moscowTime}] Повторная попытка подключения через ${retryDelay / 1000} секунд...`);
+            setTimeout(() => startServer(retryCount + 1), retryDelay);
+        } else {
+            logger.error(`[${moscowTime}] Превышено максимальное количество попыток подключения. Сервер не будет запущен.`);
+            logger.error(`[${moscowTime}] Детали ошибки:`, err);
+
+            // В продакшене можно отправить уведомление администратору
+            if (process.env.NODE_ENV === 'production') {
+                logger.error(`[${moscowTime}] КРИТИЧЕСКАЯ ОШИБКА: Сервер не может подключиться к базе данных!`);
+            }
+
+            process.exit(1);
+        }
+    }
+};
+
+// Запускаем сервер с retry логикой
+startServer();

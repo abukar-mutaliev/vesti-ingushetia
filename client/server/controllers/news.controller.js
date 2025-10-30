@@ -866,7 +866,8 @@ async function deleteMediaFile(media) {
     }
 
     if (!fileDeleted) {
-        console.warn(`⚠️ [DELETE] Файл не найден для удаления: ${media.url}`);
+        // Не логируем как ошибку, если файл уже удален - это нормально
+        console.log(`ℹ️ [DELETE] Файл уже удален или не найден: ${media.url}`);
     }
 
     return fileDeleted;
@@ -1040,7 +1041,8 @@ exports.deleteNews = async (req, res) => {
                     }
 
                     if (!fileDeleted) {
-                        console.warn(`⚠️ Медиа файл не найден для удаления при удалении: ${media.url}`);
+                        // Не логируем как ошибку, если файл уже удален - это нормально
+                        console.log(`ℹ️ Медиа файл уже удален или не найден: ${media.url}`);
                     }
                 }
             }
