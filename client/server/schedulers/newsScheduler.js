@@ -147,8 +147,25 @@ class NewsScheduler {
 
                             let finalImageUrl = null;
 
+                            // Вариант 0: Если это существующее изображение (при редактировании)
+                            if (mediaFile.isExisting && mediaFile.url) {
+                                // Извлекаем относительный путь из полного URL
+                                let relativeUrl = mediaFile.url;
+                                if (relativeUrl.includes('/uploads/')) {
+                                    relativeUrl = relativeUrl.substring(relativeUrl.indexOf('/uploads/') + 1);
+                                } else if (relativeUrl.startsWith('http')) {
+                                    // Если это полный URL, извлекаем путь после домена
+                                    const urlParts = relativeUrl.split('/');
+                                    const uploadsIndex = urlParts.findIndex(p => p === 'uploads');
+                                    if (uploadsIndex !== -1) {
+                                        relativeUrl = urlParts.slice(uploadsIndex).join('/');
+                                    }
+                                }
+                                finalImageUrl = relativeUrl;
+                                console.log(`   ✅ Используем существующее изображение: ${finalImageUrl}`);
+                            }
                             // Вариант 1: Если есть готовый URL и это fallback
-                            if (mediaFile.fallback && mediaFile.url) {
+                            else if (mediaFile.fallback && mediaFile.url) {
                                 // Проверяем что файл существует по указанному пути
                                 const expectedPath = path.join(__dirname, '../../uploads/images', path.basename(mediaFile.url));
                                 if (fs.existsSync(expectedPath)) {

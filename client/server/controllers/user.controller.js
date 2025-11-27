@@ -554,6 +554,42 @@ exports.getUserReplies = async (req, res) => {
     }
 };
 
+exports.changePassword = async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    try {
+        const user = await User.findByPk(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            logger.warn(`Неверный текущий пароль при смене пароля для пользователя ${userId}`, {
+                ip: req.ip,
+                timestamp: new Date().toISOString()
+            });
+            return res.status(400).json({ error: 'Неверный текущий пароль' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await user.update({ password: hashedPassword });
+
+        logger.info(`Пароль успешно изменён для пользователя ${userId}`, {
+            timestamp: new Date().toISOString()
+        });
+
+        res.status(200).json({ message: 'Пароль успешно изменён' });
+    } catch (err) {
+        logger.error('Ошибка смены пароля:', err);
+        res.status(500).json({
+            error: `Ошибка смены пароля: ${err.message}`,
+        });
+    }
+};
+
 exports.logOutUser = (req, res) => {
     if (req.user) {
         logger.info(`Пользователь ${req.user.id} вышел из системы`, {

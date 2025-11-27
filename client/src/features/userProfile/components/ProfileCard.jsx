@@ -2,6 +2,7 @@ import styles from '../ui/UserProfile.module.scss';
 import { FaUpload } from 'react-icons/fa';
 import defaultAvatar from '@assets/default-avatar.jpg';
 import { RiLogoutBoxLine } from 'react-icons/ri';
+import { FiSettings } from 'react-icons/fi';
 
 export const ProfileCard = ({
     user,
@@ -12,6 +13,7 @@ export const ProfileCard = ({
     handleUploadClick,
     fileInputRef,
     handleAvatarChange,
+    handleEditProfile,
 }) => {
     const formattedDate =
         user && user.createdAt
@@ -71,6 +73,13 @@ export const ProfileCard = ({
                         <strong>{formattedDate}</strong>
                     </div>
                 </div>
+                <button
+                    className={styles.editProfileButton}
+                    onClick={handleEditProfile}
+                >
+                    <FiSettings size={18} />
+                    Редактировать профиль
+                </button>
             </div>
         </div>
     );

@@ -434,7 +434,34 @@ exports.createNews = async (req, res) => {
 
                 console.log(`✅ Подготовлено ${newsData.mediaFiles.length} файлов для планировщика`);
             } else {
-                console.log('ℹ️ Изображения отсутствуют для отложенной публикации');
+                console.log('ℹ️ Новые изображения отсутствуют для отложенной публикации');
+            }
+
+            // Обрабатываем существующие изображения (при редактировании)
+            const existingMediaUrls = req.body.existingMediaUrls;
+            if (existingMediaUrls) {
+                try {
+                    const parsedUrls = JSON.parse(existingMediaUrls);
+                    if (Array.isArray(parsedUrls) && parsedUrls.length > 0) {
+                        console.log(`📷 Добавление ${parsedUrls.length} существующих изображений`);
+                        
+                        const existingMedia = parsedUrls.map(url => {
+                            // Извлекаем имя файла из URL
+                            const filename = url.split('/').pop();
+                            return {
+                                type: 'image',
+                                filename: filename,
+                                url: url,
+                                isExisting: true
+                            };
+                        });
+                        
+                        newsData.mediaFiles = [...newsData.mediaFiles, ...existingMedia];
+                        console.log(`✅ Всего изображений после добавления существующих: ${newsData.mediaFiles.length}`);
+                    }
+                } catch (e) {
+                    console.error('Ошибка парсинга existingMediaUrls:', e);
+                }
             }
 
             console.log('📋 Финальные данные для планировщика:', {

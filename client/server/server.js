@@ -192,8 +192,8 @@ app.use(
 );
 
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: process.env.NODE_ENV === 'development' ? 10000000 : 100,
+    windowMs: 10 * 60 * 1000, // Уменьшил до 10 минут
+    max: process.env.NODE_ENV === 'development' ? 10000000 : 1500, // Увеличил до 1500 запросов за 10 минут
     message: 'Слишком много запросов с этого IP, попробуйте позже.',
     handler: (req, res, next) => {
         const moscowTime = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
@@ -290,6 +290,15 @@ app.use('/uploads/audio', express.static(audioDir, {
 app.use('/uploads/avatars', express.static(avatarDir, {
     setHeaders: (res, filePath, stat) => {
         res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+    },
+}));
+
+// Папка temp для отложенных новостей (scheduled-* файлы)
+const tempDir = path.join(__dirname, 'temp');
+app.use('/uploads/temp', express.static(tempDir, {
+    setHeaders: (res, filePath, stat) => {
+        res.setHeader('Cache-Control', 'public, max-age=3600');
         res.setHeader('Access-Control-Allow-Origin', '*');
     },
 }));

@@ -10,3 +10,15 @@ export const updateAvatarApi = (formData) => {
 
 export const fetchUserRepliesApi = () =>
     api.get(`${API_URL}/replies`, { withCredentials: true });
+
+export const updateUserProfileApi = (userId, userData) => {
+    return api.put(`${API_URL}/update/${userId}`, userData, {
+        withCredentials: true,
+    });
+};
+
+export const changePasswordApi = (passwordData) => {
+    return api.put(`${API_URL}/change-password`, passwordData, {
+        withCredentials: true,
+    });
+};

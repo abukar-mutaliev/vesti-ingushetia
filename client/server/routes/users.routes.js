@@ -29,6 +29,7 @@ const {
     updateAvatarValidator,
     refreshTokenValidator,
     registerAdminValidator,
+    changePasswordValidator,
 } = require('../validation/userValidation');
 
 router.use(detectSuspiciousPatterns);
@@ -148,6 +149,15 @@ router.put(
     updateAvatarValidator,
     validate,
     userController.updateAvatar,
+);
+
+router.put(
+    '/change-password',
+    authenticateToken,
+    csrfProtection,
+    changePasswordValidator,
+    validate,
+    userController.changePassword,
 );
 
 router.get(

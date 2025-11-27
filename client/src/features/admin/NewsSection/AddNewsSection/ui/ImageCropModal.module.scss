@@ -1,0 +1,202 @@
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modalContent {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e1e5e9;
+    background: #f8f9fa;
+
+    h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+}
+
+.closeButton {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6c757d;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background-color: #e9ecef;
+        color: #495057;
+    }
+}
+
+.aspectInfo {
+    padding: 12px 24px;
+    border-bottom: 1px solid #e1e5e9;
+    background: #e8f4fd;
+    text-align: center;
+
+    span {
+        font-weight: 500;
+        color: #0056b3;
+        font-size: 0.9rem;
+    }
+}
+
+.cropContainer {
+    position: relative;
+    height: 400px;
+    background: #f8f9fa;
+
+    @media (max-width: 768px) {
+        height: 300px;
+    }
+}
+
+.zoomControls {
+    padding: 16px 24px;
+    border-top: 1px solid #e1e5e9;
+    background: #f8f9fa;
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #495057;
+        font-size: 0.9rem;
+    }
+}
+
+.zoomSlider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #dee2e6;
+    outline: none;
+    -webkit-appearance: none;
+
+    &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #007bff;
+        cursor: pointer;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    &::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #007bff;
+        cursor: pointer;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+}
+
+.modalActions {
+    padding: 20px 24px;
+    border-top: 1px solid #e1e5e9;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    background: white;
+
+    button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 100px;
+    }
+
+    .cancelBtn {
+        background: #6c757d;
+        color: white;
+
+        &:hover {
+            background: #5a6268;
+        }
+    }
+
+    .saveBtn {
+        background: #28a745;
+        color: white;
+
+        &:hover {
+            background: #218838;
+        }
+
+        &:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+
+            &:hover {
+                background: #6c757d;
+            }
+        }
+    }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+    .modalContent {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .modalHeader {
+        padding: 16px 20px;
+
+        h3 {
+            font-size: 1.1rem;
+        }
+    }
+
+    .aspectRatioSelector,
+    .zoomControls {
+        padding: 12px 20px;
+    }
+
+    .modalActions {
+        padding: 16px 20px;
+        flex-direction: column;
+
+        button {
+            width: 100%;
+        }
+    }
+}

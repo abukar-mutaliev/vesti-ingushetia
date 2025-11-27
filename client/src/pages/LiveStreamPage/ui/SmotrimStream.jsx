@@ -12,7 +12,8 @@ const SmotrimStream = ({ streamId }) => {
             margin: '0 auto'
         }}>
             <iframe
-                allowfullscreen
+                allowfullscreen="true"
+                allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                 frameborder="0"
                 style={{
                     width: '100%',

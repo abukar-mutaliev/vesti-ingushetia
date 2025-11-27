@@ -112,7 +112,57 @@ export const DraftsManager = ({ onEditDraft }) => {
             deferredDate: draft.deferredDate
         }));
 
+        // Флаг для возврата к черновикам после сохранения/отмены
+        localStorage.setItem('returnToDraftsAfterSave', 'true');
+
         deleteDraft(draft.id);
+        onEditDraft && onEditDraft();
+    };
+
+    const editServerScheduledNews = async (item) => {
+        const realId = item.id.replace('server-', '');
+        
+        console.log('✏️ Редактирование отложенной новости:', {
+            id: realId,
+            title: item.newsTitle,
+            mediaFiles: item.mediaFiles,
+            deferredDate: item.deferredDate
+        });
+        
+        // Форматируем дату для input datetime-local
+        let formattedDeferredDate = '';
+        if (item.deferredDate) {
+            const date = new Date(item.deferredDate);
+            // Форматируем в YYYY-MM-DDTHH:mm для input datetime-local
+            formattedDeferredDate = date.toISOString().slice(0, 16);
+        }
+        
+        // Извлекаем URL изображений
+        const mediaUrls = item.mediaFiles?.map(m => m.url).filter(url => url) || [];
+        console.log('📷 URL изображений для редактирования:', mediaUrls);
+        
+        // Загружаем данные в форму редактирования
+        // НЕ отменяем новость сразу - сохраняем ID для отмены при сохранении
+        const formData = {
+            newsTitle: item.newsTitle,
+            newsContent: item.newsContent,
+            selectedCategoryIds: item.categoryIds || [],
+            videoUrl: item.videoUrl || '',
+            publishDate: '',
+            isDeferred: true,
+            deferredDate: formattedDeferredDate,
+            // ID запланированной новости для отмены при сохранении
+            scheduledNewsIdToCancel: realId,
+            // Сохраняем URL изображений для отображения
+            existingMediaUrls: mediaUrls
+        };
+        
+        console.log('💾 Сохранение в localStorage:', formData);
+        localStorage.setItem('adminDashboard_addNewsSectionFormData', JSON.stringify(formData));
+        
+        // Флаг для возврата к черновикам после сохранения
+        localStorage.setItem('returnToDraftsAfterSave', 'true');
+
         onEditDraft && onEditDraft();
     };
 
@@ -193,16 +243,22 @@ export const DraftsManager = ({ onEditDraft }) => {
 
     // Объединяем локальные черновики с серверными отложенными новостями
     const getAllNewsItems = () => {
-        const serverScheduled = myScheduledNews.map(news => ({
-            ...news,
-            id: `server-${news.id}`,
-            newsTitle: news.title || 'Без заголовка',
-            newsContent: news.content || '',
-            deferredDate: news.publishDate || news.scheduledDate, // Используем publishDate в первую очередь
-            createdAt: news.createdAt,
-            status: news.status,
-            isServerNews: true
-        }));
+        const serverScheduled = myScheduledNews.map(news => {
+            console.log('📰 Серверная новость:', news.title, 'mediaFiles:', news.mediaFiles);
+            return {
+                ...news,
+                id: `server-${news.id}`,
+                newsTitle: news.title || 'Без заголовка',
+                newsContent: news.content || '',
+                deferredDate: news.publishDate || news.scheduledDate,
+                createdAt: news.createdAt,
+                status: news.status,
+                isServerNews: true,
+                categoryIds: news.categoryIds || news.categories?.map(c => c.id) || [],
+                videoUrl: news.videoUrl || '',
+                mediaFiles: news.mediaFiles || []
+            };
+        });
 
         return [...localDrafts, ...serverScheduled];
     };
@@ -303,15 +359,17 @@ export const DraftsManager = ({ onEditDraft }) => {
                             </div>
 
                             <div className={styles.actions}>
-                                {!item.isServerNews && (
-                                    <button
-                                        className={styles.editBtn}
-                                        onClick={() => editDraft(item)}
-                                        title="Редактировать"
-                                    >
-                                        <FaEdit />
-                                    </button>
-                                )}
+                                <button
+                                    className={styles.editBtn}
+                                    onClick={() => 
+                                        item.isServerNews 
+                                            ? editServerScheduledNews(item)
+                                            : editDraft(item)
+                                    }
+                                    title="Редактировать"
+                                >
+                                    <FaEdit />
+                                </button>
 
                                 <button
                                     className={styles.publishBtn}

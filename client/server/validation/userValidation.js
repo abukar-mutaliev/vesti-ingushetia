@@ -58,8 +58,8 @@ exports.registerUserValidator = [
         .withMessage('Имя пользователя обязательно')
         .isLength({ min: 3, max: 30 })
         .withMessage('Имя пользователя должно содержать от 3 до 30 символов')
-        .matches(/^[a-zA-Z0-9_]+$/)
-        .withMessage('Имя пользователя может содержать только буквы, цифры и символ подчеркивания')
+        .matches(/^[a-zA-Zа-яА-ЯёЁ0-9_ ]+$/)
+        .withMessage('Имя пользователя может содержать только буквы, цифры, пробелы и символ подчеркивания')
         .custom((value) => {
             const sanitized = sanitizeInput(value);
             if (sanitized !== value) {
@@ -132,8 +132,8 @@ exports.updateUserValidator = [
         .optional()
         .isLength({ min: 3, max: 30 })
         .withMessage('Имя пользователя должно содержать от 3 до 30 символов')
-        .matches(/^[a-zA-Z0-9_]+$/)
-        .withMessage('Имя пользователя может содержать только буквы, цифры и символ подчеркивания')
+        .matches(/^[a-zA-Zа-яА-ЯёЁ0-9_ ]+$/)
+        .withMessage('Имя пользователя может содержать только буквы, цифры, пробелы и символ подчеркивания')
         .custom((value) => {
             if (value) {
                 const sanitized = sanitizeInput(value);
@@ -200,8 +200,8 @@ exports.registerAdminValidator = [
         .withMessage('Имя пользователя обязательно')
         .isLength({ min: 3, max: 30 })
         .withMessage('Имя пользователя должно содержать от 3 до 30 символов')
-        .matches(/^[a-zA-Z0-9_]+$/)
-        .withMessage('Имя пользователя может содержать только буквы, цифры и символ подчеркивания')
+        .matches(/^[a-zA-Zа-яА-ЯёЁ0-9_ ]+$/)
+        .withMessage('Имя пользователя может содержать только буквы, цифры, пробелы и символ подчеркивания')
         .custom((value) => {
             const sanitized = sanitizeInput(value);
             if (sanitized !== value) {

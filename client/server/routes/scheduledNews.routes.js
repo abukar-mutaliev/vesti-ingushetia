@@ -11,9 +11,59 @@ const logger = require('../logger');
 router.get('/my', authenticateToken, async (req, res) => {
     try {
         const scheduledNews = await newsScheduler.getScheduledNews(req.user.id);
+        const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
 
         const formattedNews = scheduledNews.map(item => {
             const newsData = JSON.parse(item.newsData);
+            
+            // Форматируем URL изображений
+            let mediaFiles = [];
+            if (newsData.mediaFiles && newsData.mediaFiles.length > 0) {
+                console.log('📷 Обработка mediaFiles для новости:', item.title);
+                
+                mediaFiles = newsData.mediaFiles.map((media, index) => {
+                    console.log(`  Файл ${index + 1}:`, media);
+                    
+                    let url = '';
+                    
+                    // Приоритеты для формирования URL:
+                    // 1. Если уже есть готовый URL (http/https)
+                    if (media.url && media.url.startsWith('http')) {
+                        url = media.url;
+                    }
+                    // 2. Если filename начинается с scheduled- (файлы в temp)
+                    else if (media.filename && media.filename.startsWith('scheduled-')) {
+                        url = `${baseUrl}/uploads/temp/${media.filename}`;
+                    }
+                    // 3. Если есть filename обычный - формируем URL для uploads/images
+                    else if (media.filename) {
+                        url = `${baseUrl}/uploads/images/${media.filename}`;
+                    }
+                    // 4. Если путь содержит temp
+                    else if (media.path && media.path.includes('temp')) {
+                        const filename = media.path.split(/[/\\]/).pop();
+                        url = `${baseUrl}/uploads/temp/${filename}`;
+                    }
+                    // 5. Если путь содержит uploads
+                    else if (media.path && media.path.includes('uploads')) {
+                        const uploadsIndex = media.path.indexOf('uploads');
+                        const relativePath = media.path.substring(uploadsIndex).replace(/\\/g, '/');
+                        url = `${baseUrl}/${relativePath}`;
+                    }
+                    // 6. Если есть относительный путь uploads/
+                    else if (media.url && media.url.startsWith('uploads/')) {
+                        url = `${baseUrl}/${media.url}`;
+                    }
+                    
+                    console.log(`  Итоговый URL: ${url}`);
+                    
+                    return {
+                        ...media,
+                        url: url
+                    };
+                }).filter(m => m.url); // Фильтруем только с валидным URL
+            }
+            
             return {
                 id: item.id,
                 title: item.title,
@@ -23,6 +73,10 @@ router.get('/my', authenticateToken, async (req, res) => {
                 status: item.status,
                 createdAt: item.createdAt,
                 authorId: item.authorId,
+                // Полные данные для редактирования
+                categoryIds: newsData.categoryIds || [],
+                videoUrl: newsData.videoUrl || '',
+                mediaFiles: mediaFiles,
                 preview: {
                     title: newsData.title,
                     content: newsData.content ? newsData.content.substring(0, 200) + '...' : '',

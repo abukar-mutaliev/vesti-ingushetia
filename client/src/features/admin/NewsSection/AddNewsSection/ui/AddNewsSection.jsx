@@ -4,11 +4,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectCategories } from '@entities/categories/model/categorySelectors.js';
 import { fetchCategories } from '@entities/categories/model/categorySlice.js';
 import { createNews, fetchAllNews } from '@entities/news/model/newsSlice.js';
-import { createScheduledNews } from '@entities/news/model/scheduledNewsSlice.js';
+import { createScheduledNews, cancelScheduledNews } from '@entities/news/model/scheduledNewsSlice.js';
 import { RichTextEditor } from '@shared/ui/RichTextEditor';
 import { FaDeleteLeft, FaClock } from 'react-icons/fa6';
-import { FaCalendarAlt } from 'react-icons/fa';
+import { FaCalendarAlt, FaCrop } from 'react-icons/fa';
 import { MoscowTimeUtils } from '@shared/lib/TimeUtils/timeUtils.js';
+import { ImageCropModal } from './ImageCropModal.jsx';
 
 const LOCAL_STORAGE_KEY = 'adminDashboard_addNewsSectionFormData';
 
@@ -51,12 +52,52 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         return saved ? JSON.parse(saved).deferredDate || '' : '';
     });
 
+    // Существующие изображения (URL) при редактировании отложенных новостей
+    const [existingMediaUrls, setExistingMediaUrls] = useState(() => {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        return saved ? JSON.parse(saved).existingMediaUrls || [] : [];
+    });
+
+    // ID запланированной новости для отмены при сохранении (при редактировании)
+    const [scheduledNewsIdToCancel, setScheduledNewsIdToCancel] = useState(() => {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        return saved ? JSON.parse(saved).scheduledNewsIdToCancel || null : null;
+    });
+
     const [newsMedia, setNewsMedia] = useState([[]]);
     const [errors, setErrors] = useState({});
+
+    // State for image cropping modal
+    const [cropModal, setCropModal] = useState({
+        isOpen: false,
+        image: null,
+        groupIndex: null,
+        fileIndex: null,
+    });
 
     useEffect(() => {
         dispatch(fetchCategories());
     }, [dispatch]);
+
+    // Загружаем данные из localStorage при монтировании (для редактирования отложенных новостей)
+    useEffect(() => {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (saved) {
+            try {
+                const parsedData = JSON.parse(saved);
+                // Обновляем существующие изображения если они есть
+                if (parsedData.existingMediaUrls && parsedData.existingMediaUrls.length > 0) {
+                    setExistingMediaUrls(parsedData.existingMediaUrls);
+                }
+                // Обновляем ID для отмены если есть
+                if (parsedData.scheduledNewsIdToCancel) {
+                    setScheduledNewsIdToCancel(parsedData.scheduledNewsIdToCancel);
+                }
+            } catch (e) {
+                console.error('Ошибка парсинга данных из localStorage:', e);
+            }
+        }
+    }, []);
 
     useEffect(() => {
         const formData = {
@@ -67,6 +108,8 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             publishDate,
             isDeferred,
             deferredDate,
+            existingMediaUrls,
+            scheduledNewsIdToCancel,
         };
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(formData));
     }, [
@@ -77,6 +120,8 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         publishDate,
         isDeferred,
         deferredDate,
+        existingMediaUrls,
+        scheduledNewsIdToCancel,
     ]);
 
     useEffect(() => {
@@ -165,7 +210,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         const isDeferredDateValid = validateField('deferredDate', deferredDate);
 
         const isMediaValid =
-            videoUrl.trim() || newsMedia.some((group) => group.length > 0);
+            videoUrl.trim() || newsMedia.some((group) => group.length > 0) || existingMediaUrls.length > 0;
         setErrors((prevErrors) => ({
             ...prevErrors,
             media: isMediaValid
@@ -277,6 +322,12 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             }
         }
 
+        // Передаём существующие URL изображений (при редактировании отложенной новости)
+        if (existingMediaUrls.length > 0) {
+            formData.append('existingMediaUrls', JSON.stringify(existingMediaUrls));
+            console.log('📷 [CLIENT] Существующие изображения:', existingMediaUrls);
+        }
+
         // ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ ФАЙЛОВ
         console.log('📁 [CLIENT] Анализ файлов перед отправкой:');
         console.log('   newsMedia структура:', newsMedia);
@@ -313,8 +364,23 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
 
         console.log(`🚀 [CLIENT] Отправка ${isDeferred ? 'отложенной' : 'немедленной'} новости...`);
 
-        dispatch(actionToDispatch(formData))
-            .unwrap()
+        // Если редактируем существующую запланированную новость - сначала отменяем старую
+        const saveNews = async () => {
+            if (scheduledNewsIdToCancel) {
+                console.log(`🗑️ [CLIENT] Отмена старой запланированной новости ID: ${scheduledNewsIdToCancel}`);
+                try {
+                    await dispatch(cancelScheduledNews(scheduledNewsIdToCancel)).unwrap();
+                    console.log('✅ [CLIENT] Старая запланированная новость отменена');
+                } catch (cancelError) {
+                    console.error('⚠️ [CLIENT] Ошибка отмены старой новости:', cancelError);
+                    // Продолжаем сохранение даже при ошибке отмены
+                }
+            }
+            
+            return dispatch(actionToDispatch(formData)).unwrap();
+        };
+
+        saveNews()
             .then((response) => {
                 console.log('✅ [CLIENT] Успешный ответ:', response);
 
@@ -438,6 +504,114 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         });
     };
 
+    const openCropModal = (groupIndex, fileIndex) => {
+        const file = newsMedia[groupIndex][fileIndex];
+        if (file && file.type.startsWith('image')) {
+            setCropModal({
+                isOpen: true,
+                image: {
+                    src: URL.createObjectURL(file),
+                    name: file.name,
+                },
+                groupIndex,
+                fileIndex,
+            });
+        }
+    };
+
+    const handleCropComplete = (croppedImage) => {
+        const { groupIndex, fileIndex } = cropModal;
+
+        // Revoke the previous object URL to free memory
+        URL.revokeObjectURL(cropModal.image.src);
+
+        setNewsMedia((prevMedia) => {
+            const updatedMedia = [...prevMedia];
+            updatedMedia[groupIndex] = [...updatedMedia[groupIndex]];
+            updatedMedia[groupIndex][fileIndex] = croppedImage;
+            return updatedMedia;
+        });
+
+        setCropModal({
+            isOpen: false,
+            image: null,
+            groupIndex: null,
+            fileIndex: null,
+        });
+    };
+
+    const closeCropModal = () => {
+        if (cropModal.image) {
+            URL.revokeObjectURL(cropModal.image.src);
+        }
+        setCropModal({
+            isOpen: false,
+            image: null,
+            groupIndex: null,
+            fileIndex: null,
+            isExisting: false,
+            existingIndex: null,
+        });
+    };
+
+    // Обработка обрезки существующего изображения
+    const openCropModalForExisting = async (url, index) => {
+        try {
+            // Загружаем изображение как blob
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            
+            setCropModal({
+                isOpen: true,
+                image: {
+                    src: objectUrl,
+                    name: `existing-image-${index}.jpg`,
+                },
+                groupIndex: null,
+                fileIndex: null,
+                isExisting: true,
+                existingIndex: index,
+                existingUrl: url,
+            });
+        } catch (error) {
+            console.error('Ошибка загрузки изображения для обрезки:', error);
+            alert('Не удалось загрузить изображение для редактирования');
+        }
+    };
+
+    // Обработка завершения обрезки для существующего изображения
+    const handleCropCompleteForExisting = (croppedImage) => {
+        const { existingIndex } = cropModal;
+        
+        // Удаляем из существующих URL
+        setExistingMediaUrls(prev => prev.filter((_, i) => i !== existingIndex));
+        
+        // Добавляем обрезанное изображение в newsMedia
+        setNewsMedia(prev => {
+            const updated = [...prev];
+            if (updated[0]) {
+                updated[0] = [...updated[0], croppedImage];
+            } else {
+                updated[0] = [croppedImage];
+            }
+            return updated;
+        });
+        
+        // Закрываем модал
+        if (cropModal.image) {
+            URL.revokeObjectURL(cropModal.image.src);
+        }
+        setCropModal({
+            isOpen: false,
+            image: null,
+            groupIndex: null,
+            fileIndex: null,
+            isExisting: false,
+            existingIndex: null,
+        });
+    };
+
     const handleCancel = () => {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
         onCancel();
@@ -447,9 +621,11 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         return MoscowTimeUtils.getMinDateTime();
     };
 
+    const isEditing = !!scheduledNewsIdToCancel;
+
     return (
         <div className={styles.addNewsSection}>
-            <h2>Добавить новость</h2>
+            <h2>{isEditing ? 'Редактировать отложенную новость' : 'Добавить новость'}</h2>
             <div className={styles.addForm}>
                 <label>Заголовок</label>
                 <input
@@ -574,6 +750,55 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 </div>
 
                 <label>Изображения</label>
+                
+                {/* Существующие изображения при редактировании */}
+                {existingMediaUrls.length > 0 && (
+                    <div className={styles.existingMedia}>
+                        <p className={styles.existingMediaLabel}>Текущие изображения ({existingMediaUrls.length}):</p>
+                        <div className={styles.mediaPreview}>
+                            {existingMediaUrls.map((url, index) => (
+                                <div key={`existing-${index}`} className={styles.previewItem}>
+                                    <div className={styles.previewActions}>
+                                        <button
+                                            type="button"
+                                            className={styles.cropButton}
+                                            onClick={() => openCropModalForExisting(url, index)}
+                                            title="Обрезать изображение"
+                                        >
+                                            <FaCrop />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={styles.removeButton}
+                                            onClick={() => {
+                                                setExistingMediaUrls(prev => 
+                                                    prev.filter((_, i) => i !== index)
+                                                );
+                                            }}
+                                            title="Удалить изображение"
+                                        >
+                                            <FaDeleteLeft />
+                                        </button>
+                                    </div>
+                                    <img
+                                        src={url}
+                                        alt={`Изображение ${index + 1}`}
+                                        className={styles.imagePreview}
+                                        onError={(e) => {
+                                            console.error('Ошибка загрузки изображения:', url);
+                                            e.target.style.display = 'none';
+                                            e.target.parentElement.innerHTML += '<span style="font-size:10px;color:#666;padding:5px;">Изображение недоступно</span>';
+                                        }}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                        <p className={styles.existingMediaInfo}>
+                            Эти изображения уже загружены. Нажмите ✂️ для обрезки или ❌ для удаления.
+                        </p>
+                    </div>
+                )}
+                
                 {newsMedia.map((mediaGroup, index) => (
                     <div key={index}>
                         <input
@@ -589,15 +814,26 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                                     key={fileIndex}
                                     className={styles.previewItem}
                                 >
-                                    <button
-                                        type="button"
-                                        className={styles.removeButton}
-                                        onClick={() =>
-                                            removeMedia(index, fileIndex)
-                                        }
-                                    >
-                                        <FaDeleteLeft />
-                                    </button>
+                                    <div className={styles.previewActions}>
+                                        <button
+                                            type="button"
+                                            className={styles.cropButton}
+                                            onClick={() => openCropModal(index, fileIndex)}
+                                            title="Обрезать изображение"
+                                        >
+                                            <FaCrop />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={styles.removeButton}
+                                            onClick={() =>
+                                                removeMedia(index, fileIndex)
+                                            }
+                                            title="Удалить изображение"
+                                        >
+                                            <FaDeleteLeft />
+                                        </button>
+                                    </div>
                                     {file.type.startsWith('image') && (
                                         <img
                                             src={URL.createObjectURL(file)}
@@ -658,6 +894,14 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                     </button>
                 </div>
             </div>
+
+            {cropModal.isOpen && (
+                <ImageCropModal
+                    image={cropModal.image}
+                    onCropComplete={cropModal.isExisting ? handleCropCompleteForExisting : handleCropComplete}
+                    onCancel={closeCropModal}
+                />
+            )}
         </div>
     );
 };

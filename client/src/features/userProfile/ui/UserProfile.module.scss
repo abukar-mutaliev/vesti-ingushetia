@@ -164,6 +164,38 @@
             }
         }
     }
+
+    .editProfileButton {
+        margin-top: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
+
+        @media screen and (max-width: 860px) {
+            padding: 10px 20px;
+            font-size: 13px;
+        }
+    }
 }
 
 .repliesSection {
@@ -302,5 +334,49 @@
 
     &:hover {
         color: #000;
+    }
+}
+
+.toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: #fff;
+    padding: 16px 28px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 500;
+    box-shadow: 0 10px 40px rgba(34, 197, 94, 0.4);
+    z-index: 9999;
+    animation: toastSlideDown 0.4s ease-out;
+
+    svg {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        padding: 4px;
+    }
+
+    @media screen and (max-width: 480px) {
+        top: 70px;
+        left: 16px;
+        right: 16px;
+        transform: none;
+        justify-content: center;
+    }
+}
+
+@keyframes toastSlideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
     }
 }

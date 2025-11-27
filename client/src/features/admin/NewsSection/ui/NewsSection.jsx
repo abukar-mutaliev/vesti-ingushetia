@@ -21,6 +21,15 @@ export const NewsSection = ({ onEditNews, onAddNews }) => {
     const [showDrafts, setShowDrafts] = useState(false);
     const [draftsCount, setDraftsCount] = useState({ total: 0, scheduled: 0, drafts: 0 });
 
+    // Проверяем флаг возврата к черновикам при каждом рендере
+    useEffect(() => {
+        const returnToDrafts = localStorage.getItem('returnToDraftsAfterSave');
+        if (returnToDrafts === 'true') {
+            localStorage.removeItem('returnToDraftsAfterSave');
+            setShowDrafts(true);
+        }
+    });
+
     useEffect(() => {
         dispatch(fetchAllNews());
         updateDraftsCount();
@@ -71,6 +80,13 @@ export const NewsSection = ({ onEditNews, onAddNews }) => {
         setShowDrafts(false);
         onAddNews();
         updateDraftsCount();
+    };
+
+    // Обработчик добавления новой новости - очищаем данные предыдущего редактирования
+    const handleAddNewNews = () => {
+        localStorage.removeItem('adminDashboard_addNewsSectionFormData');
+        localStorage.removeItem('returnToDraftsAfterSave');
+        onAddNews();
     };
 
     if (showDrafts) {
@@ -125,7 +141,7 @@ export const NewsSection = ({ onEditNews, onAddNews }) => {
                         </button>
                     )}
 
-                    <button className={styles.create} onClick={onAddNews}>
+                    <button className={styles.create} onClick={handleAddNewNews}>
                         <FaPlus className={styles.buttonIcon} />
                         Добавить новость
                     </button>
@@ -170,7 +186,7 @@ export const NewsSection = ({ onEditNews, onAddNews }) => {
                                 <p>Новостей пока нет</p>
                                 <button
                                     className={styles.emptyButton}
-                                    onClick={onAddNews}
+                                    onClick={handleAddNewNews}
                                 >
                                     Создать первую новость
                                 </button>
