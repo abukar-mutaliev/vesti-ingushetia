@@ -95,9 +95,6 @@ const corsOptions = {
         const integrationDomains = [
             'https://ya.ru',
             'https://yandex.ru',
-            'https://powerpoint.officeapps.live.com',
-            'https://officeapps.live.com',
-            'https://view.officeapps.live.com',
             'https://docs.google.com',
             'https://www.google.com',
             'https://rutube.ru',

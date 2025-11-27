@@ -5,25 +5,14 @@ const SmotrimStream = ({ streamId }) => {
 
     return (
         <div className={styles.iframeContainer}>
-            <div className={styles.iframeWrapper}>
-            <iframe
-                allowFullScreen
-                frameBorder="0"
-                style={{
-                    width: '100%',
-                    maxWidth: '800px',
-                    height: 'auto',
-                    minHeight: '400px',
-                    display: 'block',
-                    margin: '0 auto'
-                }}
-                name={`smotrim_player_${streamId}`}
-                src={iframeSrc}
-                className={styles.liveStreamIframe}
-                title="Трансляция"
-                allow="autoplay; encrypted-media; fullscreen"
-                sandbox="allow-same-origin allow-scripts allow-presentation allow-forms"
-            />
+            <div style={{ maxWidth: '100%', position: 'relative', width: '100%', paddingBottom: '56%' }}>
+                <iframe
+                    allowfullscreen
+                    frameborder="0"
+                    style={{ width: '100%', height: '100%', position: 'absolute' }}
+                    name={`smotrim_player_${streamId}`}
+                    src={iframeSrc}
+                />
             </div>
         </div>
     );
