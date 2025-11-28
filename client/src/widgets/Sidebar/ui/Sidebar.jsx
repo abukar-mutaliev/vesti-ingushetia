@@ -34,8 +34,8 @@ export const Sidebar = React.memo(({ categories }) => {
 
     return (
         <div className={styles.sidebar}>
-            <p>Рекламная служба ГТРК "Ингушетия" - 8928-793-47-86</p>
             <LiveStreamWidget />
+            <p>Рекламная служба ГТРК "Ингушетия" - 8928-793-47-86</p>
             <VideoAdPlayer />
 
             {categories.map((category) => {
