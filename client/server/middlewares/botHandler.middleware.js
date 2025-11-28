@@ -3,6 +3,7 @@ const fs = require('fs');
 const logger = require('../logger');
 const { News, Media } = require('../models');
 const sharp = require('sharp');
+const { isYandexBotIP, getClientIP } = require('../utils/yandexIPWhitelist');
 
 const formatMediaUrls = (newsItem, baseUrl) => {
     const newsObj = newsItem.toJSON();
@@ -58,14 +59,19 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
 
 const botHandler = async (req, res, next) => {
     const userAgent = req.headers['user-agent']?.toLowerCase() || '';
+    const clientIP = getClientIP(req);
 
-    const isBot = userAgent.includes('bot') ||
+    // Проверяем по User-Agent
+    const isBotByUA = userAgent.includes('bot') ||
         userAgent.includes('spider') ||
         userAgent.includes('crawler') ||
         userAgent.includes('yandex') ||
         userAgent.includes('googlebot');
+    
+    // Проверяем по IP-адресу (новые роботы Яндекса)
+    const isYandexIP = isYandexBotIP(clientIP);
 
-    if (!isBot) {
+    if (!isBotByUA && !isYandexIP) {
         return next();
     }
 

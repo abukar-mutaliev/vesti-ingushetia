@@ -2,6 +2,7 @@
 const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
 const logger = require('../logger');
+const { isYandexBotIP, getClientIP } = require('../utils/yandexIPWhitelist');
 
 // Хранилище для отслеживания попыток входа
 const failedAttempts = new Map();
@@ -24,7 +25,14 @@ setInterval(() => {
  * Middleware для защиты от брутфорса при входе
  */
 const bruteForceProtection = (req, res, next) => {
-    const key = `${req.ip}:${req.body.email || 'unknown'}`;
+    const clientIP = getClientIP(req);
+    
+    // Пропускаем роботов Яндекса
+    if (isYandexBotIP(clientIP)) {
+        return next();
+    }
+    
+    const key = `${clientIP}:${req.body.email || 'unknown'}`;
     const attempts = failedAttempts.get(key) || { count: 0, lastAttempt: 0 };
 
     // Если слишком много попыток
@@ -58,8 +66,8 @@ const bruteForceProtection = (req, res, next) => {
 
             // Добавляем IP в подозрительные после 3 неудачных попыток
             if (attempts.count >= 3) {
-                suspiciousIPs.add(req.ip);
-                console.log(`[SECURITY] IP ${req.ip} добавлен в список подозрительных`, {
+                suspiciousIPs.add(clientIP);
+                console.log(`[SECURITY] IP ${clientIP} добавлен в список подозрительных`, {
                     attempts: attempts.count,
                     email: req.body.email,
                     timestamp: new Date().toISOString()
@@ -68,7 +76,7 @@ const bruteForceProtection = (req, res, next) => {
         } else if (res.statusCode === 200 && data && data.message === 'Успешная авторизация') {
             // Успешный вход - сбрасываем счетчик
             failedAttempts.delete(key);
-            suspiciousIPs.delete(req.ip);
+            suspiciousIPs.delete(clientIP);
         }
 
         return originalJson.call(this, data);
@@ -85,7 +93,11 @@ const suspiciousIPSlowdown = slowDown({
     delayAfter: 1, // начинаем замедлять после 1 запроса
     delayMs: () => 500, // функция, возвращающая 500мс задержки
     maxDelayMs: 5000, // максимальная задержка 5 секунд
-    skip: (req) => !suspiciousIPs.has(req.ip),
+    skip: (req) => {
+        const clientIP = getClientIP(req);
+        // Пропускаем роботов Яндекса и IP, которые не в списке подозрительных
+        return isYandexBotIP(clientIP) || !suspiciousIPs.has(clientIP);
+    },
     validate: {
         delayMs: false // отключаем предупреждение
     }
@@ -121,6 +133,13 @@ const registrationLimiter = rateLimit({
  * Middleware для обнаружения подозрительных паттернов
  */
 const detectSuspiciousPatterns = (req, res, next) => {
+    const clientIP = getClientIP(req);
+    
+    // Пропускаем роботов Яндекса
+    if (isYandexBotIP(clientIP)) {
+        return next();
+    }
+    
     const userAgent = req.get('User-Agent') || '';
     const suspiciousPatterns = [
         /sqlmap/i,
@@ -150,7 +169,7 @@ const detectSuspiciousPatterns = (req, res, next) => {
     );
 
     // Проверяем на слишком быстрые запросы
-    const requestKey = `requests:${req.ip}`;
+    const requestKey = `requests:${clientIP}`;
     const now = Date.now();
     const requests = failedAttempts.get(requestKey) || { times: [], count: 0 };
 
@@ -158,20 +177,20 @@ const detectSuspiciousPatterns = (req, res, next) => {
     requests.times = requests.times.filter(time => now - time < 10000); // Последние 10 секунд
 
     if (requests.times.length > 20) { // Более 20 запросов за 10 секунд
-        console.log(`[SECURITY] Обнаружена подозрительная активность от ${req.ip}`, {
+        console.log(`[SECURITY] Обнаружена подозрительная активность от ${clientIP}`, {
             requestsIn10s: requests.times.length,
             userAgent: userAgent,
             endpoint: req.path,
             timestamp: new Date().toISOString()
         });
 
-        suspiciousIPs.add(req.ip);
+        suspiciousIPs.add(clientIP);
     }
 
     failedAttempts.set(requestKey, requests);
 
     if (isSuspiciousUA || hasSuspiciousHeaders) {
-        console.log(`[SECURITY] Подозрительный запрос от ${req.ip}`, {
+        console.log(`[SECURITY] Подозрительный запрос от ${clientIP}`, {
             userAgent: userAgent,
             suspiciousUA: isSuspiciousUA,
             suspiciousHeaders: hasSuspiciousHeaders,
@@ -179,7 +198,7 @@ const detectSuspiciousPatterns = (req, res, next) => {
             timestamp: new Date().toISOString()
         });
 
-        suspiciousIPs.add(req.ip);
+        suspiciousIPs.add(clientIP);
 
         // Для очень подозрительных запросов возвращаем 403
         if (isSuspiciousUA) {

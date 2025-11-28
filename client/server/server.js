@@ -41,13 +41,31 @@ const publicDir = path.join(__dirname, '../public');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Импорт утилиты для проверки IP-адресов роботов Яндекса
+// Добавлены новые IP-адреса и подсети роботов Яндекса для вайтлиста
+// Подробности: client/server/utils/yandexIPWhitelist.js
+const { isYandexBotIP, getClientIP } = require('./utils/yandexIPWhitelist');
+
+/**
+ * Проверяет, является ли запрос запросом от бота
+ * Проверяет как по User-Agent, так и по IP-адресу (для новых роботов Яндекса)
+ */
 const isBot = (req) => {
     const userAgent = req.headers['user-agent']?.toLowerCase() || '';
-    return userAgent.includes('bot') ||
+    const clientIP = getClientIP(req);
+    
+    // Проверяем по User-Agent
+    const isBotByUA = userAgent.includes('bot') ||
         userAgent.includes('spider') ||
         userAgent.includes('crawler') ||
         userAgent.includes('yandex') ||
         userAgent.includes('googlebot');
+    
+    // Проверяем по IP-адресу (новые роботы Яндекса)
+    // IP-адреса: 217.20.158.64/26, 217.20.158.252/30, 5.101.41.0/29
+    const isYandexIP = isYandexBotIP(clientIP);
+    
+    return isBotByUA || isYandexIP;
 };
 
 app.use((req, res, next) => {
@@ -61,6 +79,13 @@ app.use((req, res, next) => {
         second: '2-digit'
     });
 
+    const clientIP = getClientIP(req);
+    const isYandexBot = isYandexBotIP(clientIP);
+    
+    if (isYandexBot) {
+        logger.info(`[${moscowTime}] 🤖 Yandex Bot IP: ${clientIP} - ${req.method} ${req.url}`);
+    }
+
     if (!req.url.includes('/uploads/') &&
         !req.url.includes('.js') &&
         !req.url.includes('.css') &&
@@ -70,7 +95,7 @@ app.use((req, res, next) => {
         !req.url.includes('.gif') &&
         !req.url.includes('.webp') &&
         !req.url.includes('/favicon.ico')) {
-        logger.info(`[${moscowTime}] ${req.method} ${req.url}`);
+        logger.info(`[${moscowTime}] ${req.method} ${req.url}${isYandexBot ? ' [Yandex Bot]' : ''}`);
     }
     next();
 });

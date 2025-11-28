@@ -1,7 +1,7 @@
 import styles from './LiveStreamPage.module.scss';
 
 const SmotrimStream = ({ streamId }) => {
-    const iframeSrc = `https://player.smotrim.ru/iframe/live/uid/${streamId}/start_zoom/true/showZoomBtn/false/isPlay/false/`;
+    const iframeSrc = `https://player.smotrim.ru/iframe/live/uid/${streamId}/start_zoom/true/showZoomBtn/false/isPlay/true/autoplay/true/`;
 
     return (
         <div style={{
