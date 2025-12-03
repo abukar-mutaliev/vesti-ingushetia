@@ -642,7 +642,9 @@ const distDir = path.join(__dirname, '../dist');
 
 // botHandler должен быть ПЕРЕД статическими файлами и React роутингом
 // чтобы перехватывать запросы к /news/:id для ботов
+// ВАЖНО: botHandler должен быть ДО express.static(distDir), иначе статика может перехватить запрос
 app.use(botHandler);
+
 app.use(express.static(distDir));
 
 app.use((err, req, res, next) => {
