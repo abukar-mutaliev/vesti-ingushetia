@@ -19,3 +19,5 @@ ON CONFLICT (email) DO NOTHING;
 -- Проверяем, что админ создан
 SELECT id, username, email, "isAdmin" FROM users WHERE email = 'admin@example.com';
 
+
+

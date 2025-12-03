@@ -25,7 +25,7 @@
 </head>
 <body>
 <div id="root">
-    <div class="seo-content">
+    <div class="seo-content" style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif; line-height: 1.6;">
         <article itemscope itemtype="http://schema.org/NewsArticle"
                  prefix="schema: http://schema.org/ article: http://ogp.me/ns/article#">
             <meta itemprop="datePublished" content="%PUBLISH_DATE%" />
@@ -33,9 +33,21 @@
             <meta itemprop="author" content="%AUTHOR%" />
             %PUBLISHER_MARKUP%
 
-            <h1 itemprop="headline">%TITLE%</h1>
-            <img src="%IMAGE_URL%" alt="%TITLE%" itemprop="image" />
-            <div itemprop="articleBody">%CONTENT%</div>
+            <header style="margin-bottom: 20px;">
+                <h1 itemprop="headline" style="font-size: 28px; margin-bottom: 10px; color: #333;">%TITLE%</h1>
+                <div style="color: #666; font-size: 14px; margin-bottom: 20px;">
+                    <span>Автор: <span itemprop="author">%AUTHOR%</span></span>
+                    <span style="margin-left: 20px;">Дата публикации: <time itemprop="datePublished" datetime="%PUBLISH_DATE%">%PUBLISH_DATE%</time></span>
+                </div>
+            </header>
+
+            <div style="margin-bottom: 20px;">
+                <img src="%IMAGE_URL%" alt="%TITLE%" itemprop="image" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" />
+            </div>
+
+            <div itemprop="articleBody" style="font-size: 16px; color: #333; margin-top: 20px;">
+                %CONTENT%
+            </div>
 
             <meta itemprop="mainEntityOfPage" content="%BASE_URL%/news/%NEWS_ID%" />
         </article>

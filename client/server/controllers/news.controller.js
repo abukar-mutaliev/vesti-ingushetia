@@ -216,38 +216,61 @@ exports.getNewsById = async (req, res) => {
 
         const modifiedNews = formatMediaUrls([news])[0];
 
-        if (req.isBot) {
+        // Проверяем, является ли запрос запросом от бота (на случай, если botHandler не сработал)
+        const userAgent = req.headers['user-agent']?.toLowerCase() || '';
+        const isBot = userAgent.includes('bot') ||
+            userAgent.includes('spider') ||
+            userAgent.includes('crawler') ||
+            userAgent.includes('yandex') ||
+            userAgent.includes('googlebot') ||
+            req.isBot;
+
+        if (isBot) {
             try {
                 const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
                 const seoHtmlPath = path.join(__dirname, '../../public/seo.html');
-                console.log(`Ищу SEO-шаблон по пути: ${seoHtmlPath}`);
-                console.log(`Шаблон существует: ${fs.existsSync(seoHtmlPath)}`);
-
+                
                 if (fs.existsSync(seoHtmlPath)) {
-                    console.log('SEO-шаблон успешно прочитан');
-
                     let html = fs.readFileSync(seoHtmlPath, 'utf8');
 
                     const imageMedia = modifiedNews.mediaFiles?.find(media => media.type === 'image');
                     const imageUrl = imageMedia
-                        ? (imageMedia.url.startsWith('http') ? imageMedia.url : `${baseUrl}${imageMedia.url}`)
+                        ? (imageMedia.url.startsWith('http') ? imageMedia.url : `${baseUrl}${imageMedia.url.startsWith('/') ? '' : '/'}${imageMedia.url}`)
                         : `${baseUrl}/default.png`;
 
                     const author = modifiedNews.authorDetails?.username || 'Редакция';
                     const publishDate = modifiedNews.publishDate || modifiedNews.createdAt;
                     const plainContent = modifiedNews.content?.replace(/<[^>]*>?/gm, '') || '';
+                    
+                    // Описание для мета-тегов (первые 150-160 символов)
+                    const description = plainContent.length > 0 
+                        ? plainContent.substring(0, 160).trim() 
+                        : modifiedNews.title.substring(0, 150);
+
+                    // Экранируем HTML для безопасной вставки в мета-теги
+                    const escapeHtml = (text) => {
+                        if (!text) return '';
+                        return String(text)
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/"/g, '&quot;')
+                            .replace(/'/g, '&#039;');
+                    };
 
                     html = html
-                        .replace(/%TITLE%/g, modifiedNews.title)
-                        .replace(/%DESCRIPTION%/g, modifiedNews.description || modifiedNews.title.substring(0, 150))
-                        .replace(/%FULLTEXT%/g, plainContent)
+                        .replace(/%TITLE%/g, escapeHtml(modifiedNews.title))
+                        .replace(/%DESCRIPTION%/g, escapeHtml(description))
+                        .replace(/%FULLTEXT%/g, escapeHtml(plainContent))
                         .replace(/%NEWS_ID%/g, id)
-                        .replace(/%IMAGE_URL%/g, imageUrl)
-                        .replace(/%PUBLISH_DATE%/g, publishDate)
-                        .replace(/%AUTHOR%/g, author)
-                        .replace(/%CONTENT%/g, modifiedNews.content || '')
+                        .replace(/%IMAGE_URL%/g, escapeHtml(imageUrl))
+                        .replace(/%IMAGE_LENGTH%/g, '0')
+                        .replace(/%IMAGE_TYPE%/g, 'image/jpeg')
+                        .replace(/%PUBLISH_DATE%/g, publishDate ? new Date(publishDate).toISOString() : new Date().toISOString())
+                        .replace(/%AUTHOR%/g, escapeHtml(author))
+                        .replace(/%CONTENT%/g, modifiedNews.content || '') // HTML контент вставляем как есть
                         .replace(/\${baseUrl}/g, baseUrl)
-                        .replace(/%BASE_URL%/g, baseUrl);
+                        .replace(/%BASE_URL%/g, escapeHtml(baseUrl));
 
                     const publisherMarkup = `
                         <div itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -257,15 +280,15 @@ exports.getNewsById = async (req, res) => {
                             </div>
                         </div>
                     `;
-                    html = html.replace(/%PUBLISHER_MARKUP%/g, publisherMarkup);
+                    html = html.replace(/%PUBLISHER_MARKUP%/g, publisherMarkup)
+                        .replace(/%[A-Z_]+%/g, '');
 
+                    res.setHeader('Content-Type', 'text/html; charset=utf-8');
                     return res.send(html);
                 }
-                console.error('Полный путь к файлу:', path.resolve(seoHtmlPath));
 
             } catch (error) {
-                console.error('Ошибка при чтении SEO-шаблона:', error);
-                console.error('Ошибка при генерации SEO HTML:', error);
+                logger.error('Ошибка при генерации SEO HTML в getNewsById:', error);
             }
         }
 
