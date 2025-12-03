@@ -108,6 +108,14 @@ const botHandler = async (req, res, next) => {
     const userAgent = req.headers['user-agent']?.toLowerCase() || '';
     const clientIP = getClientIP(req);
 
+    // Сначала проверяем, является ли это запросом к новости
+    const newsMatch = req.path.match(/^\/news\/(\d+)$/);
+    if (!newsMatch) {
+        return next();
+    }
+
+    const newsId = newsMatch[1];
+
     // Проверяем по User-Agent (расширенный список для ботов Яндекса)
     const isBotByUA = userAgent.includes('bot') ||
         userAgent.includes('spider') ||
@@ -145,18 +153,19 @@ const botHandler = async (req, res, next) => {
     // Проверяем по IP-адресу (новые роботы Яндекса)
     const isYandexIP = isYandexBotIP(clientIP);
 
-    if (!isBotByUA && !isYandexIP) {
+    // Проверяем специальный заголовок для тестирования (X-SEO-Preview) или query-параметр
+    const isTestMode = req.headers['x-seo-preview'] === 'true' || req.query.seo === 'true';
+
+    // Если это не бот и не тестовый режим, пропускаем дальше
+    if (!isBotByUA && !isYandexIP && !isTestMode) {
         return next();
     }
 
-    const newsMatch = req.path.match(/^\/news\/(\d+)$/);
-    if (!newsMatch) {
-        return next();
+    if (isTestMode) {
+        logger.info(`🧪 Test mode: Processing news ${newsId} for SEO preview`);
+    } else {
+        logger.info(`🤖 Bot detected: ${userAgent} (IP: ${clientIP}) - Processing news ${newsId}`);
     }
-
-    const newsId = newsMatch[1];
-    
-    logger.info(`🤖 Bot detected: ${userAgent} (IP: ${clientIP}) - Processing news ${newsId}`);
 
     try {
         const news = await News.findByPk(newsId, {
