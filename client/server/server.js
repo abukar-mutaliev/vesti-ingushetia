@@ -679,12 +679,29 @@ app.get('/server-test', (req, res) => {
         timestamp: new Date().toISOString(),
         headers: req.headers,
         url: req.url,
+        originalUrl: req.originalUrl,
+        query: req.query,
         routes: [
             '/test-iframe',
             '/test',
             '/api/server-time',
             '/api/*'
         ]
+    });
+});
+
+// Тестовый маршрут для проверки botHandler
+app.get('/test-bot-handler', (req, res) => {
+    res.json({
+        message: 'Bot handler test',
+        url: req.url,
+        originalUrl: req.originalUrl,
+        query: req.query,
+        headers: {
+            'user-agent': req.headers['user-agent'],
+            'x-seo-preview': req.headers['x-seo-preview'] || req.headers['X-SEO-Preview']
+        },
+        path: req.path
     });
 });
 

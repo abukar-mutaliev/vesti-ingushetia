@@ -154,7 +154,37 @@ const botHandler = async (req, res, next) => {
     const isYandexIP = isYandexBotIP(clientIP);
 
     // Проверяем специальный заголовок для тестирования (X-SEO-Preview) или query-параметр
-    const isTestMode = req.headers['x-seo-preview'] === 'true' || req.query.seo === 'true';
+    // Express приводит заголовки к lowercase, но проверяем оба варианта
+    const seoPreviewHeader = req.headers['x-seo-preview'] || req.headers['X-SEO-Preview'];
+    
+    // Парсим query-параметры из URL (используем originalUrl для надежности)
+    const urlToCheck = req.originalUrl || req.url;
+    let querySeo = req.query?.seo;
+    
+    // Если req.query не содержит seo, парсим вручную из URL
+    if (!querySeo && urlToCheck.includes('?')) {
+        try {
+            const queryString = urlToCheck.split('?')[1];
+            const urlParams = new URLSearchParams(queryString);
+            querySeo = urlParams.get('seo');
+        } catch (e) {
+            // Игнорируем ошибки парсинга
+        }
+    }
+    
+    // Также проверяем напрямую в URL (на случай если парсинг не сработал)
+    const hasSeoInUrl = urlToCheck.includes('seo=true') || urlToCheck.includes('seo=1');
+    
+    const isTestMode = seoPreviewHeader === 'true' || 
+                       querySeo === 'true' || 
+                       querySeo === true ||
+                       querySeo === '1' ||
+                       hasSeoInUrl;
+
+    // Логируем для отладки (только если есть признаки тестового режима)
+    if (seoPreviewHeader || querySeo || hasSeoInUrl) {
+        logger.info(`🔍 Test mode check for news ${newsId}: header=${seoPreviewHeader}, query=${querySeo || req.query?.seo}, url=${urlToCheck}, hasSeoInUrl=${hasSeoInUrl}`);
+    }
 
     // Если это не бот и не тестовый режим, пропускаем дальше
     if (!isBotByUA && !isYandexIP && !isTestMode) {
