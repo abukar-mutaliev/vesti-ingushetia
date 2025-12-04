@@ -127,13 +127,13 @@ const logger = winston.createLogger({
     ],
 });
 
-if (process.env.NODE_ENV !== 'production') {
-    logger.add(new winston.transports.Console({
-        format: consoleFormat,
-        handleExceptions: true,
-        handleRejections: true
-    }));
-}
+// Всегда добавляем Console transport для PM2 (даже в production)
+// PM2 может видеть только логи, которые выводятся в stdout/stderr
+logger.add(new winston.transports.Console({
+    format: consoleFormat,
+    handleExceptions: true,
+    handleRejections: true
+}));
 
 logger.scheduler = (message, meta = {}) => {
     logger.info(`🔄 [SCHEDULER] ${message}`, {
