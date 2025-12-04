@@ -8,7 +8,9 @@ module.exports = {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT || 5432,
         dialect: 'postgres',
-        logging: process.env.NODE_ENV === 'development' ? console.log : false,
+        // Отключаем логирование SQL запросов (слишком много шума)
+        // Для отладки можно временно включить: logging: console.log
+        logging: false,
         pool: {
             max: 10,
             min: 0,

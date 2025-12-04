@@ -105,9 +105,6 @@ const getLargestValidImage = async (mediaFiles, baseUrl) => {
 };
 
 const botHandler = async (req, res, next) => {
-    const userAgent = req.headers['user-agent']?.toLowerCase() || '';
-    const clientIP = getClientIP(req);
-
     // Сначала проверяем, является ли это запросом к новости
     const newsMatch = req.path.match(/^\/news\/(\d+)$/);
     if (!newsMatch) {
@@ -115,40 +112,19 @@ const botHandler = async (req, res, next) => {
     }
 
     const newsId = newsMatch[1];
+    const userAgent = req.headers['user-agent'] || '';
+    const userAgentLower = userAgent.toLowerCase();
+    const clientIP = getClientIP(req);
+    
+    // Логируем ВСЕ запросы к /news/:id для диагностики (временно)
+    logger.info(`🔍 botHandler вызван для /news/${newsId}, UA: ${userAgent.substring(0, 80)}, IP: ${clientIP}`);
 
     // Проверяем по User-Agent (расширенный список для ботов Яндекса)
-    const isBotByUA = userAgent.includes('bot') ||
-        userAgent.includes('spider') ||
-        userAgent.includes('crawler') ||
-        userAgent.includes('yandex') ||
-        userAgent.includes('googlebot') ||
-        userAgent.includes('YandexBot') ||
-        userAgent.includes('YandexAccessibilityBot') ||
-        userAgent.includes('YandexMobileBot') ||
-        userAgent.includes('YandexDirect') ||
-        userAgent.includes('YandexMetrika') ||
-        userAgent.includes('YandexNews') ||
-        userAgent.includes('YandexImages') ||
-        userAgent.includes('YandexVideo') ||
-        userAgent.includes('YandexMedia') ||
-        userAgent.includes('YandexBlogs') ||
-        userAgent.includes('YandexFavicons') ||
-        userAgent.includes('YandexWebmaster') ||
-        userAgent.includes('YandexPagechecker') ||
-        userAgent.includes('YandexImageResizer') ||
-        userAgent.includes('YandexAdNet') ||
-        userAgent.includes('YandexDirectDyn') ||
-        userAgent.includes('YandexCalendar') ||
-        userAgent.includes('YandexSitelinks') ||
-        userAgent.includes('YandexMetrika') ||
-        userAgent.includes('YandexMarket') ||
-        userAgent.includes('YandexVertis') ||
-        userAgent.includes('YandexForDomain') ||
-        userAgent.includes('YandexRCA') ||
-        userAgent.includes('YaDirectFetcher') ||
-        userAgent.includes('YandexBot') ||
-        userAgent.includes('YandexAccessibilityBot') ||
-        userAgent.includes('YandexMobileBot');
+    const isBotByUA = userAgentLower.includes('bot') ||
+        userAgentLower.includes('spider') ||
+        userAgentLower.includes('crawler') ||
+        userAgentLower.includes('yandex') ||
+        userAgentLower.includes('googlebot');
     
     // Проверяем по IP-адресу (новые роботы Яндекса)
     const isYandexIP = isYandexBotIP(clientIP);
@@ -181,21 +157,17 @@ const botHandler = async (req, res, next) => {
                        querySeo === '1' ||
                        hasSeoInUrl;
 
-    // Логируем для отладки (только если есть признаки тестового режима)
-    if (seoPreviewHeader || querySeo || hasSeoInUrl) {
-        logger.info(`🔍 Test mode check for news ${newsId}: header=${seoPreviewHeader}, query=${querySeo || req.query?.seo}, url=${urlToCheck}, hasSeoInUrl=${hasSeoInUrl}`);
-    }
-
+    // Логируем детали проверки
+    logger.info(`🔍 Проверка бота для /news/${newsId}: isBotByUA=${isBotByUA}, isYandexIP=${isYandexIP}, isTestMode=${isTestMode}`);
+    
     // Если это не бот и не тестовый режим, пропускаем дальше
     if (!isBotByUA && !isYandexIP && !isTestMode) {
+        logger.info(`⏭️ Пропускаем запрос /news/${newsId} - не бот и не тестовый режим`);
         return next();
     }
 
-    if (isTestMode) {
-        logger.info(`🧪 Test mode: Processing news ${newsId} for SEO preview`);
-    } else {
-        logger.info(`🤖 Bot detected: ${userAgent} (IP: ${clientIP}) - Processing news ${newsId}`);
-    }
+    // Логируем обработку бота
+    logger.info(`🤖 Bot detected: ${userAgent.substring(0, 80)} (IP: ${clientIP}) - Processing news ${newsId}`);
 
     try {
         const news = await News.findByPk(newsId, {
@@ -282,7 +254,7 @@ const botHandler = async (req, res, next) => {
             .replace(/%IMAGE_TYPE%/g, imageType)
             .replace(/%PUBLISH_DATE%/g, publishDate ? new Date(publishDate).toISOString() : new Date().toISOString())
             .replace(/%AUTHOR%/g, escapeHtml(author))
-            .replace(/%CONTENT%/g, modifiedNews.content || '') // HTML контент вставляем как есть
+            .replace(/%CONTENT%/g, newsContent || '<p>Контент недоступен</p>') // HTML контент вставляем как есть
             .replace(/%BASE_URL%/g, escapeHtml(baseUrl))
             .replace(/%PUBLISHER_MARKUP%/g, `
                 <div itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -294,7 +266,7 @@ const botHandler = async (req, res, next) => {
             `)
             .replace(/%[A-Z_]+%/g, '');
 
-        logger.info(`✅ SEO HTML generated for news ${newsId}, content length: ${(modifiedNews.content || '').length} chars`);
+        logger.info(`✅ SEO HTML generated for news ${newsId}, content length: ${newsContent.length} chars, HTML template size: ${htmlTemplate.length} chars`);
         
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.send(htmlTemplate);

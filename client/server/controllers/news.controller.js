@@ -27,22 +27,16 @@ const formatMediaUrls = (newsItems) => {
         const newsObj = item.toJSON();
 
         if (newsObj.mediaFiles) {
-            console.log(`🔍 [formatMediaUrls] Обработка медиафайлов для новости "${newsObj.title}" (ID: ${newsObj.id}):`);
-
             newsObj.mediaFiles = newsObj.mediaFiles.map((media) => {
                 const mediaObj = { ...media };
 
-                console.log(`   📁 Исходный URL: ${mediaObj.url}`);
-
                 // Если это уже полный URL (http/https), оставляем как есть
                 if (/^https?:\/\//i.test(mediaObj.url)) {
-                    console.log(`   ✅ Полный URL оставлен: ${mediaObj.url}`);
                     return mediaObj;
                 }
 
                 // Если URL уже содержит базовый домен, оставляем как есть
                 if (mediaObj.url.includes(baseUrl)) {
-                    console.log(`   ✅ URL с baseUrl оставлен: ${mediaObj.url}`);
                     return mediaObj;
                 }
 
@@ -60,14 +54,8 @@ const formatMediaUrls = (newsItems) => {
                 }
 
                 mediaObj.url = fullUrl;
-                console.log(`   🔧 Преобразован в: ${mediaObj.url}`);
 
                 return mediaObj;
-            });
-
-            console.log(`   ✅ Финальные URL для новости "${newsObj.title}":`);
-            newsObj.mediaFiles.forEach((media, index) => {
-                console.log(`      ${index + 1}. ${media.type}: ${media.url}`);
             });
         }
 

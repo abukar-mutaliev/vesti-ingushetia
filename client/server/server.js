@@ -69,34 +69,26 @@ const isBot = (req) => {
 };
 
 app.use((req, res, next) => {
-    const moscowTime = new Date().toLocaleString('ru-RU', {
-        timeZone: 'Europe/Moscow',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    });
-
+    // Логируем только важные запросы (API, новости, RSS) и боты
+    const isApiRequest = req.url.startsWith('/api/');
+    const isImportantRequest = req.url.startsWith('/news/') || req.url.startsWith('/rss');
     const clientIP = getClientIP(req);
     const isYandexBot = isYandexBotIP(clientIP);
     
-    if (isYandexBot) {
-        logger.info(`[${moscowTime}] 🤖 Yandex Bot IP: ${clientIP} - ${req.method} ${req.url}`);
+    // Логируем только ботов и важные запросы (не статические файлы)
+    if (isYandexBot && (isApiRequest || isImportantRequest)) {
+        const moscowTime = new Date().toLocaleString('ru-RU', {
+            timeZone: 'Europe/Moscow',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        logger.info(`🤖 Yandex Bot: ${req.method} ${req.url} (IP: ${clientIP})`);
     }
-
-    if (!req.url.includes('/uploads/') &&
-        !req.url.includes('.js') &&
-        !req.url.includes('.css') &&
-        !req.url.includes('.png') &&
-        !req.url.includes('.jpg') &&
-        !req.url.includes('.jpeg') &&
-        !req.url.includes('.gif') &&
-        !req.url.includes('.webp') &&
-        !req.url.includes('/favicon.ico')) {
-        logger.info(`[${moscowTime}] ${req.method} ${req.url}${isYandexBot ? ' [Yandex Bot]' : ''}`);
-    }
+    // Остальные запросы не логируем (слишком много шума)
     next();
 });
 
@@ -258,10 +250,6 @@ app.use(express.static(publicDir));
 const logStaticFileRequests = (req, res, next) => {
     if (req.url.startsWith('/uploads/')) {
         const requestedFile = path.resolve(__dirname, '..', req.url);
-        
-        console.log(`🔍 [Static] Запрос файла: ${req.url}`);
-        console.log(`   Ожидаемый путь: ${requestedFile}`);
-        console.log(`   Файл существует: ${fs.existsSync(requestedFile)}`);
 
         if (!fs.existsSync(requestedFile)) {
             const alternatives = [
@@ -270,18 +258,14 @@ const logStaticFileRequests = (req, res, next) => {
                 path.resolve(__dirname, '../../uploads', req.url.replace('/uploads/', '')),
             ];
 
-            console.log(`   🔍 Проверяем альтернативы:`);
             for (const alt of alternatives) {
-                const exists = fs.existsSync(alt);
-                console.log(`      ${alt} - ${exists ? '✅' : '❌'}`);
-                
-                if (exists && !res.headersSent) {
-                    console.log(`   🔄 Перенаправляем к найденному файлу: ${alt}`);
+                if (fs.existsSync(alt) && !res.headersSent) {
                     return res.sendFile(alt);
                 }
             }
             
-            console.log(`   ❌ Файл не найден во всех альтернативах`);
+            // Логируем только если файл не найден
+            logger.warn(`Файл не найден: ${req.url}`);
         }
     }
     next();
@@ -640,11 +624,30 @@ app.use((req, res, next) => {
 
 const distDir = path.join(__dirname, '../dist');
 
-// botHandler должен быть ПЕРЕД статическими файлами и React роутингом
-// чтобы перехватывать запросы к /news/:id для ботов
-// ВАЖНО: botHandler должен быть ДО express.static(distDir), иначе статика может перехватить запрос
+// КРИТИЧЕСКИ ВАЖНО: Добавляем явный маршрут для /news/:id ПЕРЕД express.static
+// чтобы гарантировать, что botHandler обработает запросы к новостям ДО того, как они попадут в статику
+// Создаем обертку, которая вызывает botHandler и обрабатывает результат
+app.get('/news/:id', async (req, res, next) => {
+    // Вызываем botHandler
+    await botHandler(req, res, (err) => {
+        // Если botHandler вызвал next() (не обработал запрос), продолжаем дальше
+        if (err) {
+            return next(err);
+        }
+        // Если botHandler отправил ответ (для ботов), ничего не делаем
+        if (res.headersSent) {
+            return;
+        }
+        // Если botHandler не обработал запрос, продолжаем дальше
+        next();
+    });
+});
+
+// Затем добавляем botHandler как общий middleware для остальных случаев
 app.use(botHandler);
 
+// Статические файлы из dist (React приложение)
+// ВАЖНО: express.static может перехватывать запросы, поэтому botHandler должен быть выше
 app.use(express.static(distDir));
 
 app.use((err, req, res, next) => {
@@ -707,7 +710,10 @@ app.get('/test-bot-handler', (req, res) => {
     });
 });
 
+// Fallback для всех остальных маршрутов - отдаем React приложение
+// ВАЖНО: этот маршрут должен быть ПОСЛЕ botHandler, чтобы botHandler мог обработать запросы к /news/:id
 app.get('*', (req, res) => {
+    // Если botHandler уже отправил ответ (для ботов), не отправляем index.html
     if (!res.headersSent) {
         res.sendFile(path.join(distDir, 'index.html'));
     }
