@@ -217,13 +217,19 @@ const botHandler = async (req, res, next) => {
         const author = modifiedNews.authorDetails?.username || 'Редакция';
         const publishDate = modifiedNews.publishDate || modifiedNews.createdAt;
         
-        // Получаем чистый текст для мета-тегов
-        const plainContent = modifiedNews.content?.replace(/<[^>]*>?/gm, '') || '';
+        // Получаем контент новости
+        const newsContent = modifiedNews.content || '';
+        
+        // Получаем чистый текст для мета-тегов (убираем HTML теги)
+        const plainContent = newsContent.replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim() || '';
         
         // Описание для мета-тегов (первые 150-160 символов)
         const description = plainContent.length > 0 
             ? plainContent.substring(0, 160).trim() 
             : modifiedNews.title.substring(0, 150);
+        
+        // Логируем информацию о контенте для диагностики
+        logger.info(`📄 Контент новости ${newsId}: длина HTML=${newsContent.length}, длина текста=${plainContent.length}, описание=${description.substring(0, 50)}...`);
 
         const seoHtmlPath = path.join(__dirname, '../../public/seo.html');
         if (!fs.existsSync(seoHtmlPath)) {
