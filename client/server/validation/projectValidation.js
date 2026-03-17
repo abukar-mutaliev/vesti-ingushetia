@@ -23,9 +23,11 @@ exports.createProjectValidator = [
                     /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
                 const youtubeRegex =
                     /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
-                if (!rutubeRegex.test(url) && !youtubeRegex.test(url)) {
+                const vkRegex =
+                    /^https?:\/\/(?:www\.|m\.)?vk\.(?:com|ru)\/(?:(?:video\?z=video|video\?id=|video|clip)(-?\d+)_(\d+)|[^?#]+[?&]z=video(-?\d+)_(\d+))(?:\?.*)?$/i;
+                if (!rutubeRegex.test(url) && !youtubeRegex.test(url) && !vkRegex.test(url)) {
                     throw new Error(
-                        'Все видео ссылки должны быть URL от Rutube или YouTube',
+                        'Все видео ссылки должны быть URL от Rutube, YouTube или ВКонтакте',
                     );
                 }
             });
@@ -55,9 +57,11 @@ exports.updateProjectValidator = [
                     /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
                 const youtubeRegex =
                     /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
-                if (!rutubeRegex.test(url) && !youtubeRegex.test(url)) {
+                const vkRegex =
+                    /^https?:\/\/(?:www\.|m\.)?vk\.(?:com|ru)\/(?:(?:video\?z=video|video\?id=|video|clip)(-?\d+)_(\d+)|[^?#]+[?&]z=video(-?\d+)_(\d+))(?:\?.*)?$/i;
+                if (!rutubeRegex.test(url) && !youtubeRegex.test(url) && !vkRegex.test(url)) {
                     throw new Error(
-                        'Все видео ссылки должны быть URL от Rutube или YouTube',
+                        'Все видео ссылки должны быть URL от Rutube, YouTube или ВКонтакте',
                     );
                 }
             });

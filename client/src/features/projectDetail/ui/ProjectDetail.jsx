@@ -78,6 +78,14 @@ export const ProjectDetail = ({ project }) => {
             return videoId ? `https://rutube.ru/play/embed/${videoId}` : null;
         }
 
+        const vkMatch = videoUrl.match(
+            /vk\.(?:com|ru)\/(?:(?:video\?z=video|video\?id=|video|clip)(-?\d+)_(\d+)|[^?#]+[?&]z=video(-?\d+)_(\d+))/i
+        );
+        if (vkMatch) {
+            const oid = vkMatch[1] ?? vkMatch[3];
+            const id = vkMatch[2] ?? vkMatch[4];
+            return oid && id ? `https://vk.com/video_ext.php?oid=${oid}&id=${id}` : null;
+        }
         return null;
     };
 

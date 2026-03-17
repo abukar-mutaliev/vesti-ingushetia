@@ -96,12 +96,14 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
             /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
         const youtubeRegex =
             /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
+        const vkRegex =
+            /^https?:\/\/(?:www\.|m\.)?vk\.(?:com|ru)\/(?:(?:video\?z=video|video\?id=|video|clip)(-?\d+)_(\d+)|[^?#]+[?&]z=video(-?\d+)_(\d+))(?:\?.*)?$/i;
 
         videoUrls.forEach((url, index) => {
             if (url.trim()) {
-                if (!rutubeRegex.test(url) && !youtubeRegex.test(url)) {
+                if (!rutubeRegex.test(url) && !youtubeRegex.test(url) && !vkRegex.test(url)) {
                     videoUrlErrors[index] =
-                        'Видео ссылка должна быть URL от Rutube или YouTube';
+                        'Видео ссылка должна быть URL от Rutube, YouTube или ВКонтакте';
                 } else {
                     videoUrlErrors[index] = '';
                 }

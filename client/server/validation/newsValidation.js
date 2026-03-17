@@ -6,11 +6,12 @@ const isSupportedVideoUrl = (value) => {
 
     const rutubeRegex = /^https?:\/\/(?:www\.)?rutube\.ru\/video\/[A-Za-z0-9_-]+\/?$/;
     const youtubeRegex = /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
+    const vkRegex = /^https?:\/\/(?:www\.|m\.)?vk\.(?:com|ru)\/(?:(?:video\?z=video|video\?id=|video|clip)(-?\d+)_(\d+)|[^?#]+[?&]z=video(-?\d+)_(\d+))(?:\?.*)?$/i;
 
-    if (rutubeRegex.test(value) || youtubeRegex.test(value)) {
+    if (rutubeRegex.test(value) || youtubeRegex.test(value) || vkRegex.test(value)) {
         return true;
     }
-    throw new Error('Видео ссылка должна быть URL от Rutube или YouTube');
+    throw new Error('Видео ссылка должна быть URL от Rutube, YouTube или ВКонтакте');
 };
 
 exports.createNewsValidator = [

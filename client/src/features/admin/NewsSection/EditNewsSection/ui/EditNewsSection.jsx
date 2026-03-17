@@ -26,7 +26,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
     const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
     const videoUrlRegex =
-        /^(https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|rutube\.ru\/video\/)[\w\d-]+(?:\/)?(?:\?.*)?)$/i;
+        /^(https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|rutube\.ru\/video\/)[\w\d-]+(?:\/)?(?:\?.*)?|https?:\/\/(?:www\.|m\.)?vk\.(?:com|ru)\/(?:(?:video\?z=video|video\?id=|video|clip)(-?\d+)_(\d+)|[^?#]+[?&]z=video(-?\d+)_(\d+))(?:\?.*)?)$/i;
 
     useEffect(() => {
         if (news) {
