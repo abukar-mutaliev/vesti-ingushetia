@@ -17,6 +17,10 @@ export default defineConfig({
         },
         host: 'localhost',
         port: 5173,
+        headers: {
+            'Content-Security-Policy':
+                "frame-src 'self' https://www.youtube.com https://www.youtu.be https://www.youtube-nocookie.com https://rutube.ru https://rutube.ru/play/embed https://player.smotrim.ru https://vk.com https://vk.ru https://vkvideo.ru https://m.vk.com https://localhost:5000",
+        },
     },
     define: {
         global: {},
