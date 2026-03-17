@@ -196,6 +196,8 @@ app.use(
                     'https://rutube.ru',
                     'https://rutube.ru/play/embed',
                     'https://player.smotrim.ru',
+                    'https://vk.com',
+                    'https://vk.ru',
                     process.env.BASE_URL,
                 ],
                 objectSrc: ["'none'"],
