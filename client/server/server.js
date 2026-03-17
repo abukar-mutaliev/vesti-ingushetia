@@ -169,7 +169,7 @@ app.use(
             directives: {
                 defaultSrc: ["'self'", 'https://ingushetiatv.ru', 'https://player.smotrim.ru', 'https://yastatic.net', process.env.BASE_URL],
                 connectSrc: ["'self'", 'https://ingushetiatv.ru', 'https://player.smotrim.ru', 'https://yastatic.net', process.env.BASE_URL],
-                imgSrc: ["'self'", 'data:', 'blob:', 'https://ingushetiatv.ru', 'https://player.smotrim.ru', 'https://yastatic.net', process.env.BASE_URL],
+                imgSrc: ["'self'", 'data:', 'blob:', 'https://ingushetiatv.ru', 'https://player.smotrim.ru', 'https://yastatic.net', 'https://rutube.ru', process.env.BASE_URL],
                 mediaSrc: ["'self'", 'https://ingushetiatv.ru', 'https://player.smotrim.ru', 'https://yastatic.net', process.env.BASE_URL],
                 scriptSrc: [
                     "'self'",
