@@ -22,38 +22,23 @@ export const MediaElement = ({
         return hasVideo ? getVideoThumbnailUrl(videoUrl) : null;
     }, [hasVideo, videoUrl]);
 
-    // ИСПРАВЛЕНО: правильная обработка URL изображений
     const processedImageUrl = useMemo(() => {
         if (!imageUrl) return null;
 
-        console.log('🖼️ [MediaElement] Обработка imageUrl:', imageUrl);
-
-        // Если это уже полный URL
         if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-            console.log('   ✅ Полный URL:', imageUrl);
             return imageUrl;
         }
 
-        // Если это относительный путь
         if (imageUrl.startsWith('uploads/')) {
-            // Убираем начальный слеш если есть
             const cleanPath = imageUrl.replace(/^\/+/, '');
-            const fullUrl = `${window.location.origin}/${cleanPath}`;
-            console.log('   🔧 Преобразован в полный URL:', fullUrl);
-            return fullUrl;
+            return `${window.location.origin}/${cleanPath}`;
         }
 
-        // Если путь не начинается с uploads/, добавляем его
         if (!imageUrl.startsWith('/uploads/')) {
-            const fullUrl = `${window.location.origin}/uploads/images/${imageUrl}`;
-            console.log('   🔧 Добавлен базовый путь:', fullUrl);
-            return fullUrl;
+            return `${window.location.origin}/uploads/images/${imageUrl}`;
         }
 
-        // Fallback - просто добавляем домен
-        const fallbackUrl = `${window.location.origin}${imageUrl}`;
-        console.log('   🔧 Fallback URL:', fallbackUrl);
-        return fallbackUrl;
+        return `${window.location.origin}${imageUrl}`;
     }, [imageUrl]);
 
     useEffect(() => {
@@ -65,26 +50,13 @@ export const MediaElement = ({
 
     const src = useMemo(() => {
         if (hasVideo && videoPosterUrl) {
-            const videoSrc = useHighQuality ? videoPosterUrl.highQuality : videoPosterUrl.fallback;
-            console.log('🎥 [MediaElement] Используем видео постер:', videoSrc);
-            return videoSrc;
+            return useHighQuality ? videoPosterUrl.highQuality : videoPosterUrl.fallback;
         }
-
-        const imageSrc = processedImageUrl || defaultImage;
-        console.log('🖼️ [MediaElement] Финальный src:', imageSrc);
-        return imageSrc;
+        return processedImageUrl || defaultImage;
     }, [hasVideo, videoPosterUrl, processedImageUrl, useHighQuality]);
 
     const handleImageError = (e) => {
-        console.error('❌ [MediaElement] Ошибка загрузки изображения:', {
-            src: e.target.src,
-            originalImageUrl: imageUrl,
-            hasVideo,
-            useHighQuality
-        });
-
         if (hasVideo && useHighQuality) {
-            console.log('🔄 [MediaElement] Переключаемся на низкое качество видео постера');
             setUseHighQuality(false);
             return;
         }
@@ -92,7 +64,6 @@ export const MediaElement = ({
         if (!imageLoadError) {
             setImageLoadError(true);
 
-            // Пробуем альтернативные пути
             if (imageUrl && !imageUrl.startsWith('http')) {
                 const alternativeUrls = [
                     `${window.location.origin}/${imageUrl}`,
@@ -100,9 +71,6 @@ export const MediaElement = ({
                     `${window.location.origin}/uploads/images/${imageUrl.replace('uploads/images/', '')}`,
                 ];
 
-                console.log('🔄 [MediaElement] Пробуем альтернативные URL:', alternativeUrls);
-
-                // Пробуем первый альтернативный URL
                 if (alternativeUrls[0] !== e.target.src) {
                     e.target.src = alternativeUrls[0];
                     return;
@@ -110,13 +78,8 @@ export const MediaElement = ({
             }
         }
 
-        console.log('🔄 [MediaElement] Используем изображение по умолчанию');
         e.target.src = defaultImage;
         onError(e);
-    };
-
-    const handleImageLoad = () => {
-        console.log('✅ [MediaElement] Изображение успешно загружено:', src);
     };
 
     return (
@@ -127,7 +90,6 @@ export const MediaElement = ({
                 className={styles.mediaImage}
                 loading="lazy"
                 onError={handleImageError}
-                onLoad={handleImageLoad}
             />
             {hasVideo && videoPosterUrl && showPlayIcon && (
                 <div className={styles.playIcon}>
