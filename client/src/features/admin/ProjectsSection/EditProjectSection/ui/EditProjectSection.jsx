@@ -358,7 +358,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
                 {/* Видео-ссылки */}
                 <div className={styles.previewVideosContainer}>
                     <label className={styles.label}>
-                        Видео-ссылки (Rutube или YouTube)
+                        Видео-ссылки (YouTube, Rutube или ВКонтакте)
                     </label>
                     <button
                         type="button"
@@ -375,7 +375,7 @@ export const EditProjectSection = ({ project, onCancel }) => {
                                 onChange={(e) =>
                                     handleVideoUrlChange(index, e.target.value)
                                 }
-                                placeholder="Введите Rutube или YouTube ссылку"
+                                placeholder="YouTube, Rutube или VK ссылка..."
                                 className={styles.videoUrlInput}
                             />
                             {videoUrls.length > 1 && (

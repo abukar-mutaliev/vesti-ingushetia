@@ -255,7 +255,7 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
                     <p className={styles.error}>{errors.content}</p>
                 )}
 
-                <label>Видео-ссылки (Rutube или YouTube)</label>
+                <label>Видео-ссылки (YouTube, Rutube или ВКонтакте)</label>
                 {videoUrls.map((url, index) => (
                     <div key={index} className={styles.videoUrlGroup}>
                         <input
@@ -264,7 +264,7 @@ export const AddProjectSection = ({ onSave, onCancel }) => {
                             onChange={(e) =>
                                 handleVideoUrlChange(index, e.target.value)
                             }
-                            placeholder="Введите видео-ссылку"
+                            placeholder="YouTube, Rutube или VK ссылка..."
                             className={styles.videoUrlInput}
                         />
                         {videoUrls.length > 1 && (

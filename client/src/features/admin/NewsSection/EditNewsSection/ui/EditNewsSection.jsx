@@ -98,7 +98,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
             case 'videoUrl':
                 if (value && !videoUrlRegex.test(value)) {
                     error =
-                        'Видео ссылка должна быть URL от Rutube или YouTube.';
+                        'Видео ссылка должна быть URL от Rutube, YouTube или ВКонтакте.';
                 }
                 break;
 
@@ -319,11 +319,11 @@ export const EditNewsSection = ({ news, onCancel }) => {
                     <p className={styles.error}>{errors.categories}</p>
                 )}
 
-                <label>Ссылка на видео (YouTube или Rutube)</label>
+                <label>Ссылка на видео (YouTube, Rutube или ВКонтакте)</label>
                 <input
                     type="text"
                     value={videoUrl}
-                    placeholder="https://www.youtube.com/watch?v=..."
+                    placeholder="YouTube, Rutube или VK ссылка..."
                     onChange={(e) =>
                         handleInputChange('videoUrl', e.target.value)
                     }
