@@ -61,8 +61,8 @@ const isBot = (req) => {
         userAgent.includes('yandex') ||
         userAgent.includes('googlebot');
     
-    // Проверяем по IP-адресу (новые роботы Яндекса)
-    // IP-адреса: 217.20.158.64/26, 217.20.158.252/30, 5.101.41.0/29
+    // Проверяем по IP-адресу (новые роботы Яндекса и адреса из уведомления Дзен/Новости)
+    // Актуальный whitelist хранится в client/server/utils/yandexIPWhitelist.js
     const isYandexIP = isYandexBotIP(clientIP);
     
     return isBotByUA || isYandexIP;

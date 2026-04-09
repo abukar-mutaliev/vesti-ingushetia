@@ -156,7 +156,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 const youtubeRegex =
                     /^https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
                 const vkRegex =
-                    /^https?:\/\/(?:www\.|m\.)?vk\.(?:com|ru)\/(?:(?:video\?z=video|video\?id=|video|clip)(-?\d+)_(\d+)|[^?#]+[?&]z=video(-?\d+)_(\d+))(?:\?.*)?$/i;
+                    /^https?:\/\/(?:(?:www\.|m\.)?vk\.(?:com|ru)\/(?:(?:video\?z=video|video\?id=|video|clip)(-?\d+)_(\d+)|[^?#]+[?&]z=video(-?\d+)_(\d+))|(?:www\.)?vkvideo\.ru\/(?:video|clip)(-?\d+)_(\d+))(?:\?.*)?$/i;
                 if (
                     value &&
                     !(rutubeRegex.test(value) || youtubeRegex.test(value) || vkRegex.test(value))

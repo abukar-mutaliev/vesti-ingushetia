@@ -77,6 +77,15 @@ export const NewsDetail = memo(
                 const id = vkMatch[2] ?? vkMatch[4];
                 return oid && id ? `https://vk.com/video_ext.php?oid=${oid}&id=${id}` : null;
             }
+
+            const vkVideoRuMatch = videoUrl.match(
+                /vkvideo\.ru\/(?:video|clip)(-?\d+)_(\d+)/i
+            );
+            if (vkVideoRuMatch) {
+                const oid = vkVideoRuMatch[1];
+                const id = vkVideoRuMatch[2];
+                return oid && id ? `https://vk.com/video_ext.php?oid=${oid}&id=${id}` : null;
+            }
             return null;
         };
 
