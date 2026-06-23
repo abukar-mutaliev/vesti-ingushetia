@@ -1,30 +1,23 @@
 import styles from './LiveStreamPage.module.scss';
 
-const SmotrimStream = ({ streamId }) => {
-    const iframeSrc = `https://player.smotrim.ru/iframe/live/uid/${streamId}/start_zoom/true/showZoomBtn/false/isPlay/true/autoplay/true/`;
+const SmotrimStream = ({ channelId = '537' }) => {
+    const iframeSrc = `https://embed.smotrim.ru/iframe/channel/id/${channelId}/isPlay/true/mute/true`;
 
     return (
         <div style={{
             maxWidth: '100%',
-            position: 'relative',
             width: '100%',
-            paddingBottom: '56.25%',
             margin: '0 auto'
         }}>
             <iframe
-                allowfullscreen="true"
-                allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                frameborder="0"
+                allowFullScreen
+                frameBorder="0"
                 style={{
                     width: '100%',
                     height: '100%',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0
+                    aspectRatio: '16 / 9'
                 }}
-                name={`smotrim_player_${streamId}`}
+                name={`smotrim_player_channel_${channelId}`}
                 src={iframeSrc}
                 className={styles.iframeContainer}
             />

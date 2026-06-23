@@ -2,8 +2,8 @@ import React from 'react';
 import styles from './LiveStreamWidget.module.scss';
 
 export const LiveStreamWidget = () => {
-    const streamId = '0ef99435-a317-425d-8413-baad29f19bd3'; // Россия 1. Назрань
-    const iframeSrc = `https://player.smotrim.ru/iframe/live/uid/${streamId}/start_zoom/true/showZoomBtn/false/isPlay/true/autoplay/true/`;
+    const channelId = '537'; // Россия 1. Назрань
+    const iframeSrc = `https://embed.smotrim.ru/iframe/channel/id/${channelId}/isPlay/true/mute/true`;
 
     return (
         <div className={styles.liveStreamWidget}>
@@ -13,9 +13,8 @@ export const LiveStreamWidget = () => {
                     LIVE
                 </div>
                 <iframe
-                    allowfullscreen="true"
-                    allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                    frameborder="0"
+                    allowFullScreen
+                    frameBorder="0"
                     style={{
                         width: '100%',
                         height: '100%',
@@ -26,7 +25,7 @@ export const LiveStreamWidget = () => {
                         bottom: 0,
                         border: 'none'
                     }}
-                    name={`smotrim_player_${streamId}`}
+                    name={`smotrim_player_channel_${channelId}`}
                     src={iframeSrc}
                     title="Прямая трансляция Россия 1. Назрань"
                 />

@@ -113,7 +113,8 @@ const corsOptions = {
             'https://docs.google.com',
             'https://www.google.com',
             'https://rutube.ru',
-            'https://player.smotrim.ru'
+            'https://player.smotrim.ru',
+            'https://embed.smotrim.ru'
         ];
 
         if (process.env.NODE_ENV === 'development') {
@@ -196,6 +197,7 @@ app.use(
                     'https://rutube.ru',
                     'https://rutube.ru/play/embed',
                     'https://player.smotrim.ru',
+                    'https://embed.smotrim.ru',
                     'https://vk.com',
                     'https://vk.ru',
                     'https://vkvideo.ru',
@@ -210,6 +212,7 @@ app.use(
                     'https://rutube.ru',
                     'https://rutube.ru/play/embed',
                     'https://player.smotrim.ru',
+                    'https://embed.smotrim.ru',
                     'https://vk.com',
                     'https://vk.ru',
                     'https://vkvideo.ru',
