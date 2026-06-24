@@ -1,11 +1,14 @@
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useState } from 'react';
 import styles from './NewsDetailPage.module.scss';
 import { Sidebar } from '@widgets/Sidebar';
 import { NewsDetail } from '@features/newsDetail';
+import { EditNewsSection } from '@features/admin/NewsSection/EditNewsSection';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { fetchNewsById, fetchAllNews } from '@entities/news/model/newsSlice';
 import { fetchCategories } from '@entities/categories/model/categorySlice';
 import { useParams } from 'react-router-dom';
+import { FaEdit } from 'react-icons/fa';
+import { selectIsAdmin } from '@entities/user/auth/model/authSelectors.js';
 import {
     selectNewsList,
     selectNewsByIdLoading,
@@ -22,7 +25,9 @@ const NewsDetailPage = memo(() => {
     const dispatch = useDispatch();
     const { id } = useParams();
     const newsId = id;
+    const [isEditing, setIsEditing] = useState(false);
 
+    const isAdmin = useSelector(selectIsAdmin);
     const currentNews = useSelector((state) => selectNewsById(state, newsId));
     const newsList = useSelector(selectNewsList, shallowEqual);
     const loadingNews = useSelector(selectNewsLoading, shallowEqual);
@@ -47,7 +52,13 @@ const NewsDetailPage = memo(() => {
 
     useEffect(() => {
         window.scrollTo(0, 0);
+        setIsEditing(false);
     }, [id]);
+
+    const handleEditClose = () => {
+        setIsEditing(false);
+        dispatch(fetchNewsById(newsId));
+    };
 
     useEffect(() => {
         if (currentNews?.schemaYandex) {
@@ -75,17 +86,36 @@ const NewsDetailPage = memo(() => {
         return <Loader />;
     }
 
+    if (isEditing) {
+        return (
+            <div className={`${styles.newsDetailPage} ${styles.editMode}`}>
+                <EditNewsSection news={currentNews} onCancel={handleEditClose} embedded />
+            </div>
+        );
+    }
+
     return (
         <div className={styles.newsDetailPage}>
             <div className={styles.newsDetailPageContainer}>
-                <NewsDetail
-                    newsId={newsId}
-                    news={currentNews}
-                    loading={loadingNewsById}
-                    comments={comments}
-                    userId={currentNews.authorDetails?.id}
-                    authorName={currentNews.authorDetails?.username}
-                />
+                <div className={styles.mainContent}>
+                    {isAdmin && (
+                        <button
+                            type="button"
+                            className={styles.editButton}
+                            onClick={() => setIsEditing(true)}
+                        >
+                            <FaEdit /> Редактировать
+                        </button>
+                    )}
+                    <NewsDetail
+                        newsId={newsId}
+                        news={currentNews}
+                        loading={loadingNewsById}
+                        comments={comments}
+                        userId={currentNews.authorDetails?.id}
+                        authorName={currentNews.authorDetails?.username}
+                    />
+                </div>
                 <div className={styles.sidebarContainer}>
                     <Sidebar
                         newsList={newsList.filter(news => news.id !== parseInt(newsId, 10))}

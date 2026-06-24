@@ -9,7 +9,7 @@ import { FaDeleteLeft } from 'react-icons/fa6';
 import { ConfirmDeleteModal } from '@shared/ui/ConfirmDeleteModal';
 import { MoscowTimeUtils } from '@shared/lib/TimeUtils/timeUtils.js';
 
-export const EditNewsSection = ({ news, onCancel }) => {
+export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
     const dispatch = useDispatch();
     const categories = useSelector(selectCategories);
 
@@ -270,7 +270,7 @@ export const EditNewsSection = ({ news, onCancel }) => {
 
 
     return (
-        <div className={styles.editNewsSection}>
+        <div className={`${styles.editNewsSection} ${embedded ? styles.embedded : ''}`}>
             <h2>Редактировать новость</h2>
             <div className={styles.editForm}>
                 <label>Заголовок</label>
