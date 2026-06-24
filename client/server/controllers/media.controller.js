@@ -83,30 +83,61 @@ const getVkEmbedHtml = async (oid, id) => {
     return response.text();
 };
 
+const pickLargestImageUrl = (images) => {
+    if (!Array.isArray(images)) {
+        return null;
+    }
+
+    const valid = images.filter((image) => image?.url);
+    if (valid.length === 0) {
+        return null;
+    }
+
+    return valid.sort((a, b) => (b.width || 0) - (a.width || 0))[0].url;
+};
+
+// VK периодически меняет разметку embed-страницы (video_ext.php), поэтому
+// порядок ключей и расположение превью нестабильны. Пробуем несколько способов.
 const extractVkThumbnailUrl = (html) => {
     if (!html) {
         return null;
     }
 
-    const imageBlockMatch = html.match(/"image":(\[[\s\S]*?\]),"first_frame"/);
-    if (!imageBlockMatch?.[1]) {
-        return null;
-    }
-
-    try {
-        const images = JSON.parse(imageBlockMatch[1]);
-        if (!Array.isArray(images) || images.length === 0) {
-            return null;
+    const tryImageArrays = (regex) => {
+        for (const match of html.matchAll(regex)) {
+            try {
+                const url = pickLargestImageUrl(JSON.parse(match[1]));
+                if (url) {
+                    return url;
+                }
+            } catch (error) {
+                // Невалидный JSON в этом совпадении — пробуем следующее.
+            }
         }
-
-        const largestImage = images
-            .filter((image) => image?.url)
-            .sort((a, b) => (b.width || 0) - (a.width || 0))[0];
-
-        return largestImage?.url || null;
-    } catch (error) {
         return null;
+    };
+
+    const fromImage = tryImageArrays(/"image":(\[\{[\s\S]*?\}\])/g);
+    if (fromImage) {
+        return fromImage;
     }
+
+    const fromFirstFrame = tryImageArrays(/"first_frame":(\[\{[\s\S]*?\}\])/g);
+    if (fromFirstFrame) {
+        return fromFirstFrame;
+    }
+
+    const rawUrlMatch = html.match(
+        /https?:\\?\/\\?\/[^"'\\\s]*(?:getVideoPreview|userapi\.com[^"'\\\s]*\.jpg)[^"'\\\s]*/i,
+    );
+    if (rawUrlMatch) {
+        return rawUrlMatch[0].replace(/\\\//g, '/');
+    }
+
+    const ogImageMatch = html.match(
+        /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+    );
+    return ogImageMatch?.[1] || null;
 };
 
 exports.getRutubeThumbnail = async (req, res) => {
