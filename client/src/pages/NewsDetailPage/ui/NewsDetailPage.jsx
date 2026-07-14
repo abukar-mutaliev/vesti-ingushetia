@@ -125,6 +125,7 @@ const NewsDetailPage = memo(() => {
                         newsList={newsList.filter(news => news.id !== parseInt(newsId, 10))}
                         loading={loadingNews}
                         categories={categories}
+                        showElectionsBanner
                     />
                 </div>
             </div>

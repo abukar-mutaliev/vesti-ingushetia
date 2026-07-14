@@ -64,7 +64,7 @@ const NewsListPage = () => {
                             Показать все новости
                         </button>
                     )}
-                    <Sidebar categories={categories} newsList={newsList} />
+                    <Sidebar categories={categories} newsList={newsList} showElectionsBanner />
                 </div>
             </div>
         </div>

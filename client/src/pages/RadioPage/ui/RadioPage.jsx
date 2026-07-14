@@ -90,7 +90,7 @@ const RadioPage = memo(() => {
                 />
             </div>
             <div className={styles.sidebarWrapper}>
-                <Sidebar categories={categories} newsList={memoizedNewsList} />
+                <Sidebar categories={categories} newsList={memoizedNewsList} showElectionsBanner />
             </div>
         </div>
     );

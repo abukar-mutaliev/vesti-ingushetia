@@ -140,6 +140,7 @@ const CategoryPage = () => {
                     newsList={newsList}
                     categories={categories}
                     loading={loading}
+                    showElectionsBanner
                 />
             )}
         </div>

@@ -80,6 +80,7 @@ const ProjectsPage = () => {
                     newsList={memoizedNewsList}
                     loading={loadingNews}
                     categories={categories}
+                    showElectionsBanner
                 />
             </div>
         </div>
