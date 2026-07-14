@@ -82,7 +82,11 @@ const NewsDetailPage = memo(() => {
         };
     }, [currentNews]);
 
-    if (!currentNews || loadingNewsById || loadingNews) {
+    if (!currentNews && (loadingNewsById || loadingNews)) {
+        return <Loader />;
+    }
+
+    if (!currentNews) {
         return <Loader />;
     }
 

@@ -20,6 +20,7 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
     const [newMedia, setNewMedia] = useState([]);
     const [videoUrl, setVideoUrl] = useState('');
     const [publishDate, setPublishDate] = useState('');
+    const [isElections, setIsElections] = useState(false);
     const [errors, setErrors] = useState({});
     const [mediaToDelete, setMediaToDelete] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,6 +33,7 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
         if (news) {
             setEditTitle(news.title || '');
             setEditContent(news.content || '');
+            setIsElections(Boolean(news.isElections));
             setSelectedCategoryIds(news.categories.map((category) => category.id));
             setEditMedia(news.mediaFiles || []);
             const videoMedia = news.mediaFiles?.find((m) => m.type === 'video');
@@ -183,6 +185,7 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
         formData.append('title', editTitle);
         formData.append('content', editContent);
         formData.append('categoryIds', JSON.stringify(selectedCategoryIds));
+        formData.append('isElections', isElections ? 'true' : 'false');
 
         if (videoUrl.trim()) formData.append('videoUrl', videoUrl.trim());
 
@@ -318,6 +321,17 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
                 {errors.categories && (
                     <p className={styles.error}>{errors.categories}</p>
                 )}
+
+                <label className={styles.checkboxLabel}>
+                    <input
+                        type="checkbox"
+                        checked={isElections}
+                        onChange={(e) => setIsElections(e.target.checked)}
+                        className={styles.checkboxInput}
+                    />
+                    <span className={styles.checkboxCustom}></span>
+                    Выборы
+                </label>
 
                 <label>Ссылка на видео (YouTube, Rutube или ВКонтакте)</label>
                 <input

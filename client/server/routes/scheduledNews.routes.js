@@ -76,6 +76,7 @@ router.get('/my', authenticateToken, async (req, res) => {
                 // Полные данные для редактирования
                 categoryIds: newsData.categoryIds || [],
                 videoUrl: newsData.videoUrl || '',
+                isElections: Boolean(newsData.isElections),
                 mediaFiles: mediaFiles,
                 preview: {
                     title: newsData.title,

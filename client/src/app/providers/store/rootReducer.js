@@ -12,6 +12,7 @@ import radioReducer from '@entities/radio/model/radioSlice.js';
 import tvProgramReducer from '@entities/tvProgram/model/tvProgramSlice.js';
 import videoAdReducer from '@entities/videoAd/model/videoAdSlice.js';
 import projectsReducer from '@entities/projects/model/projectSlice.js';
+import electionsReducer from '@entities/elections/model/electionsSlice.js';
 import errorReducer from './errorSlice';
 
 const rootReducer = combineReducers({
@@ -27,6 +28,7 @@ const rootReducer = combineReducers({
     tvProgram: tvProgramReducer,
     videoAd: videoAdReducer,
     projects: projectsReducer,
+    elections: electionsReducer,
     error: errorReducer,
 });
 

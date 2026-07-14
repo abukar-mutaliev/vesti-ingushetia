@@ -4,10 +4,11 @@ import styles from './Sidebar.module.scss';
 import { ListedNews } from '../../ListedNews/';
 import { NewsCardSidebar } from '@widgets/NewsCardSidebar/index.js';
 import { VideoAdPlayer } from '@widgets/VideoAdPlayer/index.js';
+import { ElectionsBannerWidget } from '@widgets/ElectionsBannerWidget/index.js';
 import { selectRandomizedNewsList } from '@entities/news/model/newsSelectors.js';
 import { LiveStreamWidget } from '@widgets/LiveStreamWidget/index.js';
 
-export const Sidebar = React.memo(({ categories }) => {
+export const Sidebar = React.memo(({ categories, showElectionsBanner = false }) => {
     const randomizedNewsList = useSelector(selectRandomizedNewsList);
 
 
@@ -37,6 +38,7 @@ export const Sidebar = React.memo(({ categories }) => {
             <LiveStreamWidget />
             <p>Рекламная служба ГТРК "Ингушетия" - 8928-793-47-86</p>
             <VideoAdPlayer />
+            {showElectionsBanner && <ElectionsBannerWidget />}
 
             {categories.map((category) => {
                 const categoryNews = memoizedGroupedNews[category.id] || [];

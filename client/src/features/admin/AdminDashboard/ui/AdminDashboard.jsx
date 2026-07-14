@@ -24,6 +24,7 @@ import { AddVideoAdSection } from '@features/admin/VideoAdSection/AddVideoAdSect
 import { ProjectsSection } from '@features/admin/ProjectsSection';
 import { AddProjectSection } from '@features/admin/ProjectsSection/AddProjectSection';
 import { EditProjectSection } from '@features/admin/ProjectsSection/EditProjectSection';
+import { ElectionsSection } from '@features/admin/ElectionsSection';
 import {
     selectIsAdmin,
     selectUserAuth,
@@ -245,6 +246,8 @@ export const AdminDashboard = () => {
                         onEditVideoAd={setVideoAdToEdit}
                     />
                 );
+            case 'elections':
+                return <ElectionsSection />;
             default:
                 return <NewsSection />;
         }

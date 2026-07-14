@@ -35,6 +35,9 @@ const TvProgramsPage = lazy(
     () => import('@pages/TvProgramsPage/ui/TvProgramsPage'),
 );
 const ProjectsPage = lazy(() => import('@pages/ProjectsPage/ui/ProjectsPage'));
+const ElectionsPage = lazy(
+    () => import('@pages/ElectionsPage/ui/ElectionsPage'),
+);
 const ProjectDetailPage = lazy(
     () => import('@pages/ProjectDetailPage/ui/ProjectDetailPage'),
 );
@@ -62,6 +65,7 @@ export function AppRouter() {
 
                     <Route path="/" element={<HomePage />} />
                     <Route path="/news" element={<NewsListPage />} />
+                    <Route path="/elections" element={<ElectionsPage />} />
                     <Route path="/projects" element={<ProjectsPage />} />
                     <Route
                         path="/projects/:id"

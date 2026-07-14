@@ -26,6 +26,6 @@ router.use('/projects', require('./projects.routes'));
 
 router.use('/media', require('./media.routes'));
 
-
+router.use('/elections', require('./elections.routes'));
 
 module.exports = router;

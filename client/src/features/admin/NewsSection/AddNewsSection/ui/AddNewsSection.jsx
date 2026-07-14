@@ -47,6 +47,11 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         return saved ? JSON.parse(saved).isDeferred || false : false;
     });
 
+    const [isElections, setIsElections] = useState(() => {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        return saved ? JSON.parse(saved).isElections || false : false;
+    });
+
     const [deferredDate, setDeferredDate] = useState(() => {
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         return saved ? JSON.parse(saved).deferredDate || '' : '';
@@ -108,6 +113,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             publishDate,
             isDeferred,
             deferredDate,
+            isElections,
             existingMediaUrls,
             scheduledNewsIdToCancel,
         };
@@ -120,6 +126,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         publishDate,
         isDeferred,
         deferredDate,
+        isElections,
         existingMediaUrls,
         scheduledNewsIdToCancel,
     ]);
@@ -241,6 +248,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             publishDate,
             isDeferred,
             deferredDate,
+            isElections,
             newsMedia: newsMedia.flat().map((file) => ({
                 name: file.name,
                 type: file.type,
@@ -293,6 +301,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         }
 
         formData.append('categoryIds', JSON.stringify(validCategoryIds));
+        formData.append('isElections', isElections ? 'true' : 'false');
 
         if (videoUrl.trim()) {
             formData.append('videoUrl', videoUrl.trim());
@@ -670,6 +679,17 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 {errors.categories && (
                     <p className={styles.error}>{errors.categories}</p>
                 )}
+
+                <label className={styles.checkboxLabel}>
+                    <input
+                        type="checkbox"
+                        checked={isElections}
+                        onChange={(e) => setIsElections(e.target.checked)}
+                        className={styles.checkboxInput}
+                    />
+                    <span className={styles.checkboxCustom}></span>
+                    Выборы
+                </label>
 
                 <label>Ссылка на видео (YouTube, Rutube или ВКонтакте)</label>
                 <input

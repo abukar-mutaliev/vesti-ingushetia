@@ -1,0 +1,171 @@
+.indicator {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    margin-bottom: 16px;
+    animation: slideIn 0.35s ease-out;
+}
+
+.loading {
+    background: linear-gradient(135deg, #eef4ff 0%, #f5f9ff 100%);
+    border-color: #c5d9f8;
+    box-shadow: 0 4px 14px rgba(33, 150, 243, 0.12);
+}
+
+.success {
+    background: linear-gradient(135deg, #edf8f0 0%, #f4fbf6 100%);
+    border-color: #b8e0c2;
+    box-shadow: 0 4px 14px rgba(76, 175, 80, 0.15);
+    animation:
+        slideIn 0.35s ease-out,
+        successPulse 0.6s ease-out;
+}
+
+.iconWrap {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid #bbdefb;
+    border-top-color: #2196f3;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.checkIcon {
+    width: 40px;
+    height: 40px;
+
+    circle {
+        fill: #4caf50;
+        transform-origin: center;
+        animation: scaleIn 0.4s ease-out;
+    }
+
+    path {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 20;
+        stroke-dashoffset: 20;
+        animation: drawCheck 0.45s ease-out 0.15s forwards;
+    }
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    flex: 1;
+    padding-top: 2px;
+}
+
+.title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.loading .title {
+    color: #1565c0;
+}
+
+.success .title {
+    color: #2e7d32;
+}
+
+.fileName {
+    font-size: 13px;
+    color: #5f6368;
+    word-break: break-all;
+    line-height: 1.4;
+}
+
+.progressTrack {
+    margin-top: 8px;
+    height: 4px;
+    background: rgba(33, 150, 243, 0.15);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    width: 35%;
+    background: linear-gradient(90deg, #42a5f5, #2196f3);
+    border-radius: 999px;
+    animation: progressSlide 1.2s ease-in-out infinite;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes progressSlide {
+    0% {
+        transform: translateX(-120%);
+    }
+
+    100% {
+        transform: translateX(320%);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.6);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes drawCheck {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes successPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.35);
+    }
+
+    70% {
+        box-shadow: 0 0 0 8px rgba(76, 175, 80, 0);
+    }
+
+    100% {
+        box-shadow: 0 4px 14px rgba(76, 175, 80, 0.15);
+    }
+}

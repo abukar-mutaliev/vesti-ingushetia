@@ -51,6 +51,11 @@ exports.createNewsValidator = [
         .optional()
         .isBoolean()
         .withMessage('Поле scheduleForLater должно быть булевым значением'),
+    body('isElections')
+        .optional()
+        .isBoolean()
+        .withMessage('Поле isElections должно быть булевым значением')
+        .toBoolean(),
     body('publishDate')
         .optional()
         .isISO8601()
@@ -117,6 +122,11 @@ exports.updateNewsValidator = [
     body('videoUrl')
         .optional({ checkFalsy: true })
         .custom(isSupportedVideoUrl),
+    body('isElections')
+        .optional()
+        .isBoolean()
+        .withMessage('Поле isElections должно быть булевым значением')
+        .toBoolean(),
     body('existingMedia')
         .optional()
         .custom((value) => {

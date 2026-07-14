@@ -64,6 +64,7 @@ export const DraftsManager = ({ onEditDraft }) => {
             formData.append('title', draft.newsTitle);
             formData.append('content', draft.newsContent);
             formData.append('categoryIds', JSON.stringify(draft.selectedCategoryIds));
+            formData.append('isElections', draft.isElections ? 'true' : 'false');
 
             if (draft.videoUrl) {
                 formData.append('videoUrl', draft.videoUrl);
@@ -109,7 +110,8 @@ export const DraftsManager = ({ onEditDraft }) => {
             videoUrl: draft.videoUrl,
             publishDate: draft.publishDate,
             isDeferred: draft.status === 'scheduled',
-            deferredDate: draft.deferredDate
+            deferredDate: draft.deferredDate,
+            isElections: draft.isElections || false,
         }));
 
         // Флаг для возврата к черновикам после сохранения/отмены
@@ -151,6 +153,7 @@ export const DraftsManager = ({ onEditDraft }) => {
             publishDate: '',
             isDeferred: true,
             deferredDate: formattedDeferredDate,
+            isElections: item.isElections || false,
             // ID запланированной новости для отмены при сохранении
             scheduledNewsIdToCancel: realId,
             // Сохраняем URL изображений для отображения
@@ -172,6 +175,7 @@ export const DraftsManager = ({ onEditDraft }) => {
             formData.append('title', draft.newsTitle);
             formData.append('content', draft.newsContent);
             formData.append('categoryIds', JSON.stringify(draft.selectedCategoryIds));
+            formData.append('isElections', draft.isElections ? 'true' : 'false');
 
             if (draft.videoUrl) {
                 formData.append('videoUrl', draft.videoUrl);

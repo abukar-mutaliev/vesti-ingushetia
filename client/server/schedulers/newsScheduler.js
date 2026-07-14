@@ -101,6 +101,7 @@ class NewsScheduler {
                 content: newsData.content,
                 authorId: newsData.authorId,
                 publishDate: publishTime,
+                isElections: Boolean(newsData.isElections),
             }, { transaction });
 
             console.log(`✅ Новость создана с ID: ${news.id}`);

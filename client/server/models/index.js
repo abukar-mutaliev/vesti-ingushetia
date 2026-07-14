@@ -25,6 +25,8 @@ const VideoAd = require('./VideoAd.model')(sequelize);
 const Project = require('./Projects.model')(sequelize);
 const NewsCategory = require('./NewsCategory.model')(sequelize);
 const ScheduledNews = require('./ScheduledNews.model')(sequelize);
+const ElectionPdf = require('./ElectionPdf.model')(sequelize);
+const ElectionBanner = require('./ElectionBanner.model')(sequelize);
 
 const models = {
     User,
@@ -41,6 +43,8 @@ const models = {
     VideoAd,
     Project,
     ScheduledNews,
+    ElectionPdf,
+    ElectionBanner,
 };
 
 Object.values(models).forEach((model) => {

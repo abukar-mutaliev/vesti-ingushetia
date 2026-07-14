@@ -30,6 +30,11 @@ module.exports = (sequelize) => {
                 allowNull: true,
                 defaultValue: DataTypes.NOW,
             },
+            isElections: {
+                type: DataTypes.BOOLEAN,
+                allowNull: false,
+                defaultValue: false,
+            },
         },
         {
             tableName: 'news',

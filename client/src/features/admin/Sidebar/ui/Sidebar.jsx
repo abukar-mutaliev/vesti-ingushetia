@@ -17,6 +17,7 @@ export const Sidebar = ({ onSectionChange }) => {
                     Телепередачи
                 </li>
                 <li onClick={() => onSectionChange('videoAd')}>Видеореклама</li>
+                <li onClick={() => onSectionChange('elections')}>Выборы</li>
             </ul>
         </div>
     );

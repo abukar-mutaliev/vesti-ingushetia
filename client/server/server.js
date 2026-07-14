@@ -16,6 +16,7 @@ const csurf = require('csurf');
 require('./middlewares/cronJobs');
 const botHandler = require('./middlewares/botHandler.middleware');
 const fs = require('fs');
+const { ensureElectionsSchema } = require('./utils/ensureElectionsSchema');
 
 const privateKey = fs.readFileSync(path.join(__dirname, 'cf', 'private-key.pem'), 'utf8');
 const certificate = fs.readFileSync(path.join(__dirname, 'cf', 'certificate.pem'), 'utf8');
@@ -34,6 +35,7 @@ const allowedOrigins = process.env.CORS_ORIGIN.split(',');
 const imagesDir = path.join(uploadDir, 'images');
 const videoAdDir = path.join(uploadDir, 'videoAd');
 const audioDir = path.join(uploadDir, 'audio');
+const electionsDir = path.join(uploadDir, 'elections');
 const avatarDir = path.join(uploadDir, 'avatars');
 const publicDir = path.join(__dirname, '../public');
 
@@ -191,6 +193,7 @@ app.use(
                 fontSrc: ["'self'", 'https://ingushetiatv.ru', 'https://player.smotrim.ru', 'https://yastatic.net', 'data:', process.env.BASE_URL],
                 childSrc: [
                     "'self'",
+                    'blob:',
                     'https://www.youtube.com',
                     'https://www.youtu.be',
                     'https://www.youtube-nocookie.com',
@@ -206,6 +209,7 @@ app.use(
                 ],
                 frameSrc: [
                     "'self'",
+                    'blob:',
                     'https://www.youtube.com',
                     'https://www.youtu.be',
                     'https://www.youtube-nocookie.com',
@@ -314,6 +318,18 @@ app.use('/uploads/audio', express.static(audioDir, {
     setHeaders: (res, filePath, stat) => {
         res.setHeader('Cache-Control', 'public, max-age=86400');
         res.setHeader('Access-Control-Allow-Origin', '*');
+    },
+}));
+
+app.use('/uploads/elections', express.static(electionsDir, {
+    setHeaders: (res, filePath) => {
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+
+        if (filePath.toLowerCase().endsWith('.pdf')) {
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'inline');
+        }
     },
 }));
 
@@ -754,6 +770,7 @@ const startServer = async (retryCount = 0) => {
         logger.info(`[${currentTime}] Подключение к базе данных установлено успешно.`);
 
         // Синхронизируем модели
+        await ensureElectionsSchema(sequelize);
         await sequelize.sync();
         const moscowTime = new Date().toLocaleString('ru-RU', {
             timeZone: 'Europe/Moscow',

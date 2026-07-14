@@ -9,7 +9,7 @@ import {
     selectNewsList,
     selectNewsLoading,
     selectNewsListExcludingLast,
-    selectRandomizedNewsList
+    selectRandomizedNewsList,
 } from '@entities/news/model/newsSelectors.js';
 
 import { useDispatch, useSelector } from 'react-redux';
@@ -49,7 +49,7 @@ const HomePage = () => {
         setIsMenuOpen(false);
     };
 
-    if (loading) {
+    if (loading && newsList.length === 0) {
         return (
             <div className={styles.homePageLoader}>
                 <Loader />
@@ -84,7 +84,11 @@ const HomePage = () => {
                     />
                 </div>
                 <div className={styles.sidebarContainer}>
-                    <Sidebar categories={categories} newsList={randomizedNewsList}/>
+                    <Sidebar
+                        categories={categories}
+                        newsList={randomizedNewsList}
+                        showElectionsBanner
+                    />
                 </div>
             </div>
             <div className={styles.projectsSliderContainer}>

@@ -8,6 +8,7 @@ const initialState = {
     currentNews: null,
     loading: false,
     newsLoading: false,
+    newsRefreshing: false,
     newsByIdLoading: false,
     error: null,
     selectedDate: null,
@@ -42,6 +43,12 @@ export const fetchAllNews = createAsyncThunk(
         } catch (err) {
             return rejectWithValue(err.response?.data || 'Network Error');
         }
+    },
+    {
+        condition: (_, { getState }) => {
+            const { newsLoading, newsRefreshing } = getState().news;
+            return !newsLoading && !newsRefreshing;
+        },
     },
 );
 
@@ -151,11 +158,16 @@ const newsSlice = createSlice({
     extraReducers: (builder) => {
         builder
             .addCase(fetchAllNews.pending, (state) => {
-                state.newsLoading = true;
+                if (state.newsList.length === 0) {
+                    state.newsLoading = true;
+                } else {
+                    state.newsRefreshing = true;
+                }
                 state.error = null;
             })
             .addCase(fetchAllNews.fulfilled, (state, action) => {
                 state.newsLoading = false;
+                state.newsRefreshing = false;
                 state.newsList = Array.isArray(action.payload)
                     ? action.payload.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate))
                     : [];
@@ -167,6 +179,7 @@ const newsSlice = createSlice({
             })
             .addCase(fetchAllNews.rejected, (state, action) => {
                 state.newsLoading = false;
+                state.newsRefreshing = false;
                 state.error = action.payload || 'Ошибка получения новостей';
             })
             .addCase(fetchNewsById.pending, (state) => {

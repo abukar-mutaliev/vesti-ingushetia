@@ -16,6 +16,15 @@ const MoscowTimeUtils = require('../utils/moscowTimeUtils');
 
 const path = require('path');
 
+const parseBooleanField = (value) => {
+    if (value === undefined || value === null || value === '') return false;
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+        return value === 'true' || value === '1';
+    }
+    return Boolean(value);
+};
+
 const SAFE_USER_ATTRIBUTES = ['id', 'username', 'avatarUrl', 'createdAt'];
 
 const ADMIN_USER_ATTRIBUTES = ['id', 'username', 'email', 'avatarUrl', 'isAdmin', 'createdAt'];
@@ -83,6 +92,39 @@ const formatMediaUrls = (newsItems) => {
     });
 };
 
+
+exports.getElectionsNews = async (req, res) => {
+    try {
+        const news = await News.findAll({
+            where: {
+                isElections: true,
+                publishDate: {
+                    [Op.lte]: new Date(),
+                },
+            },
+            order: [['publishDate', 'DESC']],
+            include: [
+                {
+                    model: User,
+                    as: 'authorDetails',
+                    attributes: SAFE_USER_ATTRIBUTES,
+                },
+                {
+                    model: Category,
+                    as: 'categories',
+                    through: { attributes: [] },
+                },
+                { model: Media, as: 'mediaFiles' },
+            ],
+        });
+
+        res.json(formatMediaUrls(news));
+    } catch (err) {
+        res.status(500).json({
+            error: `Ошибка получения новостей раздела «Выборы»: ${err.message}`,
+        });
+    }
+};
 
 exports.getAllNews = async (req, res) => {
     try {
@@ -337,43 +379,15 @@ exports.getNewsByDate = async (req, res) => {
 
 exports.createNews = async (req, res) => {
     const { title, content, categoryIds, videoUrl, publishDate, scheduleForLater } = req.body;
+    const isElections = parseBooleanField(req.body.isElections);
     const mediaFiles = req.files;
     const authorId = req.user.id;
-
-    // НОВОЕ: детальное логирование файлов
-    console.log('📰 Создание новости - детальная информация:', {
-        userId: authorId,
-        title: title,
-        hasMediaFiles: !!mediaFiles,
-        mediaFilesKeys: mediaFiles ? Object.keys(mediaFiles) : null,
-        scheduleForLater: scheduleForLater,
-        publishDate: publishDate
-    });
-
-    if (mediaFiles) {
-        console.log('📁 Анализ загруженных файлов:');
-        console.log('  Структура mediaFiles:', JSON.stringify(mediaFiles, null, 2));
-
-        if (mediaFiles.images) {
-            console.log(`  📷 Найдено ${mediaFiles.images.length} изображений:`);
-            mediaFiles.images.forEach((file, index) => {
-                console.log(`    ${index + 1}. ${file.originalname} (${file.mimetype}, ${file.size} bytes)`);
-                console.log(`       Path: ${file.path}`);
-                console.log(`       Filename: ${file.filename}`);
-            });
-        } else {
-            console.log('  ⚠️ Массив images отсутствует в mediaFiles');
-        }
-    } else {
-        console.log('📁 Файлы не были загружены');
-    }
 
     if (scheduleForLater && publishDate) {
         try {
             let scheduledDate = new Date(publishDate);
 
             if (isNaN(scheduledDate.getTime())) {
-                console.error('❌ Неверный формат даты:', publishDate);
                 return res.status(400).json({
                     errors: [{
                         type: "field",
@@ -385,18 +399,9 @@ exports.createNews = async (req, res) => {
             }
 
             const now = new Date();
-
-            console.log('🕐 Анализ времени планирования:');
-            console.log(`   Получено от клиента: ${publishDate}`);
-            console.log(`   Парсится как: ${scheduledDate.toISOString()}`);
-            console.log(`   Московское время: ${scheduledDate.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`);
-            console.log(`   Текущее время UTC: ${now.toISOString()}`);
-            console.log(`   Текущее московское: ${now.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`);
-
             const minFutureTime = new Date(now.getTime() + 60 * 1000);
 
             if (scheduledDate <= minFutureTime) {
-                console.log('❌ Дата в прошлом или слишком близко');
                 // ИСПРАВЛЕНО: Очищаем загруженные файлы при ошибке
                 cleanupUploadedFiles(mediaFiles);
                 return res.status(400).json({
@@ -410,8 +415,6 @@ exports.createNews = async (req, res) => {
                 });
             }
 
-            console.log('✅ Валидация времени прошла успешно');
-
             // ИСПРАВЛЕНО: правильная обработка файлов для отложенных новостей
             const newsData = {
                 title,
@@ -419,33 +422,20 @@ exports.createNews = async (req, res) => {
                 categoryIds: JSON.parse(categoryIds || '[]'),
                 videoUrl,
                 publishDate: scheduledDate,
+                isElections,
                 mediaFiles: [] // Инициализируем пустым массивом
             };
 
             // Обрабатываем изображения для отложенной публикации
             if (mediaFiles && mediaFiles.images && mediaFiles.images.length > 0) {
-                console.log(`📷 Обработка ${mediaFiles.images.length} изображений для отложенной публикации`);
-
-                newsData.mediaFiles = mediaFiles.images.map(file => {
-                    console.log(`   Обрабатываем файл: ${file.originalname}`);
-                    console.log(`     Путь: ${file.path}`);
-                    console.log(`     Filename: ${file.filename}`);
-                    console.log(`     MIME: ${file.mimetype}`);
-                    console.log(`     Размер: ${file.size}`);
-                    
-                    return {
+                newsData.mediaFiles = mediaFiles.images.map(file => ({
                         type: file.mimetype.startsWith('image/') ? 'image' : 'other',
                         filename: file.filename,
                         originalname: file.originalname,
                         path: file.path, // ВАЖНО: сохраняем полный путь к файлу
                         mimetype: file.mimetype,
                         size: file.size
-                    };
-                });
-
-                console.log(`✅ Подготовлено ${newsData.mediaFiles.length} файлов для планировщика`);
-            } else {
-                console.log('ℹ️ Новые изображения отсутствуют для отложенной публикации');
+                }));
             }
 
             // Обрабатываем существующие изображения (при редактировании)
@@ -454,8 +444,6 @@ exports.createNews = async (req, res) => {
                 try {
                     const parsedUrls = JSON.parse(existingMediaUrls);
                     if (Array.isArray(parsedUrls) && parsedUrls.length > 0) {
-                        console.log(`📷 Добавление ${parsedUrls.length} существующих изображений`);
-                        
                         const existingMedia = parsedUrls.map(url => {
                             // Извлекаем имя файла из URL
                             const filename = url.split('/').pop();
@@ -468,33 +456,17 @@ exports.createNews = async (req, res) => {
                         });
                         
                         newsData.mediaFiles = [...newsData.mediaFiles, ...existingMedia];
-                        console.log(`✅ Всего изображений после добавления существующих: ${newsData.mediaFiles.length}`);
                     }
                 } catch (e) {
-                    console.error('Ошибка парсинга existingMediaUrls:', e);
+                    // игнорируем невалидный JSON existingMediaUrls
                 }
             }
 
-            console.log('📋 Финальные данные для планировщика:', {
-                title: newsData.title,
-                categoryIds: newsData.categoryIds,
-                hasVideoUrl: !!newsData.videoUrl,
-                mediaFilesCount: newsData.mediaFiles.length,
-                publishDate: newsData.publishDate.toISOString()
-            });
-
-            console.log('🔄 Вызов newsScheduler.scheduleNews...');
             const scheduledNews = await newsScheduler.scheduleNews(
                 newsData,
                 scheduledDate,
                 authorId
             );
-
-            console.log('✅ Планировщик завершил работу успешно:', {
-                id: scheduledNews.id,
-                title: scheduledNews.title,
-                status: scheduledNews.status
-            });
 
             logger.info(`✅ Создана отложенная новость: ${title}`, {
                 authorId,
@@ -515,17 +487,9 @@ exports.createNews = async (req, res) => {
             });
 
         } catch (error) {
-            console.error('❌ Ошибка в createNews при планировании:', {
-                error: error.message,
-                stack: error.stack,
-                publishDate,
-                authorId
-            });
-
-            // ИСПРАВЛЕНО: Очищаем загруженные файлы при ошибке
             cleanupUploadedFiles(mediaFiles);
 
-            logger.error('❌ Ошибка создания отложенной новости:', error);
+            logger.error('Ошибка создания отложенной новости:', error);
 
             return res.status(400).json({
                 errors: [{
@@ -538,9 +502,6 @@ exports.createNews = async (req, res) => {
         }
     }
 
-    // НЕМЕДЛЕННАЯ ПУБЛИКАЦИЯ - тоже добавим логирование
-    console.log('📝 Немедленная публикация новости...');
-
     let transaction;
     try {
         transaction = await sequelize.transaction();
@@ -549,6 +510,7 @@ exports.createNews = async (req, res) => {
             title,
             content,
             authorId,
+            isElections,
         };
 
         if (publishDate && !scheduleForLater) {
@@ -560,9 +522,7 @@ exports.createNews = async (req, res) => {
             }
         }
 
-        console.log('💾 Создание записи в базе данных...');
         const news = await News.create(newsData, { transaction });
-        console.log(`✅ Новость создана с ID: ${news.id}`);
 
         let parsedCategoryIds;
         try {
@@ -575,7 +535,6 @@ exports.createNews = async (req, res) => {
         }
 
         if (parsedCategoryIds.length > 0) {
-            console.log('🏷️ Добавление категорий...');
             const categories = await Category.findAll({
                 where: { id: parsedCategoryIds },
                 transaction,
@@ -586,7 +545,6 @@ exports.createNews = async (req, res) => {
             }
 
             await news.addCategories(categories, { transaction });
-            console.log(`✅ Добавлено ${categories.length} категорий`);
         } else {
             throw new Error('Необходимо выбрать хотя бы одну категорию');
         }
@@ -595,20 +553,9 @@ exports.createNews = async (req, res) => {
 
         // ИСПРАВЛЕНО: детальное логирование обработки изображений
         if (mediaFiles && mediaFiles.images && mediaFiles.images.length > 0) {
-            console.log(`📷 Обработка ${mediaFiles.images.length} изображений для немедленной публикации...`);
-
-            for (let [index, file] of mediaFiles.images.entries()) {
-                console.log(`  Обрабатываем файл ${index + 1}:`, {
-                    originalname: file.originalname,
-                    filename: file.filename,
-                    mimetype: file.mimetype,
-                    size: file.size,
-                    path: file.path
-                });
-
+            for (const file of mediaFiles.images) {
                 try {
                     const imageUrl = path.posix.join('uploads', 'images', file.filename);
-                    console.log(`    Создаем URL: ${imageUrl}`);
 
                     const media = await Media.create({
                         url: imageUrl,
@@ -616,49 +563,32 @@ exports.createNews = async (req, res) => {
                     }, { transaction });
 
                     mediaInstances.push(media);
-                    console.log(`    ✅ Медиа создано с ID: ${media.id}`);
                 } catch (mediaError) {
-                    console.error(`    ❌ Ошибка создания медиа для файла ${file.originalname}:`, mediaError);
+                    logger.error(`Ошибка создания медиа для файла ${file.originalname}:`, mediaError);
                     throw mediaError;
                 }
             }
-            console.log(`✅ Обработано ${mediaInstances.length} изображений`);
-        } else {
-            console.log('ℹ️ Изображения отсутствуют для немедленной публикации');
         }
 
         if (videoUrl) {
-            console.log('🎥 Добавление видео...');
             const media = await Media.create({
                 url: videoUrl,
                 type: 'video',
             }, { transaction });
             mediaInstances.push(media);
-            console.log('✅ Видео добавлено');
         }
 
         if (mediaInstances.length > 0) {
-            console.log(`🔗 Связывание ${mediaInstances.length} медиафайлов с новостью...`);
             await news.addMediaFiles(mediaInstances, { transaction });
-            console.log(`✅ Связано ${mediaInstances.length} медиафайлов`);
         }
 
-        console.log('💾 Коммит транзакции...');
         await transaction.commit();
 
-        console.log('📖 Получение созданной новости...');
         const createdNews = await News.findByPk(news.id, {
             include: [
                 { model: Category, as: 'categories' },
                 { model: Media, as: 'mediaFiles' }
             ],
-        });
-
-        console.log('✅ Финальная новость:', {
-            id: createdNews.id,
-            title: createdNews.title,
-            mediaFilesCount: createdNews.mediaFiles?.length || 0,
-            categoriesCount: createdNews.categories?.length || 0
         });
 
         logger.info(`✅ Создана новость: ${title}`, {
@@ -668,19 +598,14 @@ exports.createNews = async (req, res) => {
             immediate: !scheduleForLater
         });
 
-        console.log('✅ Новость успешно создана и возвращается клиенту');
         res.status(201).json(createdNews);
 
     } catch (err) {
         if (transaction) {
-            console.log('🔄 Откат транзакции...');
             await transaction.rollback();
         }
 
-        console.error('❌ Ошибка создания новости:', {
-            error: err.message,
-            stack: err.stack
-        });
+        logger.error('Ошибка создания новости:', err);
 
         res.status(400).json({
             error: `Ошибка создания новости: ${err.message}`,
@@ -697,16 +622,9 @@ exports.createNews = async (req, res) => {
 exports.updateNews = async (req, res) => {
     const { id } = req.params;
     let { title, content, categoryIds, videoUrl, existingMedia, publishDate } = req.body;
+    const isElections = parseBooleanField(req.body.isElections);
     const mediaFiles = req.files;
     const authorId = req.user.id;
-
-    console.log('🔄 [UPDATE] Начало обновления новости:', {
-        newsId: id,
-        hasNewFiles: !!(mediaFiles && mediaFiles.images),
-        newFilesCount: mediaFiles && mediaFiles.images ? mediaFiles.images.length : 0,
-        existingMedia: existingMedia,
-        videoUrl: videoUrl ? 'присутствует' : 'отсутствует'
-    });
 
     let transaction;
     const uploadedFiles = []; // Для отслеживания загруженных файлов
@@ -726,17 +644,10 @@ exports.updateNews = async (req, res) => {
             return res.status(404).json({ error: 'Новость не найдена' });
         }
 
-        console.log('📰 [UPDATE] Текущая новость найдена:', {
-            title: news.title,
-            currentMediaCount: news.mediaFiles.length,
-            currentMediaIds: news.mediaFiles.map(m => ({ id: m.id, type: m.type, url: m.url }))
-        });
-
-        // 2. Начинаем транзакцию
         transaction = await sequelize.transaction();
 
         // 3. Обновляем основные данные новости
-        const updateData = { title, content, authorId };
+        const updateData = { title, content, authorId, isElections };
         if (publishDate) {
             const date = new Date(publishDate);
             if (!isNaN(date)) {
@@ -747,7 +658,6 @@ exports.updateNews = async (req, res) => {
         }
 
         await news.update(updateData, { transaction });
-        console.log('✅ [UPDATE] Основные данные новости обновлены');
 
         // 4. Обновляем категории
         if (typeof categoryIds === 'string') {
@@ -759,7 +669,6 @@ exports.updateNews = async (req, res) => {
                 transaction,
             });
             await news.setCategories(categories, { transaction });
-            console.log('✅ [UPDATE] Категории обновлены');
         }
 
         // 5. Обрабатываем существующие медиафайлы
@@ -770,23 +679,12 @@ exports.updateNews = async (req, res) => {
                 existingMediaIds = [];
             }
         } catch (e) {
-            console.warn('⚠️ [UPDATE] Ошибка парсинга existingMedia, используем пустой массив');
             existingMediaIds = [];
         }
-
-        console.log('📋 [UPDATE] Анализ существующих медиафайлов:', {
-            existingMediaIds,
-            currentImageFiles: news.mediaFiles.filter(m => m.type === 'image').map(m => m.id)
-        });
 
         // 6. Определяем какие изображения нужно удалить
         const currentImageFiles = news.mediaFiles.filter(media => media.type === 'image');
         const imagesToDelete = currentImageFiles.filter(media => !existingMediaIds.includes(media.id));
-
-        console.log('🗑️ [UPDATE] Изображения для удаления:', imagesToDelete.map(m => ({
-            id: m.id,
-            url: m.url
-        })));
 
         // 7. Удаляем файлы из файловой системы
         for (const media of imagesToDelete) {
@@ -801,14 +699,11 @@ exports.updateNews = async (req, res) => {
                 },
                 transaction,
             });
-            console.log(`✅ [UPDATE] Удалено ${imagesToDelete.length} записей медиафайлов из БД`);
         }
 
         // 9. Добавляем новые изображения
         const newMediaInstances = [];
         if (mediaFiles && mediaFiles.images && mediaFiles.images.length > 0) {
-            console.log(`📁 [UPDATE] Добавляем ${mediaFiles.images.length} новых изображений`);
-
             for (const file of mediaFiles.images) {
                 uploadedFiles.push(file.path); // Отслеживаем загруженные файлы
 
@@ -819,12 +714,10 @@ exports.updateNews = async (req, res) => {
                 }, { transaction });
 
                 newMediaInstances.push(media);
-                console.log(`📷 [UPDATE] Создано новое изображение: ${imageUrl} (ID: ${media.id})`);
             }
 
             if (newMediaInstances.length > 0) {
                 await news.addMediaFiles(newMediaInstances, { transaction });
-                console.log(`✅ [UPDATE] Добавлено ${newMediaInstances.length} новых изображений к новости`);
             }
         }
 
@@ -834,7 +727,6 @@ exports.updateNews = async (req, res) => {
         // 11. Коммитим транзакцию
         await transaction.commit();
         transaction = null; // Помечаем что транзакция успешна
-        console.log('✅ [UPDATE] Транзакция успешно завершена');
 
         // 12. Получаем обновленную новость
         const updatedNews = await News.findByPk(id, {
@@ -846,12 +738,6 @@ exports.updateNews = async (req, res) => {
 
         const modifiedNews = formatMediaUrls([updatedNews])[0];
 
-        console.log('📊 [UPDATE] Финальные медиафайлы:', modifiedNews.mediaFiles.map(m => ({
-            id: m.id,
-            type: m.type,
-            url: m.url
-        })));
-
         res.status(200).json({
             message: 'Новость успешно обновлена',
             news: modifiedNews,
@@ -860,18 +746,13 @@ exports.updateNews = async (req, res) => {
     } catch (err) {
         // Откатываем транзакцию если она активна
         if (transaction) {
-            console.log('🔄 [UPDATE] Транзакция отменена из-за ошибки');
             await transaction.rollback();
         }
 
         // Удаляем загруженные файлы при ошибке
         cleanupUploadedFiles(mediaFiles);
 
-        console.error('❌ [UPDATE] Ошибка обновления новости:', {
-            error: err.message,
-            stack: err.stack,
-            newsId: id
-        });
+        logger.error('Ошибка обновления новости:', err);
 
         res.status(500).json({
             error: `Ошибка обновления новости: ${err.message}`,
@@ -894,18 +775,12 @@ async function deleteMediaFile(media) {
         try {
             if (fs.existsSync(mediaPath)) {
                 await fs.promises.unlink(mediaPath);
-                console.log(`✅ [DELETE] Файл удален: ${mediaPath}`);
                 fileDeleted = true;
                 break;
             }
         } catch (err) {
-            console.error(`❌ [DELETE] Ошибка удаления файла ${mediaPath}:`, err.message);
+            logger.error(`Ошибка удаления файла ${mediaPath}:`, err.message);
         }
-    }
-
-    if (!fileDeleted) {
-        // Не логируем как ошибку, если файл уже удален - это нормально
-        console.log(`ℹ️ [DELETE] Файл уже удален или не найден: ${media.url}`);
     }
 
     return fileDeleted;
@@ -916,12 +791,8 @@ async function handleVideoUpdate(news, videoUrl, transaction) {
     const existingVideo = news.mediaFiles.find(m => m.type === 'video');
 
     if (videoUrl && videoUrl.trim() !== '') {
-        console.log('🎥 [UPDATE] Обновляем видео URL:', videoUrl.trim());
-
         if (existingVideo) {
-            // Обновляем существующее видео
             await existingVideo.update({ url: videoUrl.trim() }, { transaction });
-            console.log('✅ [UPDATE] Видео URL обновлен');
         } else {
             // Создаем новое видео
             const newVideo = await Media.create({
@@ -929,17 +800,14 @@ async function handleVideoUpdate(news, videoUrl, transaction) {
                 type: 'video',
             }, { transaction });
             await news.addMediaFiles([newVideo], { transaction });
-            console.log('✅ [UPDATE] Новое видео добавлено');
         }
     } else {
-        // Удаляем видео если URL пустой
         if (existingVideo) {
             await news.removeMediaFiles([existingVideo], { transaction });
             await Media.destroy({
                 where: { id: existingVideo.id },
                 transaction,
             });
-            console.log('✅ [UPDATE] Видео удалено');
         }
     }
 }
@@ -948,16 +816,13 @@ async function handleVideoUpdate(news, videoUrl, transaction) {
 function cleanupUploadedFiles(mediaFiles) {
     if (!mediaFiles || !mediaFiles.images) return;
 
-    console.log('🗑️ [CLEANUP] Очистка загруженных файлов при ошибке...');
-
     for (const file of mediaFiles.images) {
         try {
             if (fs.existsSync(file.path)) {
                 fs.unlinkSync(file.path);
-                console.log(`🗑️ [CLEANUP] Удален загруженный файл при ошибке: ${file.path}`);
             }
         } catch (err) {
-            console.error(`❌ [CLEANUP] Ошибка удаления файла ${file.path}:`, err.message);
+            logger.error(`Ошибка удаления файла ${file.path}:`, err.message);
         }
     }
 }
@@ -965,8 +830,6 @@ function cleanupUploadedFiles(mediaFiles) {
 // 5. Утилита для очистки осиротевших файлов
 exports.cleanupOrphanedFiles = async (req, res) => {
     try {
-        console.log('🧹 [CLEANUP] Начинаю очистку осиротевших файлов...');
-
         const uploadsDir = path.join(__dirname, '../uploads/images');
         if (!fs.existsSync(uploadsDir)) {
             return res.json({
@@ -977,7 +840,6 @@ exports.cleanupOrphanedFiles = async (req, res) => {
         }
 
         const files = fs.readdirSync(uploadsDir);
-        console.log(`📁 [CLEANUP] Найдено файлов в папке: ${files.length}`);
 
         // Получаем все используемые файлы из БД
         const mediaUrls = await Media.findAll({
@@ -986,7 +848,6 @@ exports.cleanupOrphanedFiles = async (req, res) => {
         });
 
         const usedFilenames = mediaUrls.map(media => path.basename(media.url));
-        console.log(`📋 [CLEANUP] Используемых файлов в БД: ${usedFilenames.length}`);
 
         let deletedCount = 0;
         let skippedCount = 0;
@@ -1005,21 +866,17 @@ exports.cleanupOrphanedFiles = async (req, res) => {
                         await fs.promises.unlink(filePath);
                         deletedCount++;
                         deletedFiles.push(file);
-                        console.log(`🗑️ [CLEANUP] Удален осиротевший файл: ${file}`);
                     } else {
                         skippedCount++;
-                        console.log(`⏭️ [CLEANUP] Пропущен новый файл: ${file} (возраст: ${Math.round(fileAge / 60000)} мин)`);
                     }
                 } catch (error) {
-                    console.error(`❌ [CLEANUP] Ошибка удаления файла ${file}:`, error.message);
+                    logger.error(`Ошибка удаления файла ${file}:`, error.message);
                     skippedCount++;
                 }
             } else {
                 skippedCount++;
             }
         }
-
-        console.log(`✅ [CLEANUP] Очистка завершена. Удалено: ${deletedCount}, пропущено: ${skippedCount}`);
 
         res.json({
             message: 'Очистка осиротевших файлов завершена',
@@ -1031,7 +888,7 @@ exports.cleanupOrphanedFiles = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ [CLEANUP] Ошибка при очистке файлов:', error);
+        logger.error('Ошибка при очистке файлов:', error);
         res.status(500).json({
             error: `Ошибка при очистке файлов: ${error.message}`
         });
@@ -1061,26 +918,17 @@ exports.deleteNews = async (req, res) => {
                         path.resolve(__dirname, '../uploads/images/', path.basename(media.url))
                     ];
 
-                    let fileDeleted = false;
-                    
                     for (const mediaPath of pathVariants) {
                         try {
                             if (fs.existsSync(mediaPath)) {
                                 await fs.promises.unlink(mediaPath);
-                                console.log(`✅ Медиа файл удален при удалении: ${mediaPath}`);
-                                fileDeleted = true;
                                 break;
                             }
                         } catch (err) {
                             if (err.code !== 'ENOENT') {
-                                console.error(`Ошибка удаления медиа файла ${mediaPath}:`, err);
+                                logger.error(`Ошибка удаления медиа файла ${mediaPath}:`, err);
                             }
                         }
-                    }
-
-                    if (!fileDeleted) {
-                        // Не логируем как ошибку, если файл уже удален - это нормально
-                        console.log(`ℹ️ Медиа файл уже удален или не найден: ${media.url}`);
                     }
                 }
             }
@@ -1100,13 +948,13 @@ exports.deleteNews = async (req, res) => {
             return res.json({ message: 'Новость успешно удалена.' });
         } catch (err) {
             await transaction.rollback();
-            console.error('Ошибка при удалении новости:', err);
+            logger.error('Ошибка при удалении новости:', err);
             return res.status(500).json({
                 error: `Ошибка удаления новости: ${err.message}`,
             });
         }
     } catch (err) {
-        console.error('Внутренняя ошибка сервера:', err);
+        logger.error('Внутренняя ошибка сервера:', err);
         return res.status(500).json({
             error: `Внутренняя ошибка сервера: ${err.message}`,
         });
@@ -1145,7 +993,7 @@ exports.cleanupOrphanedFiles = async (req, res) => {
                     deletedCount++;
                     deletedFiles.push(file);
                 } catch (error) {
-                    console.error(`Ошибка удаления файла ${file}:`, error);
+                    logger.error(`Ошибка удаления файла ${file}:`, error);
                 }
             } else {
                 skippedCount++;
@@ -1161,7 +1009,7 @@ exports.cleanupOrphanedFiles = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Ошибка при очистке файлов:', error);
+        logger.error('Ошибка при очистке файлов:', error);
         res.status(500).json({
             error: `Ошибка при очистке файлов: ${error.message}`
         });
