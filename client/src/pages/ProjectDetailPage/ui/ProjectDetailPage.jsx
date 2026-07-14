@@ -79,6 +79,7 @@ const ProjectDetailPage = memo(() => {
                         newsList={newsList}
                         loading={loadingNews}
                         categories={categories}
+                        showElectionsBanner
                     />
                 </div>
             </div>
