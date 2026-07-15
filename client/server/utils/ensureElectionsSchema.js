@@ -26,6 +26,11 @@ async function ensureElectionsSchema(sequelize) {
                 autoIncrement: true,
                 allowNull: false,
             },
+            documentKey: {
+                type: DataTypes.STRING,
+                allowNull: false,
+                unique: true,
+            },
             url: {
                 type: DataTypes.STRING,
                 allowNull: false,
@@ -45,6 +50,31 @@ async function ensureElectionsSchema(sequelize) {
                 defaultValue: DataTypes.NOW,
             },
         });
+    } else {
+        const pdfTable = await queryInterface.describeTable('election_pdfs');
+
+        if (!pdfTable.documentKey) {
+            await queryInterface.addColumn('election_pdfs', 'documentKey', {
+                type: DataTypes.STRING,
+                allowNull: true,
+            });
+
+            await queryInterface.sequelize.query(`
+                UPDATE election_pdfs
+                SET "documentKey" = 'state_duma'
+                WHERE "documentKey" IS NULL
+            `);
+
+            await queryInterface.changeColumn('election_pdfs', 'documentKey', {
+                type: DataTypes.STRING,
+                allowNull: false,
+            });
+
+            await queryInterface.addIndex('election_pdfs', ['documentKey'], {
+                unique: true,
+                name: 'election_pdfs_document_key_unique',
+            });
+        }
     }
 
     if (!normalizedTables.includes('election_banners')) {

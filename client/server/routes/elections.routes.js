@@ -19,12 +19,12 @@ const {
 const { validate } = require('../middlewares/validation.middleware');
 const csrfProtection = require('../middlewares/csrfProtection.middleware');
 
-router.get('/pdf', electionsController.getCurrentPdf);
+router.get('/pdf', electionsController.getElectionPdfs);
 
 router.get('/news', newsController.getElectionsNews);
 
 router.put(
-    '/pdf',
+    '/pdf/:documentKey',
     authenticateAdmin,
     csrfProtection,
     uploadPdf,
@@ -35,7 +35,7 @@ router.put(
 );
 
 router.delete(
-    '/pdf',
+    '/pdf/:documentKey',
     authenticateAdmin,
     csrfProtection,
     electionsController.deletePdf,

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import {
-    fetchCurrentElectionPdfApi,
+    fetchElectionPdfsApi,
     uploadElectionPdfApi,
     deleteElectionPdfApi,
     fetchCurrentElectionBannerApi,
@@ -9,14 +9,37 @@ import {
     deleteElectionBannerImageApi,
     fetchElectionsNewsApi,
 } from '../api/electionsApi';
+import { ELECTION_PDF_DOCUMENTS } from './electionPdfDocuments';
 
 export const DEFAULT_BANNER_TITLE = 'Выборы 2026';
 
-export const fetchCurrentElectionPdf = createAsyncThunk(
-    'elections/fetchCurrentElectionPdf',
+const buildEmptyElectionPdfs = () =>
+    ELECTION_PDF_DOCUMENTS.map(({ documentKey, title }) => ({
+        documentKey,
+        title,
+        url: null,
+        originalFilename: null,
+    }));
+
+const upsertElectionPdf = (pdfs, updatedPdf) => {
+    const index = pdfs.findIndex(
+        (pdf) => pdf.documentKey === updatedPdf.documentKey,
+    );
+
+    if (index === -1) {
+        return [...pdfs, updatedPdf];
+    }
+
+    const nextPdfs = [...pdfs];
+    nextPdfs[index] = updatedPdf;
+    return nextPdfs;
+};
+
+export const fetchElectionPdfs = createAsyncThunk(
+    'elections/fetchElectionPdfs',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await fetchCurrentElectionPdfApi();
+            const response = await fetchElectionPdfsApi();
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data);
@@ -26,9 +49,9 @@ export const fetchCurrentElectionPdf = createAsyncThunk(
 
 export const uploadElectionPdf = createAsyncThunk(
     'elections/uploadElectionPdf',
-    async (formData, { rejectWithValue }) => {
+    async ({ documentKey, formData }, { rejectWithValue }) => {
         try {
-            const response = await uploadElectionPdfApi(formData);
+            const response = await uploadElectionPdfApi(documentKey, formData);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data);
@@ -38,10 +61,10 @@ export const uploadElectionPdf = createAsyncThunk(
 
 export const deleteElectionPdf = createAsyncThunk(
     'elections/deleteElectionPdf',
-    async (_, { rejectWithValue }) => {
+    async (documentKey, { rejectWithValue }) => {
         try {
-            await deleteElectionPdfApi();
-            return null;
+            await deleteElectionPdfApi(documentKey);
+            return documentKey;
         } catch (error) {
             return rejectWithValue(error.response?.data);
         }
@@ -111,7 +134,7 @@ export const fetchElectionsNews = createAsyncThunk(
 const electionsSlice = createSlice({
     name: 'elections',
     initialState: {
-        currentPdf: null,
+        electionPdfs: buildEmptyElectionPdfs(),
         pdfStatus: 'idle',
         pdfError: null,
         currentBanner: null,
@@ -131,14 +154,14 @@ const electionsSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(fetchCurrentElectionPdf.pending, (state) => {
+            .addCase(fetchElectionPdfs.pending, (state) => {
                 state.pdfStatus = 'loading';
             })
-            .addCase(fetchCurrentElectionPdf.fulfilled, (state, action) => {
+            .addCase(fetchElectionPdfs.fulfilled, (state, action) => {
                 state.pdfStatus = 'succeeded';
-                state.currentPdf = action.payload;
+                state.electionPdfs = action.payload;
             })
-            .addCase(fetchCurrentElectionPdf.rejected, (state, action) => {
+            .addCase(fetchElectionPdfs.rejected, (state, action) => {
                 state.pdfStatus = 'failed';
                 state.pdfError = action.payload;
             })
@@ -147,7 +170,10 @@ const electionsSlice = createSlice({
             })
             .addCase(uploadElectionPdf.fulfilled, (state, action) => {
                 state.pdfStatus = 'succeeded';
-                state.currentPdf = action.payload;
+                state.electionPdfs = upsertElectionPdf(
+                    state.electionPdfs,
+                    action.payload,
+                );
             })
             .addCase(uploadElectionPdf.rejected, (state, action) => {
                 state.pdfStatus = 'failed';
@@ -156,9 +182,16 @@ const electionsSlice = createSlice({
             .addCase(deleteElectionPdf.pending, (state) => {
                 state.pdfStatus = 'loading';
             })
-            .addCase(deleteElectionPdf.fulfilled, (state) => {
+            .addCase(deleteElectionPdf.fulfilled, (state, action) => {
                 state.pdfStatus = 'succeeded';
-                state.currentPdf = null;
+                const documentKey = action.payload;
+                const emptyPdf = buildEmptyElectionPdfs().find(
+                    (pdf) => pdf.documentKey === documentKey,
+                );
+                state.electionPdfs = upsertElectionPdf(
+                    state.electionPdfs,
+                    emptyPdf,
+                );
             })
             .addCase(deleteElectionPdf.rejected, (state, action) => {
                 state.pdfStatus = 'failed';
@@ -224,4 +257,8 @@ const electionsSlice = createSlice({
 
 export const { clearElectionsPdfError, clearElectionsBannerError } =
     electionsSlice.actions;
+
+// Backward compatibility
+export const fetchCurrentElectionPdf = fetchElectionPdfs;
+
 export default electionsSlice.reducer;

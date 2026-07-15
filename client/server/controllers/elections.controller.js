@@ -3,6 +3,11 @@ const { posix } = require('path');
 const path = require('path');
 const fs = require('fs').promises;
 const baseUrl = process.env.BASE_URL;
+const {
+    ELECTION_PDF_DOCUMENTS,
+    ELECTION_PDF_DOCUMENT_KEYS,
+    getElectionPdfDocumentTitle,
+} = require('../constants/electionPdfDocuments');
 
 const DEFAULT_BANNER_TITLE = 'Выборы 2026';
 
@@ -16,6 +21,8 @@ const parseBooleanField = (value) => {
 };
 
 const formatPdfResponse = (pdf) => ({
+    documentKey: pdf.documentKey,
+    title: getElectionPdfDocumentTitle(pdf.documentKey),
     ...pdf.toJSON(),
     url: `${baseUrl}/${pdf.url}`,
 });
@@ -31,17 +38,29 @@ const removeFileFromDisk = async (relativeUrl) => {
     }
 };
 
-exports.getCurrentPdf = async (req, res) => {
+exports.getElectionPdfs = async (req, res) => {
     try {
-        const pdf = await ElectionPdf.findOne({
-            order: [['updatedAt', 'DESC']],
+        const pdfs = await ElectionPdf.findAll();
+        const pdfMap = Object.fromEntries(
+            pdfs.map((pdf) => [pdf.documentKey, pdf]),
+        );
+
+        const response = ELECTION_PDF_DOCUMENTS.map(({ documentKey, title }) => {
+            const pdf = pdfMap[documentKey];
+
+            if (!pdf) {
+                return {
+                    documentKey,
+                    title,
+                    url: null,
+                    originalFilename: null,
+                };
+            }
+
+            return formatPdfResponse(pdf);
         });
 
-        if (!pdf) {
-            return res.status(200).json(null);
-        }
-
-        res.status(200).json(formatPdfResponse(pdf));
+        res.status(200).json(response);
     } catch (error) {
         res.status(500).json({ error: 'Ошибка сервера: ' + error.message });
     }
@@ -49,6 +68,12 @@ exports.getCurrentPdf = async (req, res) => {
 
 exports.uploadOrReplacePdf = async (req, res) => {
     try {
+        const { documentKey } = req.params;
+
+        if (!ELECTION_PDF_DOCUMENT_KEYS.includes(documentKey)) {
+            return res.status(400).json({ error: 'Неверный тип PDF-документа' });
+        }
+
         const pdfFile = req.file;
 
         if (!pdfFile) {
@@ -57,7 +82,7 @@ exports.uploadOrReplacePdf = async (req, res) => {
 
         const pdfUrl = posix.join('uploads', 'elections', pdfFile.filename);
         const existingPdf = await ElectionPdf.findOne({
-            order: [['updatedAt', 'DESC']],
+            where: { documentKey },
         });
 
         if (existingPdf) {
@@ -69,6 +94,7 @@ exports.uploadOrReplacePdf = async (req, res) => {
         }
 
         const newPdf = await ElectionPdf.create({
+            documentKey,
             url: pdfUrl,
             originalFilename: pdfFile.originalname,
         });
@@ -86,8 +112,14 @@ exports.uploadOrReplacePdf = async (req, res) => {
 
 exports.deletePdf = async (req, res) => {
     try {
+        const { documentKey } = req.params;
+
+        if (!ELECTION_PDF_DOCUMENT_KEYS.includes(documentKey)) {
+            return res.status(400).json({ error: 'Неверный тип PDF-документа' });
+        }
+
         const pdf = await ElectionPdf.findOne({
-            order: [['updatedAt', 'DESC']],
+            where: { documentKey },
         });
 
         if (!pdf) {
@@ -97,7 +129,10 @@ exports.deletePdf = async (req, res) => {
         await removeFileFromDisk(pdf.url);
         await pdf.destroy();
 
-        res.status(200).json({ message: 'PDF-файл успешно удалён' });
+        res.status(200).json({
+            message: 'PDF-файл успешно удалён',
+            documentKey,
+        });
     } catch (error) {
         res.status(500).json({ error: 'Ошибка сервера: ' + error.message });
     }

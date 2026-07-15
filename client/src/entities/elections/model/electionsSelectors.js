@@ -2,10 +2,12 @@ import { createSelector } from 'reselect';
 
 const selectElectionsState = (state) => state.elections;
 
-export const selectCurrentElectionPdf = createSelector(
+export const selectElectionPdfs = createSelector(
     [selectElectionsState],
-    (electionsState) => electionsState.currentPdf,
+    (electionsState) => electionsState.electionPdfs,
 );
+
+export const selectCurrentElectionPdf = selectElectionPdfs;
 
 export const selectPdfStatus = createSelector(
     [selectElectionsState],

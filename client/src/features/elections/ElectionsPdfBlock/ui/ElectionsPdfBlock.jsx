@@ -1,118 +1,83 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCurrentElectionPdf } from '@entities/elections/model/electionsSlice';
+import { fetchElectionPdfs } from '@entities/elections/model/electionsSlice';
 import {
-    selectCurrentElectionPdf,
+    selectElectionPdfs,
     selectPdfStatus,
 } from '@entities/elections/model/electionsSelectors';
+import { ELECTION_PDF_DOCUMENTS } from '@entities/elections/model/electionPdfDocuments';
 import { Loader } from '@shared/ui/Loader/index.js';
+import { PdfPreviewPanel } from './PdfPreviewPanel';
 import styles from './ElectionsPdfBlock.module.scss';
 
-const PDF_DISPLAY_TITLE =
-    'Сведения о размере и условиях оплаты, а также иных условиях размещения предвыборной агитации';
+const PREVIEW_ANIMATION_MS = 420;
 
 export const ElectionsPdfBlock = () => {
     const dispatch = useDispatch();
-    const pdf = useSelector(selectCurrentElectionPdf);
+    const electionPdfs = useSelector(selectElectionPdfs);
     const pdfStatus = useSelector(selectPdfStatus);
-    const [previewUrl, setPreviewUrl] = useState(null);
-    const [previewError, setPreviewError] = useState(false);
-    const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+    const [activeDocumentKey, setActiveDocumentKey] = useState(null);
+    const [mountedDocumentKey, setMountedDocumentKey] = useState(null);
+    const closeTimerRef = useRef(null);
 
     useEffect(() => {
-        dispatch(fetchCurrentElectionPdf());
+        dispatch(fetchElectionPdfs());
     }, [dispatch]);
 
-    useEffect(() => {
-        if (!pdf?.url) {
-            setPreviewUrl(null);
-            setPreviewError(false);
-            setIsPreviewLoading(false);
-            return;
-        }
-
-        let objectUrl;
-        let cancelled = false;
-
-        setIsPreviewLoading(true);
-        setPreviewError(false);
-
-        fetch(pdf.url)
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error('Не удалось загрузить PDF');
-                }
-                return response.blob();
-            })
-            .then((blob) => {
-                if (cancelled) return;
-                objectUrl = URL.createObjectURL(blob);
-                setPreviewUrl(objectUrl);
-            })
-            .catch(() => {
-                if (!cancelled) {
-                    setPreviewError(true);
-                    setPreviewUrl(null);
-                }
-            })
-            .finally(() => {
-                if (!cancelled) {
-                    setIsPreviewLoading(false);
-                }
-            });
-
-        return () => {
-            cancelled = true;
-            if (objectUrl) {
-                URL.revokeObjectURL(objectUrl);
+    useEffect(
+        () => () => {
+            if (closeTimerRef.current) {
+                window.clearTimeout(closeTimerRef.current);
             }
-            setPreviewUrl((prev) => {
-                if (prev?.startsWith('blob:')) {
-                    URL.revokeObjectURL(prev);
-                }
-                return null;
-            });
-        };
-    }, [pdf?.url]);
+        },
+        [],
+    );
 
-    const handleDownloadPdf = async () => {
-        const filename = pdf?.originalFilename || 'document.pdf';
-
-        if (previewUrl) {
-            const link = document.createElement('a');
-            link.href = previewUrl;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            return;
-        }
-
-        if (!pdf?.url) {
-            return;
-        }
-
-        try {
-            const response = await fetch(pdf.url);
-            if (!response.ok) {
-                throw new Error('Не удалось скачать PDF');
-            }
-
-            const blob = await response.blob();
-            const objectUrl = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = objectUrl;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            URL.revokeObjectURL(objectUrl);
-        } catch {
-            window.open(pdf.url, '_blank', 'noopener,noreferrer');
+    const clearCloseTimer = () => {
+        if (closeTimerRef.current) {
+            window.clearTimeout(closeTimerRef.current);
+            closeTimerRef.current = null;
         }
     };
 
-    const isLoading = pdfStatus === 'loading' && !pdf;
+    const scheduleUnmount = () => {
+        clearCloseTimer();
+        closeTimerRef.current = window.setTimeout(() => {
+            setMountedDocumentKey(null);
+            closeTimerRef.current = null;
+        }, PREVIEW_ANIMATION_MS);
+    };
+
+    const handleDocumentClick = (documentKey) => {
+        clearCloseTimer();
+
+        if (activeDocumentKey === documentKey) {
+            setActiveDocumentKey(null);
+            scheduleUnmount();
+            return;
+        }
+
+        if (activeDocumentKey) {
+            setActiveDocumentKey(null);
+            closeTimerRef.current = window.setTimeout(() => {
+                setMountedDocumentKey(documentKey);
+                requestAnimationFrame(() => {
+                    setActiveDocumentKey(documentKey);
+                });
+                closeTimerRef.current = null;
+            }, PREVIEW_ANIMATION_MS);
+            return;
+        }
+
+        setMountedDocumentKey(documentKey);
+        requestAnimationFrame(() => {
+            setActiveDocumentKey(documentKey);
+        });
+    };
+
+    const isLoading =
+        pdfStatus === 'loading' &&
+        electionPdfs.every((pdf) => !pdf.url);
 
     return (
         <section className={styles.block} aria-labelledby="elections-pdf-title">
@@ -124,53 +89,75 @@ export const ElectionsPdfBlock = () => {
                 <div className={styles.loader}>
                     <Loader />
                 </div>
-            ) : pdf?.url ? (
+            ) : (
                 <div className={styles.content}>
-                    <p className={styles.fileName}>{PDF_DISPLAY_TITLE}</p>
+                    <div className={styles.documentList}>
+                        {ELECTION_PDF_DOCUMENTS.map((document) => {
+                            const isOpen =
+                                activeDocumentKey === document.documentKey;
+                            const isMounted =
+                                mountedDocumentKey === document.documentKey;
+                            const isClosing = isMounted && !isOpen;
+                            const currentPdf = electionPdfs.find(
+                                (pdf) =>
+                                    pdf.documentKey === document.documentKey,
+                            );
+                            const hasFile = Boolean(currentPdf?.url);
 
-                    <div className={styles.viewerWrapper}>
-                        {isPreviewLoading ? (
-                            <div className={styles.viewerLoader}>
-                                <Loader />
-                            </div>
-                        ) : previewUrl ? (
-                            <iframe
-                                src={previewUrl}
-                                title={PDF_DISPLAY_TITLE}
-                                className={styles.viewer}
-                            />
-                        ) : (
-                            <div className={styles.viewerFallback}>
-                                {previewError
-                                    ? 'Не удалось загрузить предпросмотр'
-                                    : 'Предпросмотр недоступен'}
-                            </div>
-                        )}
-                    </div>
+                            return (
+                                <div
+                                    key={document.documentKey}
+                                    className={styles.documentItem}
+                                >
+                                    <button
+                                        type="button"
+                                        className={`${styles.documentButton} ${isOpen ? styles.documentButtonActive : ''}`}
+                                        onClick={() =>
+                                            handleDocumentClick(
+                                                document.documentKey,
+                                            )
+                                        }
+                                        aria-expanded={isOpen}
+                                        aria-controls={`pdf-preview-${document.documentKey}`}
+                                    >
+                                        <span className={styles.documentButtonTitle}>
+                                            {document.title}
+                                        </span>
+                                        {!hasFile && (
+                                            <span className={styles.documentBadge}>
+                                                Не загружен
+                                            </span>
+                                        )}
+                                    </button>
 
-                    <div className={styles.actions}>
-                        <a
-                            href={pdf.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.openLink}
-                        >
-                            Открыть PDF
-                        </a>
-                        <button
-                            type="button"
-                            onClick={handleDownloadPdf}
-                            disabled={isPreviewLoading}
-                            className={styles.downloadLink}
-                        >
-                            Скачать PDF
-                        </button>
+                                    {isMounted && (
+                                        <div
+                                            id={`pdf-preview-${document.documentKey}`}
+                                            className={`${styles.previewWrapper} ${isOpen ? styles.previewWrapperOpen : ''} ${isClosing ? styles.previewWrapperClosing : ''}`}
+                                            aria-hidden={!isOpen}
+                                        >
+                                            <div className={styles.previewInner}>
+                                                <div
+                                                    className={`${styles.previewContainer} ${isClosing ? styles.previewContainerClosing : ''}`}
+                                                >
+                                                    <PdfPreviewPanel
+                                                        pdf={
+                                                            currentPdf ?? {
+                                                                ...document,
+                                                                url: null,
+                                                                originalFilename: null,
+                                                            }
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
-            ) : (
-                <p className={styles.emptyState}>
-                    PDF-документ пока не загружен
-                </p>
             )}
         </section>
     );

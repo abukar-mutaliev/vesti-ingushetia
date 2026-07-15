@@ -1,6 +1,13 @@
 const { body } = require('express-validator');
 
-exports.uploadPdfValidation = [];
+const { param } = require('express-validator');
+const { ELECTION_PDF_DOCUMENT_KEYS } = require('../constants/electionPdfDocuments');
+
+exports.uploadPdfValidation = [
+    param('documentKey')
+        .isIn(ELECTION_PDF_DOCUMENT_KEYS)
+        .withMessage('Неверный тип PDF-документа'),
+];
 
 exports.updateBannerValidation = [
     body('title')

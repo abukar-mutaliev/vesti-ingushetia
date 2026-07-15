@@ -4,6 +4,11 @@ module.exports = (sequelize) => {
     const ElectionPdf = sequelize.define(
         'ElectionPdf',
         {
+            documentKey: {
+                type: DataTypes.STRING,
+                allowNull: false,
+                unique: true,
+            },
             url: {
                 type: DataTypes.STRING,
                 allowNull: false,
