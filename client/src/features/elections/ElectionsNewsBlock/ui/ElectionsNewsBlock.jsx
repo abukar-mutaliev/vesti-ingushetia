@@ -64,7 +64,6 @@ export const ElectionsNewsBlock = () => {
                             key={news.id}
                             news={news}
                             showDate
-                            showContent
                         />
                     ))}
 
