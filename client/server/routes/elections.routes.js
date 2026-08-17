@@ -12,7 +12,10 @@ const {
 } = require('../middlewares/uploadElectionBanner.middleware');
 const { authenticateAdmin } = require('../middlewares/auth.middleware');
 const {
+    createPdfValidation,
     uploadPdfValidation,
+    updatePdfTitleValidation,
+    deletePdfValidation,
     updateBannerValidation,
     uploadBannerValidation,
 } = require('../validation/electionsValidation');
@@ -23,8 +26,19 @@ router.get('/pdf', electionsController.getElectionPdfs);
 
 router.get('/news', newsController.getElectionsNews);
 
+router.post(
+    '/pdf',
+    authenticateAdmin,
+    csrfProtection,
+    uploadPdf,
+    handlePdfMulterErrors,
+    createPdfValidation,
+    validate,
+    electionsController.createElectionPdf,
+);
+
 router.put(
-    '/pdf/:documentKey',
+    '/pdf/:id',
     authenticateAdmin,
     csrfProtection,
     uploadPdf,
@@ -34,10 +48,21 @@ router.put(
     electionsController.uploadOrReplacePdf,
 );
 
-router.delete(
-    '/pdf/:documentKey',
+router.patch(
+    '/pdf/:id',
     authenticateAdmin,
     csrfProtection,
+    updatePdfTitleValidation,
+    validate,
+    electionsController.updateElectionPdfTitle,
+);
+
+router.delete(
+    '/pdf/:id',
+    authenticateAdmin,
+    csrfProtection,
+    deletePdfValidation,
+    validate,
     electionsController.deletePdf,
 );
 

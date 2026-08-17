@@ -5,7 +5,6 @@ import {
     selectElectionPdfs,
     selectPdfStatus,
 } from '@entities/elections/model/electionsSelectors';
-import { ELECTION_PDF_DOCUMENTS } from '@entities/elections/model/electionPdfDocuments';
 import { Loader } from '@shared/ui/Loader/index.js';
 import { PdfPreviewPanel } from './PdfPreviewPanel';
 import styles from './ElectionsPdfBlock.module.scss';
@@ -16,8 +15,8 @@ export const ElectionsPdfBlock = () => {
     const dispatch = useDispatch();
     const electionPdfs = useSelector(selectElectionPdfs);
     const pdfStatus = useSelector(selectPdfStatus);
-    const [activeDocumentKey, setActiveDocumentKey] = useState(null);
-    const [mountedDocumentKey, setMountedDocumentKey] = useState(null);
+    const [activePdfId, setActivePdfId] = useState(null);
+    const [mountedPdfId, setMountedPdfId] = useState(null);
     const closeTimerRef = useRef(null);
 
     useEffect(() => {
@@ -43,41 +42,39 @@ export const ElectionsPdfBlock = () => {
     const scheduleUnmount = () => {
         clearCloseTimer();
         closeTimerRef.current = window.setTimeout(() => {
-            setMountedDocumentKey(null);
+            setMountedPdfId(null);
             closeTimerRef.current = null;
         }, PREVIEW_ANIMATION_MS);
     };
 
-    const handleDocumentClick = (documentKey) => {
+    const handleDocumentClick = (pdfId) => {
         clearCloseTimer();
 
-        if (activeDocumentKey === documentKey) {
-            setActiveDocumentKey(null);
+        if (activePdfId === pdfId) {
+            setActivePdfId(null);
             scheduleUnmount();
             return;
         }
 
-        if (activeDocumentKey) {
-            setActiveDocumentKey(null);
+        if (activePdfId) {
+            setActivePdfId(null);
             closeTimerRef.current = window.setTimeout(() => {
-                setMountedDocumentKey(documentKey);
+                setMountedPdfId(pdfId);
                 requestAnimationFrame(() => {
-                    setActiveDocumentKey(documentKey);
+                    setActivePdfId(pdfId);
                 });
                 closeTimerRef.current = null;
             }, PREVIEW_ANIMATION_MS);
             return;
         }
 
-        setMountedDocumentKey(documentKey);
+        setMountedPdfId(pdfId);
         requestAnimationFrame(() => {
-            setActiveDocumentKey(documentKey);
+            setActivePdfId(pdfId);
         });
     };
 
-    const isLoading =
-        pdfStatus === 'loading' &&
-        electionPdfs.every((pdf) => !pdf.url);
+    const isLoading = pdfStatus === 'loading' && electionPdfs.length === 0;
 
     return (
         <section className={styles.block} aria-labelledby="elections-pdf-title">
@@ -89,50 +86,31 @@ export const ElectionsPdfBlock = () => {
                 <div className={styles.loader}>
                     <Loader />
                 </div>
-            ) : (
+            ) : electionPdfs.length > 0 ? (
                 <div className={styles.content}>
                     <div className={styles.documentList}>
-                        {ELECTION_PDF_DOCUMENTS.map((document) => {
-                            const isOpen =
-                                activeDocumentKey === document.documentKey;
-                            const isMounted =
-                                mountedDocumentKey === document.documentKey;
+                        {electionPdfs.map((pdf) => {
+                            const isOpen = activePdfId === pdf.id;
+                            const isMounted = mountedPdfId === pdf.id;
                             const isClosing = isMounted && !isOpen;
-                            const currentPdf = electionPdfs.find(
-                                (pdf) =>
-                                    pdf.documentKey === document.documentKey,
-                            );
-                            const hasFile = Boolean(currentPdf?.url);
 
                             return (
-                                <div
-                                    key={document.documentKey}
-                                    className={styles.documentItem}
-                                >
+                                <div key={pdf.id} className={styles.documentItem}>
                                     <button
                                         type="button"
                                         className={`${styles.documentButton} ${isOpen ? styles.documentButtonActive : ''}`}
-                                        onClick={() =>
-                                            handleDocumentClick(
-                                                document.documentKey,
-                                            )
-                                        }
+                                        onClick={() => handleDocumentClick(pdf.id)}
                                         aria-expanded={isOpen}
-                                        aria-controls={`pdf-preview-${document.documentKey}`}
+                                        aria-controls={`pdf-preview-${pdf.id}`}
                                     >
                                         <span className={styles.documentButtonTitle}>
-                                            {document.title}
+                                            {pdf.title}
                                         </span>
-                                        {!hasFile && (
-                                            <span className={styles.documentBadge}>
-                                                Не загружен
-                                            </span>
-                                        )}
                                     </button>
 
                                     {isMounted && (
                                         <div
-                                            id={`pdf-preview-${document.documentKey}`}
+                                            id={`pdf-preview-${pdf.id}`}
                                             className={`${styles.previewWrapper} ${isOpen ? styles.previewWrapperOpen : ''} ${isClosing ? styles.previewWrapperClosing : ''}`}
                                             aria-hidden={!isOpen}
                                         >
@@ -140,15 +118,7 @@ export const ElectionsPdfBlock = () => {
                                                 <div
                                                     className={`${styles.previewContainer} ${isClosing ? styles.previewContainerClosing : ''}`}
                                                 >
-                                                    <PdfPreviewPanel
-                                                        pdf={
-                                                            currentPdf ?? {
-                                                                ...document,
-                                                                url: null,
-                                                                originalFilename: null,
-                                                            }
-                                                        }
-                                                    />
+                                                    <PdfPreviewPanel pdf={pdf} />
                                                 </div>
                                             </div>
                                         </div>
@@ -158,6 +128,10 @@ export const ElectionsPdfBlock = () => {
                         })}
                     </div>
                 </div>
+            ) : (
+                <p className={styles.emptyState}>
+                    PDF-документы пока не загружены
+                </p>
             )}
         </section>
     );

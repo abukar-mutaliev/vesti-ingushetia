@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     fetchElectionPdfs,
+    createElectionPdf,
     uploadElectionPdf,
+    updateElectionPdfTitle,
     deleteElectionPdf,
     clearElectionsPdfError,
     fetchCurrentElectionBanner,
@@ -20,10 +22,13 @@ import {
     selectBannerStatus,
     selectBannerError,
 } from '@entities/elections/model/electionsSelectors';
-import { ELECTION_PDF_DOCUMENTS } from '@entities/elections/model/electionPdfDocuments';
+import { MAX_ELECTION_PDFS } from '@entities/elections/model/electionPdfDocuments';
 import { ConfirmDeleteModal } from '@shared/ui/ConfirmDeleteModal/index.js';
+import {
+    AddElectionPdfCard,
+    ElectionPdfUploadCard,
+} from './ElectionPdfUploadCard';
 import { UploadStatusIndicator } from './UploadStatusIndicator';
-import { ElectionPdfUploadCard } from './ElectionPdfUploadCard';
 import styles from './ElectionsSection.module.scss';
 
 const SUCCESS_INDICATOR_DURATION_MS = 4500;
@@ -41,11 +46,12 @@ export const ElectionsSection = () => {
 
     const [pdfLocalErrors, setPdfLocalErrors] = useState({});
     const [bannerLocalError, setBannerLocalError] = useState('');
-    const [uploadingPdfKey, setUploadingPdfKey] = useState(null);
+    const [uploadingPdfId, setUploadingPdfId] = useState(null);
+    const [savingTitlePdfId, setSavingTitlePdfId] = useState(null);
     const [isBannerUploading, setIsBannerUploading] = useState(false);
     const [pdfUploadStatuses, setPdfUploadStatuses] = useState({});
     const [bannerUploadStatus, setBannerUploadStatus] = useState(null);
-    const [deletePdfDocumentKey, setDeletePdfDocumentKey] = useState(null);
+    const [deletePdfId, setDeletePdfId] = useState(null);
     const [isDeleteBannerModalOpen, setIsDeleteBannerModalOpen] =
         useState(false);
     const [bannerTitle, setBannerTitle] = useState(DEFAULT_BANNER_TITLE);
@@ -82,9 +88,9 @@ export const ElectionsSection = () => {
         const timer = setTimeout(() => {
             setPdfUploadStatuses((prev) => {
                 const next = { ...prev };
-                successEntries.forEach(([documentKey]) => {
-                    if (next[documentKey]?.status === 'success') {
-                        delete next[documentKey];
+                successEntries.forEach(([pdfKey]) => {
+                    if (next[pdfKey]?.status === 'success') {
+                        delete next[pdfKey];
                     }
                 });
                 return next;
@@ -109,23 +115,29 @@ export const ElectionsSection = () => {
     const isPdfLoading = pdfStatus === 'loading';
     const isBannerLoading = bannerStatus === 'loading';
 
-    const uploadPdfFile = (documentKey, file) => {
+    const remainingPdfCount = MAX_ELECTION_PDFS - electionPdfs.length;
+
+    const uploadPdfFile = (pdfId, file, title) => {
         const formData = new FormData();
         formData.append('pdf', file);
 
-        setUploadingPdfKey(documentKey);
-        setPdfLocalErrors((prev) => ({ ...prev, [documentKey]: '' }));
+        if (title) {
+            formData.append('title', title);
+        }
+
+        setUploadingPdfId(pdfId);
+        setPdfLocalErrors((prev) => ({ ...prev, [pdfId]: '' }));
         setPdfUploadStatuses((prev) => ({
             ...prev,
-            [documentKey]: { status: 'uploading', fileName: file.name },
+            [pdfId]: { status: 'uploading', fileName: file.name },
         }));
 
-        dispatch(uploadElectionPdf({ documentKey, formData }))
+        dispatch(uploadElectionPdf({ id: pdfId, formData }))
             .unwrap()
             .then(() => {
                 setPdfUploadStatuses((prev) => ({
                     ...prev,
-                    [documentKey]: {
+                    [pdfId]: {
                         status: 'success',
                         fileName: file.name,
                     },
@@ -134,17 +146,79 @@ export const ElectionsSection = () => {
             .catch((uploadError) => {
                 setPdfUploadStatuses((prev) => {
                     const next = { ...prev };
-                    delete next[documentKey];
+                    delete next[pdfId];
                     return next;
                 });
                 setPdfLocalErrors((prev) => ({
                     ...prev,
-                    [documentKey]:
+                    [pdfId]:
                         uploadError?.error || 'Не удалось загрузить PDF-файл',
                 }));
             })
             .finally(() => {
-                setUploadingPdfKey(null);
+                setUploadingPdfId(null);
+            });
+    };
+
+    const createPdfFile = (file, title) => {
+        const formData = new FormData();
+        formData.append('pdf', file);
+
+        if (title) {
+            formData.append('title', title);
+        }
+
+        setUploadingPdfId('new');
+        setPdfLocalErrors((prev) => ({ ...prev, new: '' }));
+        setPdfUploadStatuses((prev) => ({
+            ...prev,
+            new: { status: 'uploading', fileName: file.name },
+        }));
+
+        dispatch(createElectionPdf({ formData }))
+            .unwrap()
+            .then(() => {
+                setPdfUploadStatuses((prev) => ({
+                    ...prev,
+                    new: {
+                        status: 'success',
+                        fileName: file.name,
+                    },
+                }));
+            })
+            .catch((uploadError) => {
+                setPdfUploadStatuses((prev) => {
+                    const next = { ...prev };
+                    delete next.new;
+                    return next;
+                });
+                setPdfLocalErrors((prev) => ({
+                    ...prev,
+                    new:
+                        uploadError?.error || 'Не удалось загрузить PDF-файл',
+                }));
+            })
+            .finally(() => {
+                setUploadingPdfId(null);
+            });
+    };
+
+    const savePdfTitle = (pdfId, title) => {
+        setSavingTitlePdfId(pdfId);
+        setPdfLocalErrors((prev) => ({ ...prev, [pdfId]: '' }));
+
+        dispatch(updateElectionPdfTitle({ id: pdfId, title }))
+            .unwrap()
+            .catch((updateError) => {
+                setPdfLocalErrors((prev) => ({
+                    ...prev,
+                    [pdfId]:
+                        updateError?.error ||
+                        'Не удалось сохранить название документа',
+                }));
+            })
+            .finally(() => {
+                setSavingTitlePdfId(null);
             });
     };
 
@@ -242,27 +316,27 @@ export const ElectionsSection = () => {
     };
 
     const handleConfirmDeletePdf = () => {
-        if (!deletePdfDocumentKey) {
+        if (!deletePdfId) {
             return;
         }
 
-        dispatch(deleteElectionPdf(deletePdfDocumentKey))
+        dispatch(deleteElectionPdf(deletePdfId))
             .unwrap()
             .then(() => {
                 setPdfUploadStatuses((prev) => {
                     const next = { ...prev };
-                    delete next[deletePdfDocumentKey];
+                    delete next[deletePdfId];
                     return next;
                 });
-                setDeletePdfDocumentKey(null);
+                setDeletePdfId(null);
             })
             .catch((deleteError) => {
                 setPdfLocalErrors((prev) => ({
                     ...prev,
-                    [deletePdfDocumentKey]:
+                    [deletePdfId]:
                         deleteError?.error || 'Не удалось удалить PDF-файл',
                 }));
-                setDeletePdfDocumentKey(null);
+                setDeletePdfId(null);
             });
     };
 
@@ -295,8 +369,9 @@ export const ElectionsSection = () => {
                 <div className={styles.card}>
                     <h2>Управление PDF-файлами</h2>
                     <p className={styles.description}>
-                        Для раздела «Выборы» используются два PDF-документа.
-                        Каждый файл загружается и заменяется отдельно.
+                        Можно загрузить до {MAX_ELECTION_PDFS} PDF-документов.
+                        Для каждого документа задаётся название, которое
+                        отображается на сайте.
                     </p>
 
                     {pdfError?.error && (
@@ -304,32 +379,30 @@ export const ElectionsSection = () => {
                     )}
 
                     <div className={styles.pdfCards}>
-                        {ELECTION_PDF_DOCUMENTS.map((document) => {
-                            const currentPdf = electionPdfs.find(
-                                (pdf) => pdf.documentKey === document.documentKey,
-                            );
+                        {electionPdfs.map((pdf) => (
+                            <ElectionPdfUploadCard
+                                key={pdf.id}
+                                pdf={pdf}
+                                isUploading={uploadingPdfId === pdf.id}
+                                isSavingTitle={savingTitlePdfId === pdf.id}
+                                uploadStatus={pdfUploadStatuses[pdf.id]}
+                                error={pdfLocalErrors[pdf.id]}
+                                onUpload={uploadPdfFile}
+                                onDelete={setDeletePdfId}
+                                onSaveTitle={savePdfTitle}
+                                isDeletingDisabled={isPdfLoading}
+                            />
+                        ))}
 
-                            return (
-                                <ElectionPdfUploadCard
-                                    key={document.documentKey}
-                                    documentKey={document.documentKey}
-                                    title={document.title}
-                                    currentPdf={currentPdf}
-                                    isUploading={
-                                        uploadingPdfKey === document.documentKey
-                                    }
-                                    uploadStatus={
-                                        pdfUploadStatuses[document.documentKey]
-                                    }
-                                    error={
-                                        pdfLocalErrors[document.documentKey]
-                                    }
-                                    onUpload={uploadPdfFile}
-                                    onDelete={setDeletePdfDocumentKey}
-                                    isDeletingDisabled={isPdfLoading}
-                                />
-                            );
-                        })}
+                        {remainingPdfCount > 0 && (
+                            <AddElectionPdfCard
+                                isUploading={uploadingPdfId === 'new'}
+                                uploadStatus={pdfUploadStatuses.new}
+                                error={pdfLocalErrors.new}
+                                onCreate={createPdfFile}
+                                remainingCount={remainingPdfCount}
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -446,8 +519,8 @@ export const ElectionsSection = () => {
             </div>
 
             <ConfirmDeleteModal
-                isOpen={Boolean(deletePdfDocumentKey)}
-                onClose={() => setDeletePdfDocumentKey(null)}
+                isOpen={Boolean(deletePdfId)}
+                onClose={() => setDeletePdfId(null)}
                 onConfirm={handleConfirmDeletePdf}
                 description="Вы уверены, что хотите удалить этот PDF-файл?"
             />

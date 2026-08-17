@@ -6,8 +6,16 @@ module.exports = (sequelize) => {
         {
             documentKey: {
                 type: DataTypes.STRING,
+                allowNull: true,
+            },
+            title: {
+                type: DataTypes.STRING,
                 allowNull: false,
-                unique: true,
+            },
+            sortOrder: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
+                defaultValue: 0,
             },
             url: {
                 type: DataTypes.STRING,

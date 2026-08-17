@@ -1,7 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import {
     fetchElectionPdfsApi,
+    createElectionPdfApi,
     uploadElectionPdfApi,
+    updateElectionPdfTitleApi,
     deleteElectionPdfApi,
     fetchCurrentElectionBannerApi,
     updateElectionBannerSettingsApi,
@@ -9,31 +11,13 @@ import {
     deleteElectionBannerImageApi,
     fetchElectionsNewsApi,
 } from '../api/electionsApi';
-import { ELECTION_PDF_DOCUMENTS } from './electionPdfDocuments';
 
 export const DEFAULT_BANNER_TITLE = 'Выборы 2026';
 
-const buildEmptyElectionPdfs = () =>
-    ELECTION_PDF_DOCUMENTS.map(({ documentKey, title }) => ({
-        documentKey,
-        title,
-        url: null,
-        originalFilename: null,
-    }));
-
-const upsertElectionPdf = (pdfs, updatedPdf) => {
-    const index = pdfs.findIndex(
-        (pdf) => pdf.documentKey === updatedPdf.documentKey,
+const sortElectionPdfs = (pdfs) =>
+    [...pdfs].sort(
+        (a, b) => a.sortOrder - b.sortOrder || a.id - b.id,
     );
-
-    if (index === -1) {
-        return [...pdfs, updatedPdf];
-    }
-
-    const nextPdfs = [...pdfs];
-    nextPdfs[index] = updatedPdf;
-    return nextPdfs;
-};
 
 export const fetchElectionPdfs = createAsyncThunk(
     'elections/fetchElectionPdfs',
@@ -47,11 +31,35 @@ export const fetchElectionPdfs = createAsyncThunk(
     },
 );
 
+export const createElectionPdf = createAsyncThunk(
+    'elections/createElectionPdf',
+    async ({ formData }, { rejectWithValue }) => {
+        try {
+            const response = await createElectionPdfApi(formData);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data);
+        }
+    },
+);
+
 export const uploadElectionPdf = createAsyncThunk(
     'elections/uploadElectionPdf',
-    async ({ documentKey, formData }, { rejectWithValue }) => {
+    async ({ id, formData }, { rejectWithValue }) => {
         try {
-            const response = await uploadElectionPdfApi(documentKey, formData);
+            const response = await uploadElectionPdfApi(id, formData);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data);
+        }
+    },
+);
+
+export const updateElectionPdfTitle = createAsyncThunk(
+    'elections/updateElectionPdfTitle',
+    async ({ id, title }, { rejectWithValue }) => {
+        try {
+            const response = await updateElectionPdfTitleApi(id, title);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data);
@@ -61,10 +69,10 @@ export const uploadElectionPdf = createAsyncThunk(
 
 export const deleteElectionPdf = createAsyncThunk(
     'elections/deleteElectionPdf',
-    async (documentKey, { rejectWithValue }) => {
+    async (id, { rejectWithValue }) => {
         try {
-            await deleteElectionPdfApi(documentKey);
-            return documentKey;
+            await deleteElectionPdfApi(id);
+            return id;
         } catch (error) {
             return rejectWithValue(error.response?.data);
         }
@@ -131,10 +139,22 @@ export const fetchElectionsNews = createAsyncThunk(
     },
 );
 
+const upsertElectionPdf = (pdfs, updatedPdf) => {
+    const index = pdfs.findIndex((pdf) => pdf.id === updatedPdf.id);
+
+    if (index === -1) {
+        return sortElectionPdfs([...pdfs, updatedPdf]);
+    }
+
+    const nextPdfs = [...pdfs];
+    nextPdfs[index] = updatedPdf;
+    return sortElectionPdfs(nextPdfs);
+};
+
 const electionsSlice = createSlice({
     name: 'elections',
     initialState: {
-        electionPdfs: buildEmptyElectionPdfs(),
+        electionPdfs: [],
         pdfStatus: 'idle',
         pdfError: null,
         currentBanner: null,
@@ -159,9 +179,23 @@ const electionsSlice = createSlice({
             })
             .addCase(fetchElectionPdfs.fulfilled, (state, action) => {
                 state.pdfStatus = 'succeeded';
-                state.electionPdfs = action.payload;
+                state.electionPdfs = sortElectionPdfs(action.payload);
             })
             .addCase(fetchElectionPdfs.rejected, (state, action) => {
+                state.pdfStatus = 'failed';
+                state.pdfError = action.payload;
+            })
+            .addCase(createElectionPdf.pending, (state) => {
+                state.pdfStatus = 'loading';
+            })
+            .addCase(createElectionPdf.fulfilled, (state, action) => {
+                state.pdfStatus = 'succeeded';
+                state.electionPdfs = upsertElectionPdf(
+                    state.electionPdfs,
+                    action.payload,
+                );
+            })
+            .addCase(createElectionPdf.rejected, (state, action) => {
                 state.pdfStatus = 'failed';
                 state.pdfError = action.payload;
             })
@@ -179,18 +213,27 @@ const electionsSlice = createSlice({
                 state.pdfStatus = 'failed';
                 state.pdfError = action.payload;
             })
+            .addCase(updateElectionPdfTitle.pending, (state) => {
+                state.pdfStatus = 'loading';
+            })
+            .addCase(updateElectionPdfTitle.fulfilled, (state, action) => {
+                state.pdfStatus = 'succeeded';
+                state.electionPdfs = upsertElectionPdf(
+                    state.electionPdfs,
+                    action.payload,
+                );
+            })
+            .addCase(updateElectionPdfTitle.rejected, (state, action) => {
+                state.pdfStatus = 'failed';
+                state.pdfError = action.payload;
+            })
             .addCase(deleteElectionPdf.pending, (state) => {
                 state.pdfStatus = 'loading';
             })
             .addCase(deleteElectionPdf.fulfilled, (state, action) => {
                 state.pdfStatus = 'succeeded';
-                const documentKey = action.payload;
-                const emptyPdf = buildEmptyElectionPdfs().find(
-                    (pdf) => pdf.documentKey === documentKey,
-                );
-                state.electionPdfs = upsertElectionPdf(
-                    state.electionPdfs,
-                    emptyPdf,
+                state.electionPdfs = state.electionPdfs.filter(
+                    (pdf) => pdf.id !== action.payload,
                 );
             })
             .addCase(deleteElectionPdf.rejected, (state, action) => {
@@ -258,7 +301,6 @@ const electionsSlice = createSlice({
 export const { clearElectionsPdfError, clearElectionsBannerError } =
     electionsSlice.actions;
 
-// Backward compatibility
 export const fetchCurrentElectionPdf = fetchElectionPdfs;
 
 export default electionsSlice.reducer;

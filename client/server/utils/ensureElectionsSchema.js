@@ -1,4 +1,81 @@
 const { DataTypes } = require('sequelize');
+const {
+    LEGACY_PDF_TITLES,
+    LEGACY_PDF_SORT_ORDER,
+} = require('../constants/electionPdfDocuments');
+
+async function ensureElectionPdfColumns(queryInterface) {
+    const pdfTable = await queryInterface.describeTable('election_pdfs');
+
+    if (!pdfTable.title) {
+        await queryInterface.addColumn('election_pdfs', 'title', {
+            type: DataTypes.STRING,
+            allowNull: true,
+        });
+    }
+
+    if (!pdfTable.sortOrder) {
+        await queryInterface.addColumn('election_pdfs', 'sortOrder', {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        });
+    }
+
+    for (const [documentKey, title] of Object.entries(LEGACY_PDF_TITLES)) {
+        await queryInterface.sequelize.query(
+            `
+            UPDATE election_pdfs
+            SET title = :title,
+                "sortOrder" = :sortOrder
+            WHERE "documentKey" = :documentKey
+              AND (title IS NULL OR title = '')
+            `,
+            {
+                replacements: {
+                    title,
+                    sortOrder: LEGACY_PDF_SORT_ORDER[documentKey],
+                    documentKey,
+                },
+            },
+        );
+    }
+
+    await queryInterface.sequelize.query(`
+        UPDATE election_pdfs
+        SET title = "originalFilename"
+        WHERE title IS NULL OR title = ''
+    `);
+
+    await queryInterface.sequelize.query(`
+        UPDATE election_pdfs
+        SET "sortOrder" = id
+        WHERE "sortOrder" IS NULL
+    `);
+
+    const updatedPdfTable = await queryInterface.describeTable('election_pdfs');
+
+    if (updatedPdfTable.title) {
+        await queryInterface.changeColumn('election_pdfs', 'title', {
+            type: DataTypes.STRING,
+            allowNull: false,
+        });
+    }
+
+    if (updatedPdfTable.sortOrder) {
+        await queryInterface.changeColumn('election_pdfs', 'sortOrder', {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        });
+    }
+
+    if (updatedPdfTable.documentKey) {
+        await queryInterface.changeColumn('election_pdfs', 'documentKey', {
+            type: DataTypes.STRING,
+            allowNull: true,
+        });
+    }
+}
 
 async function ensureElectionsSchema(sequelize) {
     const queryInterface = sequelize.getQueryInterface();
@@ -28,8 +105,16 @@ async function ensureElectionsSchema(sequelize) {
             },
             documentKey: {
                 type: DataTypes.STRING,
+                allowNull: true,
+            },
+            title: {
+                type: DataTypes.STRING,
                 allowNull: false,
-                unique: true,
+            },
+            sortOrder: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
+                defaultValue: 0,
             },
             url: {
                 type: DataTypes.STRING,
@@ -51,30 +136,7 @@ async function ensureElectionsSchema(sequelize) {
             },
         });
     } else {
-        const pdfTable = await queryInterface.describeTable('election_pdfs');
-
-        if (!pdfTable.documentKey) {
-            await queryInterface.addColumn('election_pdfs', 'documentKey', {
-                type: DataTypes.STRING,
-                allowNull: true,
-            });
-
-            await queryInterface.sequelize.query(`
-                UPDATE election_pdfs
-                SET "documentKey" = 'state_duma'
-                WHERE "documentKey" IS NULL
-            `);
-
-            await queryInterface.changeColumn('election_pdfs', 'documentKey', {
-                type: DataTypes.STRING,
-                allowNull: false,
-            });
-
-            await queryInterface.addIndex('election_pdfs', ['documentKey'], {
-                unique: true,
-                name: 'election_pdfs_document_key_unique',
-            });
-        }
+        await ensureElectionPdfColumns(queryInterface);
     }
 
     if (!normalizedTables.includes('election_banners')) {

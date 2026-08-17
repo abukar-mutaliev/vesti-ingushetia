@@ -4,13 +4,21 @@ const API_URL = `${import.meta.env.VITE_API_URL}/elections`;
 
 export const fetchElectionPdfsApi = async () => api.get(`${API_URL}/pdf`);
 
-export const uploadElectionPdfApi = async (documentKey, formData) =>
-    api.put(`${API_URL}/pdf/${documentKey}`, formData, {
+export const createElectionPdfApi = async (formData) =>
+    api.post(`${API_URL}/pdf`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
 
-export const deleteElectionPdfApi = async (documentKey) =>
-    api.delete(`${API_URL}/pdf/${documentKey}`);
+export const uploadElectionPdfApi = async (id, formData) =>
+    api.put(`${API_URL}/pdf/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+export const updateElectionPdfTitleApi = async (id, title) =>
+    api.patch(`${API_URL}/pdf/${id}`, { title });
+
+export const deleteElectionPdfApi = async (id) =>
+    api.delete(`${API_URL}/pdf/${id}`);
 
 export const fetchCurrentElectionBannerApi = async () =>
     api.get(`${API_URL}/banner`);

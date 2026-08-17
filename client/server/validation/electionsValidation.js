@@ -1,12 +1,38 @@
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 
-const { param } = require('express-validator');
-const { ELECTION_PDF_DOCUMENT_KEYS } = require('../constants/electionPdfDocuments');
+exports.createPdfValidation = [
+    body('title')
+        .optional()
+        .trim()
+        .notEmpty()
+        .withMessage('Название документа не может быть пустым')
+        .isLength({ max: 500 })
+        .withMessage('Название не должно превышать 500 символов'),
+];
 
 exports.uploadPdfValidation = [
-    param('documentKey')
-        .isIn(ELECTION_PDF_DOCUMENT_KEYS)
-        .withMessage('Неверный тип PDF-документа'),
+    param('id').isInt({ min: 1 }).withMessage('Неверный идентификатор PDF'),
+    body('title')
+        .optional()
+        .trim()
+        .notEmpty()
+        .withMessage('Название документа не может быть пустым')
+        .isLength({ max: 500 })
+        .withMessage('Название не должно превышать 500 символов'),
+];
+
+exports.updatePdfTitleValidation = [
+    param('id').isInt({ min: 1 }).withMessage('Неверный идентификатор PDF'),
+    body('title')
+        .trim()
+        .notEmpty()
+        .withMessage('Название документа обязательно')
+        .isLength({ max: 500 })
+        .withMessage('Название не должно превышать 500 символов'),
+];
+
+exports.deletePdfValidation = [
+    param('id').isInt({ min: 1 }).withMessage('Неверный идентификатор PDF'),
 ];
 
 exports.updateBannerValidation = [

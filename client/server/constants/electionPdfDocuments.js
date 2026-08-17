@@ -1,26 +1,19 @@
-const ELECTION_PDF_DOCUMENTS = [
-    {
-        documentKey: 'state_duma',
-        title:
-            'ОБЩИЕ УСЛОВИЯ ДЛЯ ПУБЛИКАЦИИ – ВЫБОРЫ ДЕПУТАТОВ ГОСУДАРСТВЕННОЙ ДУМЫ РФ',
-    },
-    {
-        documentKey: 'parliament_ri',
-        title:
-            'ОБЩИЕ УСЛОВИЯ ДЛЯ ПУБЛИКАЦИИ – ВЫБОРЫ ДЕПУТАТОВ НАРОДНОГО СОБРАНИЯ РИ',
-    },
-];
+const MAX_ELECTION_PDFS = 15;
 
-const ELECTION_PDF_DOCUMENT_KEYS = ELECTION_PDF_DOCUMENTS.map(
-    (doc) => doc.documentKey,
-);
+const LEGACY_PDF_TITLES = {
+    state_duma:
+        'ОБЩИЕ УСЛОВИЯ ДЛЯ ПУБЛИКАЦИИ – ВЫБОРЫ ДЕПУТАТОВ ГОСУДАРСТВЕННОЙ ДУМЫ РФ',
+    parliament_ri:
+        'ОБЩИЕ УСЛОВИЯ ДЛЯ ПУБЛИКАЦИИ – ВЫБОРЫ ДЕПУТАТОВ НАРОДНОГО СОБРАНИЯ РИ',
+};
 
-const getElectionPdfDocumentTitle = (documentKey) =>
-    ELECTION_PDF_DOCUMENTS.find((doc) => doc.documentKey === documentKey)
-        ?.title ?? null;
+const LEGACY_PDF_SORT_ORDER = {
+    state_duma: 1,
+    parliament_ri: 2,
+};
 
 module.exports = {
-    ELECTION_PDF_DOCUMENTS,
-    ELECTION_PDF_DOCUMENT_KEYS,
-    getElectionPdfDocumentTitle,
+    MAX_ELECTION_PDFS,
+    LEGACY_PDF_TITLES,
+    LEGACY_PDF_SORT_ORDER,
 };
