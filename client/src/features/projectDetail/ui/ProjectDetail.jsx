@@ -12,8 +12,9 @@ export const ProjectDetail = ({ project }) => {
         project;
 
     const sortedMediaFiles = useMemo(() => {
-        return [...(mediaFiles || [])].sort((a, b) =>
-            new Date(b.createdAt) - new Date(a.createdAt)
+        const files = Array.isArray(mediaFiles) ? mediaFiles : [];
+        return [...files].sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
         );
     }, [mediaFiles]);
 

@@ -1,6 +1,31 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as projectApi from '@entities/projects/api/projectApi';
 
+const asArray = (value) => (Array.isArray(value) ? value : []);
+
+const asProjectList = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.projects)) return payload.projects;
+    if (Array.isArray(payload?.data)) return payload.data;
+    if (Array.isArray(payload?.rows)) return payload.rows;
+    if (payload && typeof payload === 'object' && payload.id) return [payload];
+    return [];
+};
+
+const normalizeProject = (project) => {
+    if (!project || typeof project !== 'object') return null;
+    return {
+        ...project,
+        mediaFiles: asArray(project.mediaFiles),
+        videoUrls: asArray(project.videoUrls),
+    };
+};
+
+const ensureProjectList = (state) => {
+    if (!Array.isArray(state.projectList)) {
+        state.projectList = asProjectList(state.projectList);
+    }
+};
 
 const initialState = {
     projectList: [],
@@ -84,7 +109,9 @@ const projectSlice = createSlice({
             })
             .addCase(fetchAllProjects.fulfilled, (state, action) => {
                 state.loadingProjects = false;
-                state.projectList = action.payload || [];
+                state.projectList = asProjectList(action.payload)
+                    .map(normalizeProject)
+                    .filter(Boolean);
                 state.lastFetched = Date.now();
             })
             .addCase(fetchAllProjects.rejected, (state, action) => {
@@ -96,16 +123,14 @@ const projectSlice = createSlice({
                 state.error = null;
             })
             .addCase(fetchProjectById.fulfilled, (state, action) => {
-                const fetchedProject = {
-                    ...action.payload,
-                    videoUrls: Array.isArray(action.payload.videoUrls)
-                        ? action.payload.videoUrls
-                        : [],
-                };
+                const fetchedProject = normalizeProject(action.payload);
                 state.currentProject = fetchedProject;
-                const index = state.projectList.findIndex(
-                    (project) => project.id === fetchedProject.id,
-                );
+                ensureProjectList(state);
+                const index = fetchedProject
+                    ? state.projectList.findIndex(
+                          (project) => project.id === fetchedProject.id,
+                      )
+                    : -1;
                 if (index !== -1) {
                     state.projectList[index] = fetchedProject;
                 }
@@ -121,7 +146,11 @@ const projectSlice = createSlice({
                 state.error = null;
             })
             .addCase(createProject.fulfilled, (state, action) => {
-                state.projectList.push(action.payload);
+                const createdProject = normalizeProject(action.payload);
+                ensureProjectList(state);
+                if (createdProject) {
+                    state.projectList.push(createdProject);
+                }
                 state.loading = false;
             })
             .addCase(createProject.rejected, (state, action) => {
@@ -133,17 +162,15 @@ const projectSlice = createSlice({
                 state.error = null;
             })
             .addCase(updateProject.fulfilled, (state, action) => {
-                const updatedProject = action.payload;
-                const index = state.projectList.findIndex(
-                    (project) => project.id === updatedProject.id,
-                );
+                const updatedProject = normalizeProject(action.payload);
+                ensureProjectList(state);
+                const index = updatedProject
+                    ? state.projectList.findIndex(
+                          (project) => project.id === updatedProject.id,
+                      )
+                    : -1;
                 if (index !== -1) {
-                    state.projectList[index] = {
-                        ...updatedProject,
-                        videoUrls: Array.isArray(updatedProject.videoUrls)
-                            ? updatedProject.videoUrls
-                            : [],
-                    };
+                    state.projectList[index] = updatedProject;
                 }
                 state.loading = false;
             })
@@ -156,6 +183,7 @@ const projectSlice = createSlice({
                 state.error = null;
             })
             .addCase(deleteProject.fulfilled, (state, action) => {
+                ensureProjectList(state);
                 state.projectList = state.projectList.filter(
                     (project) => project.id !== action.payload,
                 );

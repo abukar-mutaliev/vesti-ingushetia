@@ -72,9 +72,10 @@ export const ProjectsSlider = ({ title = 'Наши проекты', itemsToShow 
 
     const projectsElements = useMemo(() => {
         return projects.map((project) => {
-            const image = project.mediaFiles.find(
-                (media) => media.type === 'image',
-            );
+            const mediaFiles = Array.isArray(project.mediaFiles)
+                ? project.mediaFiles
+                : [];
+            const image = mediaFiles.find((media) => media?.type === 'image');
 
             const imageUrl = image?.url || null;
 

@@ -44,7 +44,11 @@ export const EditProjectSection = ({ project, onCancel }) => {
         if (currentProject) {
             setEditTitle(currentProject.title || '');
             setEditContent(currentProject.content || '');
-            setEditMedia(currentProject.mediaFiles || []);
+            setEditMedia(
+                Array.isArray(currentProject.mediaFiles)
+                    ? currentProject.mediaFiles
+                    : [],
+            );
             setVideoUrls(
                 currentProject.videoUrls && currentProject.videoUrls.length > 0
                     ? currentProject.videoUrls
