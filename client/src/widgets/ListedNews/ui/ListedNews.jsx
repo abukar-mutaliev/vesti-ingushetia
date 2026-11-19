@@ -6,7 +6,8 @@ import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
 
 export const ListedNews = React.memo(({ newsList }) => {
     const sortedByViewsNews = useMemo(() => {
-        return [...newsList].sort((a, b) => b.views - a.views).slice(0, 6);
+        const items = Array.isArray(newsList) ? newsList : [];
+        return [...items].sort((a, b) => b.views - a.views).slice(0, 6);
     }, [newsList]);
 
     const topThreeNews = useMemo(() => {

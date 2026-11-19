@@ -7,7 +7,9 @@ export const selectSelectedDate = (state) => state.news.selectedDate;
 export const selectNewsList = createSelector(
     [selectNewsState],
     (newsState) => {
-        const newsList = newsState.newsList || [];
+        const newsList = Array.isArray(newsState?.newsList)
+            ? newsState.newsList
+            : [];
 
         return [...newsList].sort((a, b) => {
             const dateA = new Date(a.publishDate || a.createdAt);
@@ -169,7 +171,9 @@ export const selectError = createSelector(
 
 export const selectArticlesNews = createSelector([selectNewsList], (newsList) => {
     const articles = newsList.filter((news) => {
-        const hasArticlesCategory = news.categories.some(category => category.name === 'Статьи');
+        const hasArticlesCategory =
+            Array.isArray(news.categories) &&
+            news.categories.some((category) => category.name === 'Статьи');
         return hasArticlesCategory;
     });
     return articles;

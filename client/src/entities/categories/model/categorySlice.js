@@ -7,6 +7,28 @@ import {
     updateCategoryApi,
 } from '../api/categoriesApi';
 
+const asList = (value) => {
+    if (Array.isArray(value)) return value;
+    if (Array.isArray(value?.categories)) return value.categories;
+    if (Array.isArray(value?.data)) return value.data;
+    if (Array.isArray(value?.rows)) return value.rows;
+    if (Array.isArray(value?.news)) return value.news;
+    return [];
+};
+
+const isListPayload = (value) =>
+    Array.isArray(value) ||
+    Array.isArray(value?.categories) ||
+    Array.isArray(value?.data) ||
+    Array.isArray(value?.rows) ||
+    Array.isArray(value?.news);
+
+const ensureCategories = (state) => {
+    if (!Array.isArray(state.categories)) {
+        state.categories = asList(state.categories);
+    }
+};
+
 const initialState = {
     categories: [],
     newsByCategory: {},
@@ -33,7 +55,7 @@ export const fetchCategories = createAsyncThunk(
     {
         condition: (_, { getState }) => {
             const { categories, categoriesLastFetched } = getState().categories;
-            if (categories.length > 0) {
+            if (Array.isArray(categories) && categories.length > 0) {
                 return false;
             }
             if (categoriesLastFetched) {
@@ -124,11 +146,17 @@ const categorySlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-             .addCase(fetchCategories.fulfilled, (state, action) => {
-                 state.loading = false;
-                 state.categories = action.payload;
-                 state.categoriesLastFetched = Date.now();
-             })
+            .addCase(fetchCategories.fulfilled, (state, action) => {
+                state.loading = false;
+                if (!isListPayload(action.payload)) {
+                    state.categories = [];
+                    state.error = 'Некорректный ответ сервера';
+                    return;
+                }
+                state.categories = asList(action.payload);
+                state.error = null;
+                state.categoriesLastFetched = Date.now();
+            })
             .addCase(fetchCategories.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload || action.error.message;
@@ -137,9 +165,9 @@ const categorySlice = createSlice({
                 state.newsLoading = true;
                 state.error = null;
             })
-                .addCase(fetchNewsByCategory.fulfilled, (state, action) => {
-                const { categoryId, news } = action.payload;
-                state.newsByCategory[categoryId] = news;
+            .addCase(fetchNewsByCategory.fulfilled, (state, action) => {
+                const { categoryId, news } = action.payload || {};
+                state.newsByCategory[categoryId] = asList(news);
                 state.newsLastFetched[categoryId] = Date.now();
                 state.newsLoading = false;
             })
@@ -153,7 +181,10 @@ const categorySlice = createSlice({
             })
             .addCase(createCategory.fulfilled, (state, action) => {
                 state.loading = false;
-                state.categories.push(action.payload);
+                ensureCategories(state);
+                if (action.payload && typeof action.payload === 'object') {
+                    state.categories.push(action.payload);
+                }
                 state.categoriesLastFetched = Date.now();
             })
             .addCase(createCategory.rejected, (state, action) => {
@@ -166,6 +197,7 @@ const categorySlice = createSlice({
             })
             .addCase(deleteCategory.fulfilled, (state, action) => {
                 state.loading = false;
+                ensureCategories(state);
                 state.categories = state.categories.filter(
                     (category) => category.id !== action.payload,
                 );
@@ -181,8 +213,9 @@ const categorySlice = createSlice({
             })
             .addCase(updateCategory.fulfilled, (state, action) => {
                 state.loading = false;
+                ensureCategories(state);
                 const index = state.categories.findIndex(
-                    (category) => category.id === action.payload.id,
+                    (category) => category.id === action.payload?.id,
                 );
                 if (index !== -1) {
                     state.categories[index] = action.payload;

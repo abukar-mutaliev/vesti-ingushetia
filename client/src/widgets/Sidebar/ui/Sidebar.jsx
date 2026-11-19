@@ -10,14 +10,18 @@ import { LiveStreamWidget } from '@widgets/LiveStreamWidget/index.js';
 
 export const Sidebar = React.memo(({ categories, showElectionsBanner = false }) => {
     const randomizedNewsList = useSelector(selectRandomizedNewsList);
-
+    const categoryList = Array.isArray(categories) ? categories : [];
+    const newsList = Array.isArray(randomizedNewsList) ? randomizedNewsList : [];
 
     const memoizedGroupedNews = useMemo(() => {
-        return randomizedNewsList.reduce((acc, newsItem) => {if (!newsItem.categories || newsItem.categories.length === 0) {
-                console.warn('No categories for news:', newsItem);
+        return newsList.reduce((acc, newsItem) => {
+            const itemCategories = Array.isArray(newsItem?.categories)
+                ? newsItem.categories
+                : [];
+            if (itemCategories.length === 0) {
                 return acc;
             }
-            newsItem.categories.forEach((category) => {
+            itemCategories.forEach((category) => {
                 if (!acc[category.id]) {
                     acc[category.id] = [];
                 }
@@ -26,10 +30,9 @@ export const Sidebar = React.memo(({ categories, showElectionsBanner = false }) 
 
             return acc;
         }, {});
-    }, [randomizedNewsList]);
+    }, [newsList]);
 
-
-    if (!categories || !categories.length) {
+    if (categoryList.length === 0) {
         return <p>Нет доступных категорий для отображения</p>;
     }
 
@@ -40,7 +43,7 @@ export const Sidebar = React.memo(({ categories, showElectionsBanner = false }) 
             <VideoAdPlayer />
             {showElectionsBanner && <ElectionsBannerWidget />}
 
-            {categories.map((category) => {
+            {categoryList.map((category) => {
                 const categoryNews = memoizedGroupedNews[category.id] || [];
                 if (categoryNews.length === 0) return null;
 
@@ -56,7 +59,7 @@ export const Sidebar = React.memo(({ categories, showElectionsBanner = false }) 
             })}
 
             <div className={styles.listedNewsContainer}>
-                <ListedNews newsList={randomizedNewsList} />
+                <ListedNews newsList={newsList} />
             </div>
         </div>
     );

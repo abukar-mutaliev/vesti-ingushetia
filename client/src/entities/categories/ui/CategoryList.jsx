@@ -11,6 +11,7 @@ import { memo } from 'react';
 
 export const CategoryList = memo(() => {
     const categories = useSelector(selectCategories, shallowEqual);
+    const categoryList = Array.isArray(categories) ? categories : [];
     const loading = useSelector(selectCategoriesLoading);
     const error = useSelector(selectCategoriesError);
     const location = useLocation();
@@ -30,7 +31,7 @@ export const CategoryList = memo(() => {
     }
     return (
         <ul className={styles.categoryList}>
-            {categories.map((category) => (
+            {categoryList.map((category) => (
                 <li
                     key={category.id}
                     className={
