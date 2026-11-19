@@ -72,10 +72,7 @@ export const selectNewsListByDate = createSelector(
     }
 );
 
-export const selectFilteredNews = createSelector(
-    [selectNewsListByDate],
-    (dateFilteredNews) => dateFilteredNews
-);
+export const selectFilteredNews = selectNewsListByDate;
 
 export const selectNewsWithVideos = createSelector(
     [selectFilteredNews],

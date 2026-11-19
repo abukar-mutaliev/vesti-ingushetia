@@ -1,6 +1,8 @@
 import api from '@app/providers/store/apiClient';
 
-const API_URL = `${import.meta.env.VITE_API_URL}/video-ads`;
+import { API_BASE_URL } from '@shared/config/apiBase';
+
+const API_URL = `${API_BASE_URL}/video-ads`;
 
 export const createVideoAdApi = (videoAdData) =>
     api.post(`${API_URL}/add`, videoAdData, {

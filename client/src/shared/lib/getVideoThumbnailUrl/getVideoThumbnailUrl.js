@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '@shared/config/apiBase';
+
 const extractVkVideoIds = (videoUrl) => {
     try {
         const url = new URL(videoUrl);
@@ -34,11 +36,7 @@ const extractVkVideoIds = (videoUrl) => {
 export const getVideoThumbnailUrl = (videoUrl) => {
     if (!videoUrl) return null;
 
-    const fallbackApiBaseUrl =
-        typeof window !== 'undefined' ? `${window.location.origin}/api` : '/api';
-    const apiBaseUrl = (
-        import.meta.env?.VITE_API_URL || fallbackApiBaseUrl
-    ).replace(/\/$/, '');
+    const apiBaseUrl = API_BASE_URL;
 
     const youtubeMatch = videoUrl.match(
         /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/,

@@ -1,6 +1,8 @@
 import api from '@app/providers/store/apiClient';
 
-const API_URL = `${import.meta.env.VITE_API_URL}/authors`;
+import { API_BASE_URL } from '@shared/config/apiBase';
+
+const API_URL = `${API_BASE_URL}/authors`;
 
 export const fetchAuthorsApi = () => api.get(`${API_URL}/all`);
 export const fetchAuthorByIdApi = (id) => api.get(`${API_URL}/${id}`);

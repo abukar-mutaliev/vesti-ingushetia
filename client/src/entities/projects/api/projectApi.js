@@ -1,6 +1,7 @@
 import api from '@app/providers/store/apiClient';
+import { API_BASE_URL } from '@shared/config/apiBase';
 
-const API_URL = `${import.meta.env.VITE_API_URL}/projects`;
+const API_URL = `${API_BASE_URL}/projects`;
 
 export const fetchAllProjectsApi = () => api.get(`${API_URL}/all`);
 export const fetchProjectByIdApi = (id) => api.get(`${API_URL}/${id}`);

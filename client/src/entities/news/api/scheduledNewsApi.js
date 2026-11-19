@@ -1,6 +1,7 @@
 import api from '@app/providers/store/apiClient';
+import { API_BASE_URL } from '@shared/config/apiBase';
 
-const API_URL = `${import.meta.env.VITE_API_URL}/scheduled-news`;
+const API_URL = `${API_BASE_URL}/scheduled-news`;
 
 // Получить мои отложенные новости
 export const fetchMyScheduledNewsApi = () => api.get(`${API_URL}/my`);
@@ -21,5 +22,5 @@ export const getScheduledNewsStatsApi = () => api.get(`${API_URL}/stats`);
 export const createScheduledNewsApi = (newsData) => {
     // Добавляем параметр scheduleForLater для отложенной публикации
     newsData.append('scheduleForLater', 'true');
-    return api.post(`${import.meta.env.VITE_API_URL}/news/add`, newsData);
+    return api.post(`${API_BASE_URL}/news/add`, newsData);
 }; 

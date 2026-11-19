@@ -1,6 +1,8 @@
 import api from '@app/providers/store/apiClient';
 
-const API_URL = `${import.meta.env.VITE_API_URL}/users`;
+import { API_BASE_URL } from '@shared/config/apiBase';
+
+const API_URL = `${API_BASE_URL}/users`;
 
 export const updateAvatarApi = (formData) => {
     return api.put(`${API_URL}/update-avatar`, formData, {

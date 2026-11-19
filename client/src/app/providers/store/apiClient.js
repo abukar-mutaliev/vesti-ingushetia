@@ -2,6 +2,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { refreshToken } from '@entities/user/auth/model/authSlice';
 import { setError } from '../store/errorSlice';
+import { API_BASE_URL } from '@shared/config/apiBase';
 
 let storeInstance;
 
@@ -9,7 +10,7 @@ export const setStore = (_store) => {
     storeInstance = _store;
 };
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = API_BASE_URL;
 
 const api = axios.create({
     baseURL: API_URL,
