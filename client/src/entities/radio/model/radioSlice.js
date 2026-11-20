@@ -7,6 +7,20 @@ import {
     deleteRadioApi,
 } from '../api/radioApi';
 
+const asRadioList = (value) => {
+    if (Array.isArray(value)) return value;
+    if (Array.isArray(value?.radio)) return value.radio;
+    if (Array.isArray(value?.data)) return value.data;
+    if (Array.isArray(value?.rows)) return value.rows;
+    return [];
+};
+
+const ensureRadioList = (state) => {
+    if (!Array.isArray(state.radio)) {
+        state.radio = asRadioList(state.radio);
+    }
+};
+
 export const createRadio = createAsyncThunk(
     'radio/createRadio',
     async (formData, { rejectWithValue }) => {
@@ -14,7 +28,7 @@ export const createRadio = createAsyncThunk(
             const response = await createRadioApi(formData);
             return response.data;
         } catch (error) {
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response?.data || 'Ошибка создания радио');
         }
     },
 );
@@ -26,7 +40,7 @@ export const fetchAllRadio = createAsyncThunk(
             const response = await fetchAllRadioApi();
             return response.data;
         } catch (error) {
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response?.data || 'Ошибка загрузки радио');
         }
     },
 );
@@ -38,7 +52,7 @@ export const fetchRadioById = createAsyncThunk(
             const response = await fetchRadioByIdApi(id);
             return response.data;
         } catch (error) {
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response?.data || 'Ошибка загрузки записи');
         }
     },
 );
@@ -50,7 +64,7 @@ export const updateRadio = createAsyncThunk(
             const response = await updateRadioApi(id, formData);
             return response.data;
         } catch (error) {
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response?.data || 'Ошибка изменения радио');
         }
     },
 );
@@ -62,7 +76,7 @@ export const deleteRadio = createAsyncThunk(
             await deleteRadioApi(id);
             return id;
         } catch (error) {
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response?.data || 'Ошибка удаления радио');
         }
     },
 );
@@ -87,7 +101,10 @@ const radioSlice = createSlice({
             })
             .addCase(createRadio.fulfilled, (state, action) => {
                 state.status = 'succeeded';
-                state.radio.push(action.payload);
+                ensureRadioList(state);
+                if (action.payload && typeof action.payload === 'object') {
+                    state.radio.push(action.payload);
+                }
             })
             .addCase(createRadio.rejected, (state, action) => {
                 state.status = 'failed';
@@ -98,7 +115,8 @@ const radioSlice = createSlice({
             })
             .addCase(fetchAllRadio.fulfilled, (state, action) => {
                 state.status = 'succeeded';
-                state.radio = action.payload;
+                state.radio = asRadioList(action.payload);
+                state.error = null;
             })
             .addCase(fetchAllRadio.rejected, (state, action) => {
                 state.status = 'failed';
@@ -120,8 +138,9 @@ const radioSlice = createSlice({
             })
             .addCase(updateRadio.fulfilled, (state, action) => {
                 state.status = 'succeeded';
+                ensureRadioList(state);
                 const index = state.radio.findIndex(
-                    (radio) => radio.id === action.payload.id,
+                    (radio) => radio.id === action.payload?.id,
                 );
                 if (index !== -1) {
                     state.radio[index] = action.payload;
@@ -136,6 +155,7 @@ const radioSlice = createSlice({
             })
             .addCase(deleteRadio.fulfilled, (state, action) => {
                 state.status = 'succeeded';
+                ensureRadioList(state);
                 state.radio = state.radio.filter(
                     (radio) => radio.id !== action.meta.arg,
                 );

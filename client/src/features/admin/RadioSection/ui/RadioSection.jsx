@@ -58,7 +58,7 @@ export const RadioSection = ({ onEditRadio, onAddRadio }) => {
                     </tr>
                 </thead>
                 <tbody>
-                    {radioList.map((item) => (
+                    {(Array.isArray(radioList) ? radioList : []).map((item) => (
                         <tr key={item.id}>
                             <td className={styles.hideOnMobile}>{item.id}</td>
                             <td>{item.title}</td>

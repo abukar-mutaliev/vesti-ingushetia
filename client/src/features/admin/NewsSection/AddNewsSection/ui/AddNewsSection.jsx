@@ -290,7 +290,10 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 ? selectedCategoryIds
                     .map((id) => Number(id))
                     .filter((id) => Number.isInteger(id) && id > 0)
-                : categories.map((cat) => cat.id).slice(0, 1);
+                : categories
+                    .map((cat) => Number(cat.id))
+                    .filter((id) => Number.isInteger(id) && id > 0)
+                    .slice(0, 1);
 
         if (validCategoryIds.length === 0) {
             setErrors((prev) => ({
@@ -301,6 +304,7 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         }
 
         formData.append('categoryIds', JSON.stringify(validCategoryIds));
+        formData.append('categoryId', String(validCategoryIds[0]));
         formData.append('isElections', isElections ? 'true' : 'false');
 
         if (videoUrl.trim()) {
@@ -426,7 +430,11 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 if (error.errors) {
                     const newErrors = {};
                     error.errors.forEach((err) => {
-                        newErrors[err.path] = err.msg;
+                        const field =
+                            err.path === 'categoryId' || err.path === 'categoryIds'
+                                ? 'categories'
+                                : err.path;
+                        newErrors[field] = err.msg;
                     });
                     setErrors((prev) => ({
                         ...prev,
@@ -665,8 +673,8 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                             <input
                                 type="checkbox"
                                 value={category.id}
-                                checked={selectedCategoryIds.includes(
-                                    category.id,
+                                checked={selectedCategoryIds.some(
+                                    (id) => Number(id) === Number(category.id),
                                 )}
                                 onChange={handleCategoryChange}
                                 className={styles.checkboxInput}

@@ -63,7 +63,13 @@ export const DraftsManager = ({ onEditDraft }) => {
             const formData = new FormData();
             formData.append('title', draft.newsTitle);
             formData.append('content', draft.newsContent);
-            formData.append('categoryIds', JSON.stringify(draft.selectedCategoryIds));
+            const categoryIds = (draft.selectedCategoryIds || [])
+                .map((id) => Number(id))
+                .filter((id) => Number.isInteger(id) && id > 0);
+            formData.append('categoryIds', JSON.stringify(categoryIds));
+            if (categoryIds[0]) {
+                formData.append('categoryId', String(categoryIds[0]));
+            }
             formData.append('isElections', draft.isElections ? 'true' : 'false');
 
             if (draft.videoUrl) {
@@ -174,7 +180,13 @@ export const DraftsManager = ({ onEditDraft }) => {
             const formData = new FormData();
             formData.append('title', draft.newsTitle);
             formData.append('content', draft.newsContent);
-            formData.append('categoryIds', JSON.stringify(draft.selectedCategoryIds));
+            const categoryIds = (draft.selectedCategoryIds || [])
+                .map((id) => Number(id))
+                .filter((id) => Number.isInteger(id) && id > 0);
+            formData.append('categoryIds', JSON.stringify(categoryIds));
+            if (categoryIds[0]) {
+                formData.append('categoryId', String(categoryIds[0]));
+            }
             formData.append('isElections', draft.isElections ? 'true' : 'false');
 
             if (draft.videoUrl) {

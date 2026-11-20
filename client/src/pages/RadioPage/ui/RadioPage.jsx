@@ -67,9 +67,8 @@ const RadioPage = memo(() => {
         return <Loader />;
     }
 
-    if (error) {
-        return <div className={styles.error}>Ошибка: {error}</div>;
-    }
+    const errorText =
+        typeof error === 'string' ? error : error?.error || error?.message || '';
 
     return (
         <div className={styles.radioPage}>
@@ -84,7 +83,7 @@ const RadioPage = memo(() => {
                     radio={radio}
                     currentRadio={currentRadio}
                     status={status}
-                    error={error}
+                    error={errorText}
                     onPlay={handlePlay}
                     onStop={handleStop}
                 />

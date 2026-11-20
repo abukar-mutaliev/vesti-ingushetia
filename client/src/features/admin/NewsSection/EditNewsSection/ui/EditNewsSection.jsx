@@ -34,7 +34,14 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
             setEditTitle(news.title || '');
             setEditContent(news.content || '');
             setIsElections(Boolean(news.isElections));
-            setSelectedCategoryIds(news.categories.map((category) => category.id));
+            const rawCategoryIds = Array.isArray(news.categories)
+                ? news.categories.map((category) => category.id)
+                : [news.categoryId ?? news.category?.id];
+            setSelectedCategoryIds(
+                rawCategoryIds
+                    .map((id) => Number(id))
+                    .filter((id) => Number.isInteger(id) && id > 0),
+            );
             setEditMedia(news.mediaFiles || []);
             const videoMedia = news.mediaFiles?.find((m) => m.type === 'video');
             setVideoUrl(videoMedia?.url || '');
@@ -184,7 +191,13 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
         const formData = new FormData();
         formData.append('title', editTitle);
         formData.append('content', editContent);
-        formData.append('categoryIds', JSON.stringify(selectedCategoryIds));
+        const validCategoryIds = selectedCategoryIds
+            .map((id) => Number(id))
+            .filter((id) => Number.isInteger(id) && id > 0);
+        formData.append('categoryIds', JSON.stringify(validCategoryIds));
+        if (validCategoryIds[0]) {
+            formData.append('categoryId', String(validCategoryIds[0]));
+        }
         formData.append('isElections', isElections ? 'true' : 'false');
 
         if (videoUrl.trim()) formData.append('videoUrl', videoUrl.trim());
@@ -219,7 +232,11 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
                 if (error.errors) {
                     const newErrors = {};
                     error.errors.forEach((err) => {
-                        newErrors[err.path] = err.msg;
+                        const field =
+                            err.path === 'categoryId' || err.path === 'categoryIds'
+                                ? 'categories'
+                                : err.path;
+                        newErrors[field] = err.msg;
                     });
                     setErrors((prev) => ({
                         ...prev,
@@ -307,8 +324,8 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
                             <input
                                 type="checkbox"
                                 value={category.id}
-                                checked={selectedCategoryIds.includes(
-                                    category.id,
+                                checked={selectedCategoryIds.some(
+                                    (id) => Number(id) === Number(category.id),
                                 )}
                                 onChange={handleCategoryChange}
                                 className={styles.checkboxInput}

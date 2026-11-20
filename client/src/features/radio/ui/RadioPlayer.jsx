@@ -9,8 +9,10 @@ import { Loader } from '@shared/ui/Loader/index.js';
 
 export const RadioPlayer = memo(
     ({ radio, currentRadio, status, error, onPlay, onStop }) => {
+        const tracks = Array.isArray(radio) ? radio : [];
+
         const trackList = useMemo(() => {
-            return radio.map((track) => (
+            return tracks.map((track) => (
                 <li
                     key={track.id}
                     className={`${styles.trackItemContainer} ${
@@ -24,7 +26,7 @@ export const RadioPlayer = memo(
                     <span className={styles.trackItem}>{track.title}</span>
                 </li>
             ));
-        }, [radio, currentRadio, onPlay]);
+        }, [tracks, currentRadio, onPlay]);
 
         return (
             <div className={styles.RadioPlayerWrapper}>
@@ -60,9 +62,13 @@ export const RadioPlayer = memo(
                 </p>
 
                 {status === 'loading' && <Loader />}
-                {error && <p>Ошибка: {error}</p>}
+                {typeof error === 'string' && error && <p>Ошибка: {error}</p>}
 
-                <ul className={styles.TrackList}>{trackList}</ul>
+                {tracks.length > 0 ? (
+                    <ul className={styles.TrackList}>{trackList}</ul>
+                ) : (
+                    status !== 'loading' && <p>Радиозаписей пока нет</p>
+                )}
 
                 {currentRadio ? (
                     <div className={styles.radioPlayerContainer}>
@@ -78,7 +84,9 @@ export const RadioPlayer = memo(
                         />
                     </div>
                 ) : (
-                    <p>Выберите радио для прослушивания</p>
+                    tracks.length > 0 && (
+                        <p>Выберите радио для прослушивания</p>
+                    )
                 )}
 
                 {currentRadio && (
