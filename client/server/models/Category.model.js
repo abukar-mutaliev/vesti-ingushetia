@@ -17,10 +17,7 @@ module.exports = (sequelize) => {
 
     Category.associate = (models) => {
         Category.belongsToMany(models.News, {
-            through: {
-                model: 'newsCategory',
-                timestamps: false
-            },
+            through: models.NewsCategory,
             foreignKey: 'categoryId',
             otherKey: 'newsId',
             as: 'news',

@@ -19,9 +19,18 @@ module.exports = {
             evict: 10000,
         },
         retry: {
-            max: 3, // Количество попыток переподключения
-            backoffBase: 100, // Базовая задержка в мс
-            backoffExponent: 1.5, // Экспонента для увеличения задержки
+            max: 3,
+            match: [
+                /ConnectionError/,
+                /SequelizeConnectionError/,
+                /SequelizeConnectionRefusedError/,
+                /SequelizeHostNotFoundError/,
+                /SequelizeHostNotReachableError/,
+                /SequelizeInvalidConnectionError/,
+                /SequelizeConnectionTimedOutError/,
+                /SequelizeConnectionAcquireTimeoutError/,
+                /TimeoutError/,
+            ],
         },
         dialectOptions: {
             connectTimeout: 60000, // Таймаут подключения 60 секунд
@@ -45,9 +54,18 @@ module.exports = {
             evict: 10000,
         },
         retry: {
-            max: 5, // Больше попыток для продакшена
-            backoffBase: 100,
-            backoffExponent: 1.5,
+            max: 5,
+            match: [
+                /ConnectionError/,
+                /SequelizeConnectionError/,
+                /SequelizeConnectionRefusedError/,
+                /SequelizeHostNotFoundError/,
+                /SequelizeHostNotReachableError/,
+                /SequelizeInvalidConnectionError/,
+                /SequelizeConnectionTimedOutError/,
+                /SequelizeConnectionAcquireTimeoutError/,
+                /TimeoutError/,
+            ],
         },
         dialectOptions: {
             connectTimeout: 60000,

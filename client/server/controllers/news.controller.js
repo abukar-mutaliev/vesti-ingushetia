@@ -11,6 +11,7 @@ const {
 const fs = require('fs');
 const baseUrl = process.env.BASE_URL;
 const newsScheduler = require('../schedulers/newsScheduler');
+const { assignLegacyCategoryId } = require('../utils/ensureNewsCategorySchema');
 const logger = require('../logger');
 const MoscowTimeUtils = require('../utils/moscowTimeUtils');
 
@@ -502,6 +503,38 @@ exports.createNews = async (req, res) => {
         }
     }
 
+    let parsedCategoryIds;
+    try {
+        parsedCategoryIds = JSON.parse(categoryIds || '[]').map(Number);
+        if (!Array.isArray(parsedCategoryIds) || parsedCategoryIds.some((id) => !Number.isInteger(id) || id <= 0)) {
+            throw new Error('Неверный формат ID категорий');
+        }
+    } catch (e) {
+        cleanupUploadedFiles(mediaFiles);
+        return res.status(400).json({
+            error: 'Неверный формат ID категорий',
+            errors: [{
+                location: 'body',
+                msg: 'Неверный формат ID категорий',
+                path: 'categoryIds',
+                type: 'field',
+            }],
+        });
+    }
+
+    if (parsedCategoryIds.length === 0) {
+        cleanupUploadedFiles(mediaFiles);
+        return res.status(400).json({
+            error: 'Необходимо выбрать хотя бы одну категорию',
+            errors: [{
+                location: 'body',
+                msg: 'Необходимо выбрать хотя бы одну категорию',
+                path: 'categoryIds',
+                type: 'field',
+            }],
+        });
+    }
+
     let transaction;
     try {
         transaction = await sequelize.transaction();
@@ -523,31 +556,18 @@ exports.createNews = async (req, res) => {
         }
 
         const news = await News.create(newsData, { transaction });
+        await assignLegacyCategoryId(sequelize, news.id, parsedCategoryIds[0], transaction);
 
-        let parsedCategoryIds;
-        try {
-            parsedCategoryIds = JSON.parse(categoryIds).map(Number);
-            if (!Array.isArray(parsedCategoryIds) || parsedCategoryIds.some(id => !Number.isInteger(id))) {
-                throw new Error('Неверный формат ID категорий');
-            }
-        } catch (e) {
-            throw new Error('Неверный формат ID категорий');
+        const categories = await Category.findAll({
+            where: { id: parsedCategoryIds },
+            transaction,
+        });
+
+        if (categories.length !== parsedCategoryIds.length) {
+            throw new Error('Некоторые категории не найдены');
         }
 
-        if (parsedCategoryIds.length > 0) {
-            const categories = await Category.findAll({
-                where: { id: parsedCategoryIds },
-                transaction,
-            });
-
-            if (categories.length !== parsedCategoryIds.length) {
-                throw new Error('Некоторые категории не найдены');
-            }
-
-            await news.addCategories(categories, { transaction });
-        } else {
-            throw new Error('Необходимо выбрать хотя бы одну категорию');
-        }
+        await news.addCategories(categories, { transaction });
 
         const mediaInstances = [];
 
@@ -602,16 +622,21 @@ exports.createNews = async (req, res) => {
 
     } catch (err) {
         if (transaction) {
-            await transaction.rollback();
+            try {
+                await transaction.rollback();
+            } catch (rollbackError) {
+                logger.error('Ошибка отката транзакции:', rollbackError);
+            }
         }
 
+        const dbMessage = err?.original?.message || err?.parent?.message || err.message;
         logger.error('Ошибка создания новости:', err);
 
         res.status(400).json({
-            error: `Ошибка создания новости: ${err.message}`,
+            error: `Ошибка создания новости: ${dbMessage}`,
             errors: [{
                 location: "body",
-                msg: err.message,
+                msg: dbMessage,
                 path: "general",
                 type: "field"
             }]
@@ -664,11 +689,20 @@ exports.updateNews = async (req, res) => {
             categoryIds = JSON.parse(categoryIds);
         }
         if (Array.isArray(categoryIds)) {
+            const normalizedCategoryIds = categoryIds
+                .map((id) => Number(id))
+                .filter((id) => Number.isInteger(id) && id > 0);
             const categories = await Category.findAll({
-                where: { id: categoryIds },
+                where: { id: normalizedCategoryIds },
                 transaction,
             });
             await news.setCategories(categories, { transaction });
+            await assignLegacyCategoryId(
+                sequelize,
+                news.id,
+                normalizedCategoryIds[0],
+                transaction,
+            );
         }
 
         // 5. Обрабатываем существующие медиафайлы

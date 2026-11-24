@@ -62,11 +62,7 @@ module.exports = (sequelize) => {
             as: 'mediaFiles',
         });
         News.belongsToMany(models.Category, {
-            through: {
-                model: 'newsCategory',
-
-                timestamps: false
-            },
+            through: models.NewsCategory,
             foreignKey: 'newsId',
             otherKey: 'categoryId',
             as: 'categories',

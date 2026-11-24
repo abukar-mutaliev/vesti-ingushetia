@@ -17,6 +17,7 @@ require('./middlewares/cronJobs');
 const botHandler = require('./middlewares/botHandler.middleware');
 const fs = require('fs');
 const { ensureElectionsSchema } = require('./utils/ensureElectionsSchema');
+const { ensureNewsCategorySchema } = require('./utils/ensureNewsCategorySchema');
 
 const privateKey = fs.readFileSync(path.join(__dirname, 'cf', 'private-key.pem'), 'utf8');
 const certificate = fs.readFileSync(path.join(__dirname, 'cf', 'certificate.pem'), 'utf8');
@@ -772,6 +773,7 @@ const startServer = async (retryCount = 0) => {
         // Синхронизируем модели
         await ensureElectionsSchema(sequelize);
         await sequelize.sync();
+        await ensureNewsCategorySchema(sequelize);
         const moscowTime = new Date().toLocaleString('ru-RU', {
             timeZone: 'Europe/Moscow',
             year: 'numeric',

@@ -3,6 +3,7 @@ const { News, Category, Media, sequelize, ScheduledNews } = require('../models')
 const path = require('path');
 const fs = require('fs');
 const logger = require('../logger');
+const { assignLegacyCategoryId } = require('../utils/ensureNewsCategorySchema');
 
 function validateVideoUrl(url) {
     if (!url || typeof url !== 'string') return false;
@@ -105,6 +106,13 @@ class NewsScheduler {
             }, { transaction });
 
             console.log(`✅ Новость создана с ID: ${news.id}`);
+
+            const legacyCategoryId = Array.isArray(newsData.categoryIds)
+                ? Number(newsData.categoryIds[0])
+                : null;
+            if (Number.isInteger(legacyCategoryId) && legacyCategoryId > 0) {
+                await assignLegacyCategoryId(sequelize, news.id, legacyCategoryId, transaction);
+            }
 
             if (newsData.categoryIds && newsData.categoryIds.length > 0) {
                 const categories = await Category.findAll({
