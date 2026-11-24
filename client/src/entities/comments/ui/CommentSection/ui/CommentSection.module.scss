@@ -1,35 +1,43 @@
 .commentSection {
-    margin: 20px 0 0 80px;
-    background-color: #f9f9f9;
-    padding: 10px;
-    border-radius: 8px;
+    margin: 8px 0 0;
+    background-color: rgba(248, 249, 250, 0.9);
+    padding: 14px 16px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 149, 218, 0.1);
+    box-shadow: 0 8px 20px rgba(7, 46, 99, 0.05);
+
     @media (max-width: 768px) {
         margin: 0;
+        padding: 12px;
+        border-radius: 14px;
     }
 }
 
 .toggleButton {
+    width: 100%;
     background-color: transparent;
-    color: #333333;
-    padding: 10px;
+    color: $text-color;
+    padding: 10px 4px;
     border: none;
-    border-radius: 4px;
-    font-size: 16px;
-    font-weight: bold;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
     display: flex;
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.25s ease;
 
     &:hover {
-        background-color: #dddddd;
+        background-color: rgba(0, 149, 218, 0.08);
     }
 }
 
 .arrow {
     margin-left: 10px;
     transition: transform 0.3s ease;
+    color: $primary-color;
 }
 
 .arrowUp {
@@ -37,34 +45,57 @@
 }
 
 .commentList {
-    margin-top: 10px;
+    margin-top: 12px;
     list-style: none;
     padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .addCommentButton {
-    margin-top: 5%;
-    padding: 10px;
-    background-color: #28a745;
+    margin-top: 16px;
+    padding: 11px 18px;
+    background: linear-gradient(
+        135deg,
+        $primary-color,
+        $primary-background-header
+    );
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 999px;
     cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 8px 18px rgba(0, 149, 218, 0.28);
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        filter 0.25s ease;
 
     &:hover {
-        background-color: #218838;
+        transform: translateY(-1px);
+        box-shadow: 0 12px 22px rgba(35, 118, 209, 0.35);
+        filter: brightness(1.05);
     }
 }
+
 .addCommentButtonDisabled {
-    background-color: #28a745;
+    background: linear-gradient(
+        135deg,
+        $primary-color,
+        $primary-background-header
+    );
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.55;
     color: white;
     border: none;
-    border-radius: 4px;
-    margin-top: 5%;
-    padding: 10px;
+    border-radius: 999px;
+    margin-top: 16px;
+    padding: 11px 18px;
+    font-weight: 600;
 }
+
 .tooltipWrapper {
     position: relative;
     display: inline-block;
@@ -78,11 +109,11 @@
 .tooltip {
     visibility: hidden;
     width: 220px;
-    background-color: rgba(0, 0, 0, 0.75);
+    background-color: rgba(7, 46, 99, 0.9);
     color: #fff;
     text-align: center;
-    border-radius: 4px;
-    padding: 8px 0;
+    border-radius: 10px;
+    padding: 10px 12px;
     position: absolute;
     z-index: 10;
     bottom: 125%;
@@ -90,6 +121,8 @@
     transform: translateX(-50%);
     opacity: 0;
     transition: opacity 0.3s;
+    font-size: 13px;
+    line-height: 1.4;
 }
 
 .tooltip::after {
@@ -100,5 +133,5 @@
     margin-left: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: rgba(0, 0, 0, 0.75) transparent transparent transparent;
+    border-color: rgba(7, 46, 99, 0.9) transparent transparent transparent;
 }

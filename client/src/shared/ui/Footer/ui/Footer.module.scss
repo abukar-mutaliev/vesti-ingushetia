@@ -1,20 +1,52 @@
 .footer {
     flex: 0 0 auto;
-    width: 103%;
+    width: 100%;
     max-width: 90rem;
-    margin: 60px 0 auto;
-    background-color: #2376d1;
+    margin: 72px auto 0;
     color: #fff;
-    font-family: Arial, sans-serif;
+    font-family: 'Russia', Arial, sans-serif;
     box-sizing: border-box;
-    -webkit-box-shadow: 0px -2px 8px 3px rgba(0, 0, 0, 0.26);
-    -moz-box-shadow: 0px -2px 8px 3px rgba(0, 0, 0, 0.26);
-    box-shadow: 0px -2px 8px 3px rgba(0, 0, 0, 0.26);
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(
+        165deg,
+        $primary-background-header 0%,
+        #1a5fad 45%,
+        #0d4a8f 100%
+    );
+    box-shadow:
+        0 -12px 36px rgba(7, 46, 99, 0.22),
+        0 1px 0 rgba(255, 255, 255, 0.08) inset;
+    border-radius: 24px 24px 0 0;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(
+                circle at top left,
+                rgba(0, 149, 218, 0.28),
+                transparent 42%
+            ),
+            radial-gradient(
+                circle at bottom right,
+                rgba(7, 46, 99, 0.35),
+                transparent 40%
+            );
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    > * {
+        position: relative;
+        z-index: 1;
+    }
 
     @media (max-width: 868px) {
-        position: relative;
         width: 100%;
         max-width: 100%;
-        box-sizing: border-box;
+        margin-top: 48px;
+        border-radius: 18px 18px 0 0;
     }
 }

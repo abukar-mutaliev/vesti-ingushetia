@@ -40,8 +40,7 @@ export const ListedNews = React.memo(({ newsList }) => {
 
     return (
         <div className={styles.listedNews}>
-            <h2>ПОПУЛЯРНОЕ</h2>
-            <hr />
+            <h2>Популярное</h2>
             <div className={styles.smallImageNewsSection}>
                 {topThreeNews.map((newsItem) => {
                     const handleImageError = (e) => {

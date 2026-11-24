@@ -1,9 +1,10 @@
+import PropTypes from 'prop-types';
 import styles from './SideMenu.module.scss';
 import { CategoryList } from '@entities/categories/index.js';
 import { Link, useLocation } from 'react-router-dom';
 import { ArticlesNewsList } from '@features/ArticlesNews/ui/articlesNews.jsx';
 
-export const SideMenu = () => {
+export const SideMenu = ({ onCategoryClick }) => {
     const location = useLocation();
     const isActiveTv = location.pathname === '/tv';
 
@@ -14,7 +15,9 @@ export const SideMenu = () => {
                 <CategoryList />
                 <ul>
                     <li className={isActiveTv ? styles.active : ''}>
-                        <Link to="/tv">ТВ</Link>
+                        <Link to="/tv" onClick={onCategoryClick}>
+                            ТВ
+                        </Link>
                     </li>
                 </ul>
                 <div className={styles.articlesNews}>
@@ -24,4 +27,8 @@ export const SideMenu = () => {
             </div>
         </div>
     );
+};
+
+SideMenu.propTypes = {
+    onCategoryClick: PropTypes.func,
 };

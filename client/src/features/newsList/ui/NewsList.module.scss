@@ -5,17 +5,16 @@
     @media (max-width: 768px) {
         flex-direction: column;
         align-items: center;
-        margin-top: 20px;
-
+        margin-top: 12px;
     }
 }
 
 .newsList {
-    background-color: $primary-background;
-    padding: 0 20px 0;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    font-family: Arial, sans-serif;
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    font-family: 'Russia', Arial, sans-serif;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -27,33 +26,72 @@
 
     @media (max-width: 768px) {
         width: 100%;
-        max-width: 50%;
-        padding: 10px;
-        justify-content: center;
-        align-content: center;
-        flex-wrap: wrap;
-        display: ruby;
-        box-sizing: border-box;
-    }
-    @media (max-width: 680px) {
         max-width: 100%;
-        padding-top: 20px;
+        padding: 0;
+        display: flex;
+        box-sizing: border-box;
     }
 
     @media (max-width: 480px) {
         gap: 12px;
     }
+
     h3 {
-        font-size: 1.5em;
+        font-size: 1.15rem;
         font-family: 'Russia', Arial, sans-serif;
         text-transform: uppercase;
-        color: black;
+        letter-spacing: 0.08em;
+        color: $text-color;
         width: 100%;
-        text-align: center;
+        text-align: left;
+        margin: 8px 0 4px;
+        padding: 0 4px 12px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        &::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(
+                90deg,
+                rgba(0, 149, 218, 0.35),
+                transparent
+            );
+        }
+
+        &::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            background: linear-gradient(
+                135deg,
+                $primary-color,
+                $primary-background-header
+            );
+            box-shadow: 0 0 0 4px rgba(0, 149, 218, 0.12);
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            font-size: 0.95rem;
+            text-align: left;
+        }
     }
+
     .newsListLoader {
         width: 100%;
-        height: 100%;
+        min-height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7785;
+        background: rgba(248, 249, 250, 0.8);
+        border-radius: 14px;
+        border: 1px dashed rgba(0, 149, 218, 0.2);
     }
 }
 
@@ -72,59 +110,63 @@
 .pagination {
     display: flex;
     list-style: none;
-    padding: 0;
-    margin: 20px 0;
-    color: #333;
+    padding: 8px 0 4px;
+    margin: 12px 0 0;
+    color: $text-color;
     justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px;
 
     li {
-        margin: 0 5px;
-    }
-
-    @media (max-width: 768px) {
-        justify-content: center;
-        flex-wrap: wrap;
+        margin: 0;
     }
 }
 
 .pageLink {
-    padding: 6px 6px;
-    margin: 0 4px;
-    border: 1px solid #747bff;
-    border-radius: 4px;
-    color: #747bff;
+    padding: 8px 12px;
+    margin: 0;
+    border: 1px solid rgba(0, 149, 218, 0.35);
+    border-radius: 10px;
+    color: $primary-color;
     cursor: pointer;
     transition:
-        background-color 0.2s,
-        color 0.2s;
+        background-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
     text-decoration: none;
+    display: inline-block;
+    font-weight: 600;
+    font-size: 13px;
 
     &:hover {
-        background-color: #747bff;
+        background-color: $primary-color;
         color: white;
+        border-color: $primary-color;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(0, 149, 218, 0.25);
     }
-    @media (max-width: 1244px) {
-        padding: 4px 4px;
-        margin: 0 3px;
-        font-size: 14px;
-    }
+
     @media (max-width: 780px) {
-        padding: 4px 4px;
-        margin: 2px;
+        padding: 6px 8px;
+        font-size: 12px;
     }
+
     @media (max-width: 486px) {
-        padding: 2px 2px;
-        margin: 1px;
-        font-size: 10px;
+        padding: 5px 7px;
+        font-size: 11px;
     }
 }
 
 .activePage {
     a {
-        background-color: #747bff;
+        background-color: $primary-color-hover;
         color: white;
+        border-color: $primary-color-hover;
+        box-shadow: 0 6px 14px rgba(0, 123, 255, 0.28);
     }
 }
+
 .loaderContainer {
     width: 45rem;
     display: flex;

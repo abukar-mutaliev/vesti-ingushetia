@@ -33,34 +33,66 @@ export const Sidebar = React.memo(({ categories, showElectionsBanner = false }) 
     }, [newsList]);
 
     if (categoryList.length === 0) {
-        return <p>Нет доступных категорий для отображения</p>;
+        return (
+            <div className={styles.sidebarEmpty}>
+                Нет доступных категорий для отображения
+            </div>
+        );
     }
 
     return (
-        <div className={styles.sidebar}>
-            <LiveStreamWidget />
-            <p>Рекламная служба ГТРК "Ингушетия" - 8928-793-47-86</p>
-            <VideoAdPlayer />
-            {showElectionsBanner && <ElectionsBannerWidget />}
+        <aside className={styles.sidebar}>
+            <section className={styles.block}>
+                <div className={styles.blockHeader}>
+                    <span className={styles.liveBadge}>
+                        <span className={styles.liveDot} />
+                        В эфире
+                    </span>
+                    <h3 className={styles.blockTitle}>Прямая трансляция</h3>
+                </div>
+                <LiveStreamWidget />
+            </section>
+
+            <section className={`${styles.block} ${styles.adBlock}`}>
+                <p className={styles.adLabel}>Реклама</p>
+                <p className={styles.adPhone}>
+                    Рекламная служба ГТРК «Ингушетия»
+                    <a href="tel:+79287934786">8 928 793-47-86</a>
+                </p>
+                <VideoAdPlayer />
+            </section>
+
+            {showElectionsBanner && (
+                <section className={styles.block}>
+                    <ElectionsBannerWidget />
+                </section>
+            )}
 
             {categoryList.map((category) => {
                 const categoryNews = memoizedGroupedNews[category.id] || [];
                 if (categoryNews.length === 0) return null;
 
                 return (
-                    <div key={category.id} className={styles.categorySection}>
+                    <section key={category.id} className={styles.categorySection}>
+                        <div className={styles.blockHeader}>
+                            <h3 className={styles.blockTitle}>{category.name}</h3>
+                        </div>
                         <ul className={styles.newsList}>
-                            {categoryNews.slice(0, 3).map((item) => (
-                                <NewsCardSidebar key={item.id} item={item} />
+                            {categoryNews.slice(0, 3).map((item, index) => (
+                                <NewsCardSidebar
+                                    key={item.id}
+                                    item={item}
+                                    featured={index === 0}
+                                />
                             ))}
                         </ul>
-                    </div>
+                    </section>
                 );
             })}
 
             <div className={styles.listedNewsContainer}>
                 <ListedNews newsList={newsList} />
             </div>
-        </div>
+        </aside>
     );
 });

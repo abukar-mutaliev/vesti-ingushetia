@@ -1,11 +1,22 @@
 .footerSmotrim {
-    width: 100px;
-    height: 30px;
+    width: 110px;
+    height: auto;
+    display: inline-flex;
+    transition: transform 0.25s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+    }
 
     @media (max-width: 868px) {
-        padding: 10px 0 25%;
+        padding: 0;
     }
+
     img {
-        border-radius: 20px;
+        width: 100%;
+        height: auto;
+        border-radius: 12px;
+        box-shadow: 0 8px 18px rgba(7, 46, 99, 0.25);
+        display: block;
     }
 }

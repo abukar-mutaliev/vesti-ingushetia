@@ -1,151 +1,233 @@
 .projectsSlider {
-    padding: 20px;
-    background-color: #0d4c75;
+    position: relative;
+    padding: 36px 28px 44px;
+    border-radius: 24px;
+    overflow: hidden;
+    color: #fff;
+    background: linear-gradient(
+        145deg,
+        $primary-background-header 0%,
+        #1a5fad 48%,
+        #0d4a8f 100%
+    );
+    box-shadow:
+        0 18px 40px rgba(7, 46, 99, 0.22),
+        0 1px 0 rgba(255, 255, 255, 0.08) inset;
 
-    h2 {
-        margin-bottom: 20px;
-        text-align: left;
-        font-size: 24px;
-        color: #ffffff;
-        padding-left: 15px;
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(
+                circle at top right,
+                rgba(0, 149, 218, 0.35),
+                transparent 42%
+            ),
+            radial-gradient(
+                circle at bottom left,
+                rgba(7, 46, 99, 0.4),
+                transparent 45%
+            );
+        pointer-events: none;
+        z-index: 0;
     }
 
-    .slick-slide {
-        display: flex;
-        justify-content: center;
-        padding: 10px;
+    > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    @media (max-width: 768px) {
+        padding: 28px 16px 36px;
+        border-radius: 18px;
+    }
+}
+
+.header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+    padding: 0 4px;
+
+    @media (max-width: 640px) {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+.headerText {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.projectsSlider h2 {
+    margin: 0;
+    padding: 0;
+    text-align: left;
+    font-size: 1.65rem;
+    font-family: 'Russia', Arial, sans-serif;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.01em;
+
+    @media (max-width: 768px) {
+        font-size: 1.35rem;
+    }
+}
+
+.viewAll {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: #fff;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    transition:
+        background-color 0.25s ease,
+        border-color 0.25s ease,
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+
+    &:hover {
+        background: $primary-color;
+        border-color: $primary-color;
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(0, 149, 218, 0.35);
+    }
+}
+
+.sliderShell {
+    margin: 0 -6px;
+
+    :global(.slick-list) {
+        margin: 0;
+        padding: 8px 0 18px;
+    }
+
+    :global(.slick-track) {
+        display: flex !important;
+        align-items: stretch;
+    }
+
+    :global(.slick-slide) {
+        height: auto;
+        padding: 0 10px;
         box-sizing: border-box;
-    }
 
-    .projectCardWrapper {
-        width: 100%;
-        max-width: 300px;
-        overflow: hidden;
-        transition:
-            0.3s ease,
-            transform 0.3s ease;
-        padding-left: 15px;
-        @media (max-width: 480px) {
-            max-width: 95%;
-        }
-        &:hover svg {
-            transition:
-                0.3s ease,
-                transform 0.3s ease;
-            transform: scale(1.05);
-            color: $primary-color-hover;
-        }
-
-        .imageWrapper {
-            position: relative;
-            width: 100%;
-            padding-top: 56.25%;
-            overflow: hidden;
-
-            img,
-            video {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                transition: transform 0.3s ease;
-                @media (max-width: 480px) {
-                    max-width: 95%;
-                    height: 200px;
-                }
-                &:hover {
-                    transform: scale(1.05);
-                }
-            }
-
-            .playButtonOverlay {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                color: rgba(255, 255, 255, 0.8);
-                pointer-events: none;
-            }
-
-            .playButton {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                color: $primary-background;
-                pointer-events: none;
-                transition: color 0.3s ease-in-out;
-                svg {
-                    transition:
-                        0.3s ease,
-                        transform 0.3s ease;
-                }
-            }
-        }
-
-        .mediaElement {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
+        > div {
             height: 100%;
         }
-
-        .projectInfo {
-            padding: 10px;
-            text-align: left;
-            background-color: #0d4c75;
-            h3 {
-                font-size: 14px;
-                color: #dddddd;
-                margin: 0;
-                white-space: nowrap;
-                overflow: hidden;
-                font-family: 'RussiaLights', Arial, sans-serif;
-                text-overflow: ellipsis;
-                transition:
-                    0.3s ease,
-                    transform 0.3s ease;
-                &:hover {
-                    color: $primary-color-hover;
-                    transition:
-                        0.3s ease,
-                        transform 0.3s ease;
-                }
-            }
-
-            p {
-                font-size: 12px;
-                color: #8c8c8c;
-                margin-top: 5px;
-            }
-        }
     }
 
-    .slick-prev,
-    .slick-next {
-        width: 60px !important;
-        height: 60px !important;
-        z-index: 1;
-        background-color: #333 !important;
-        border-radius: 50% !important;
+    :global(.slick-prev),
+    :global(.slick-next) {
+        width: 44px !important;
+        height: 44px !important;
+        z-index: 2;
+        background: rgba(255, 255, 255, 0.12) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 14px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         opacity: 1 !important;
+        transition:
+            background-color 0.25s ease,
+            transform 0.25s ease,
+            box-shadow 0.25s ease !important;
 
-        &:hover {
-            background-color: #555 !important;
+        &:before {
+            font-size: 18px !important;
+            color: #fff !important;
             opacity: 1 !important;
         }
 
-        &:before {
-            font-size: 30px !important;
-            color: #ffffff !important;
+        &:hover {
+            background: $primary-color !important;
+            border-color: $primary-color !important;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(0, 149, 218, 0.35);
         }
     }
+
+    :global(.slick-prev) {
+        left: -6px;
+    }
+
+    :global(.slick-next) {
+        right: -6px;
+    }
+
+    :global(.slick-dots) {
+        bottom: -8px;
+
+        li {
+            margin: 0 3px;
+
+            button:before {
+                font-size: 9px;
+                color: rgba(255, 255, 255, 0.45);
+                opacity: 1;
+            }
+
+            &.slick-active button:before {
+                color: #fff;
+                opacity: 1;
+            }
+        }
+    }
+
+    @media (max-width: 768px) {
+        :global(.slick-prev),
+        :global(.slick-next) {
+            display: none !important;
+        }
+    }
+}
+
+.projectCardWrapper {
+    width: 100%;
+    height: 100%;
+    padding: 4px 0;
+    box-sizing: border-box;
+}
+
+.link {
+    display: block;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+}
+
+.loaderWrap,
+.statusMessage {
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.85);
+    text-align: center;
 }
 
 .projectsSliderNotFound {
@@ -153,5 +235,5 @@
     display: flex;
     justify-content: center;
     text-align: center;
-    color: #666;
+    color: rgba(255, 255, 255, 0.75);
 }

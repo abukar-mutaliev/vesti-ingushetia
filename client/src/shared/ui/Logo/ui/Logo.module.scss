@@ -1,62 +1,77 @@
 .logo {
-    font-size: 30px;
+    font-size: 28px;
     font-weight: bold;
     color: $primary-color-header;
     font-family: 'Russia', Arial, sans-serif;
     height: 80px;
-    line-height: 80px;
+    display: flex;
+    align-items: center;
+    line-height: 1;
 
     @media screen and (max-width: 1315px) {
-        font-size: 26px;
+        font-size: 24px;
 
         span {
-            font-size: 22px;
-            padding: 0 3px;
+            font-size: 20px;
+            padding: 2px 6px;
         }
     }
+
     a {
         text-decoration: none;
         color: $primary-color-header;
-        line-height: 80px;
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
         transition:
-            0.5s ease,
-            transform 0.5s ease;
+            color 0.3s ease,
+            transform 0.3s ease;
 
         &:hover {
-            color: #dddddd;
+            color: #fff;
+            transform: translateY(-1px);
+
+            span {
+                background: #fff;
+                color: $primary-background-header;
+                box-shadow: 0 6px 14px rgba(255, 255, 255, 0.2);
+            }
         }
     }
 
     span {
         background-color: $primary-color-header;
         color: $primary-background-header;
-        padding: 0 4px;
-        margin-left: 5px;
+        padding: 3px 7px;
+        margin-left: 6px;
         text-align: center;
-        border-radius: 2px;
-        font-size: 25px;
+        border-radius: 8px;
+        font-size: 22px;
+        line-height: 1.1;
         transition:
-            0.5s ease,
-            transform 0.5s ease;
-
-        &:hover {
-            background: #dddddd;
-        }
+            background-color 0.3s ease,
+            color 0.3s ease,
+            box-shadow 0.3s ease,
+            transform 0.3s ease;
     }
 }
+
 @media screen and (max-width: 920px) {
     .logo {
-        font-size: 20px;
-        width: 25%;
+        font-size: 18px;
+        width: auto;
         height: 50px;
-        line-height: 50px;
+
         span {
-            font-size: 17px;
+            font-size: 15px;
+            padding: 2px 5px;
+            border-radius: 6px;
         }
     }
 }
+
 @media screen and (max-width: 720px) {
     .logo {
-        font-size: 20px;
+        font-size: 17px;
     }
 }

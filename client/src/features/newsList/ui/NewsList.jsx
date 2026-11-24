@@ -118,7 +118,7 @@ export const NewsList = React.memo(
                         </div>
                     ) : displayNewsList.length > 0 ? (
                         displayNewsList.map((news) => (
-                            <NewsCard key={news.id} news={news} />
+                            <NewsCard key={news.id} news={news} showDate />
                         ))
                     ) : (
                         <div className={styles.newsListLoader}>Новостей нет</div>

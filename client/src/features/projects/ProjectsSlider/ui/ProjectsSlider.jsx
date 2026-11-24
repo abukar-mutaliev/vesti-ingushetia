@@ -17,11 +17,15 @@ import {
 } from '@entities/projects/model/projectSelectors';
 
 const sliderSettings = {
-    className: 'center',
     infinite: true,
-    centerPadding: '60px',
+    centerPadding: '0',
     slidesToShow: 4,
+    slidesToScroll: 1,
     swipeToSlide: true,
+    speed: 450,
+    cssEase: 'cubic-bezier(0.22, 1, 0.36, 1)',
+    dots: true,
+    arrows: true,
     responsive: [
         {
             breakpoint: 1224,
@@ -39,6 +43,7 @@ const sliderSettings = {
             breakpoint: 768,
             settings: {
                 slidesToShow: 1,
+                arrows: false,
             },
         },
     ],
@@ -72,13 +77,6 @@ export const ProjectsSlider = ({ title = 'Наши проекты', itemsToShow 
 
     const projectsElements = useMemo(() => {
         return projects.map((project) => {
-            const mediaFiles = Array.isArray(project.mediaFiles)
-                ? project.mediaFiles
-                : [];
-            const image = mediaFiles.find((media) => media?.type === 'image');
-
-            const imageUrl = image?.url || null;
-
             return (
                 <div
                     key={project.id}
@@ -95,7 +93,7 @@ export const ProjectsSlider = ({ title = 'Наши проекты', itemsToShow 
                         }}
                         className={styles.link}
                     >
-                        <ProjectCard project={project} imageUrl={imageUrl} />
+                        <ProjectCard project={project} />
                     </Link>
                 </div>
             );
@@ -105,7 +103,9 @@ export const ProjectsSlider = ({ title = 'Наши проекты', itemsToShow 
     if (loading) {
         return (
             <div className={styles.projectsSlider}>
-                <Loader />
+                <div className={styles.loaderWrap}>
+                    <Loader />
+                </div>
             </div>
         );
     }
@@ -113,23 +113,39 @@ export const ProjectsSlider = ({ title = 'Наши проекты', itemsToShow 
     if (error) {
         return (
             <div className={styles.projectsSlider}>
-                Ошибка загрузки проектов:{' '}
-                {error.message || 'Неизвестная ошибка'}
+                <p className={styles.statusMessage}>
+                    Ошибка загрузки проектов:{' '}
+                    {error.message || 'Неизвестная ошибка'}
+                </p>
             </div>
         );
     }
 
     if (!projects.length) {
-        return <div className={styles.projectsSlider}>Проекты отсутствуют</div>;
+        return (
+            <div className={styles.projectsSlider}>
+                <p className={styles.statusMessage}>Проекты отсутствуют</p>
+            </div>
+        );
     }
 
     return (
-        <div className={styles.projectsSlider}>
-            <h2>{title}</h2>
-            <Slider {...{ ...sliderSettings, slidesToShow: itemsToShow }}>
-                {projectsElements}
-            </Slider>
-        </div>
+        <section className={styles.projectsSlider}>
+            <div className={styles.header}>
+                <div className={styles.headerText}>
+                    <span className={styles.eyebrow}>ГТРК «Ингушетия»</span>
+                    <h2>{title}</h2>
+                </div>
+                <Link to="/projects" className={styles.viewAll}>
+                    Все проекты
+                </Link>
+            </div>
+            <div className={styles.sliderShell}>
+                <Slider {...{ ...sliderSettings, slidesToShow: itemsToShow }}>
+                    {projectsElements}
+                </Slider>
+            </div>
+        </section>
     );
 };
 

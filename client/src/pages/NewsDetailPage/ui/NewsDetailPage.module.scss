@@ -1,338 +1,142 @@
 .newsDetailPage {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     width: 100%;
+    animation: pageIn 0.45s ease-out;
+
     @media (max-width: 768px) {
         padding: 0 10px;
     }
 
     &.editMode {
-        padding-top: 8%;
+        padding-top: 96px;
         box-sizing: border-box;
 
-        @media (max-width: 912px) {
-            padding-top: 15%;
-        }
-
-        @media (max-width: 768px) {
-            padding-top: 15%;
+        @media (max-width: 860px) {
+            padding-top: 72px;
         }
     }
+}
 
-    .mainContent {
-        display: flex;
+@keyframes pageIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.newsDetailPageContainer {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 100%;
+    background: transparent;
+    gap: 28px;
+    box-shadow: none;
+    margin: 0 auto;
+    padding: 96px 16px 0;
+    box-sizing: border-box;
+
+    @media (max-width: 1244px) {
         flex-direction: column;
-        flex: 1;
-        min-width: 0;
-    }
-
-    .editButton {
-        display: flex;
         align-items: center;
-        gap: 6px;
-        align-self: flex-end;
-        margin: 20px 20px 0;
-        background-color: #2196f3;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.9rem;
-
-        &:hover {
-            background-color: #1976d2;
-        }
-
-        @media (max-width: 768px) {
-            margin: 10px 10px 0;
-        }
     }
 
-    .newsDetailPageContainer {
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-        max-width: 100%;
-        background: $primary-background;
-        gap: 15px;
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-        margin: 8% auto;
-
-        @media (max-width: 1020px) {
-            width: auto;
-        }
-
-        @media (max-width: 912px) {
-            width: 100%;
-            margin-top: 15%;
-            gap: 0;
-        }
-        @media (max-width: 868px) {
-            display: flow;
-            width: 100%;
-        }
-        @media (max-width: 468px) {
-            display: flex;
-        }
-
-        .sidebarContainer {
-            @media (max-width: 1368px) {
-                display: flex;
-                justify-content: center;
-            }
-            @media (max-width: 768px) {
-                display: none;
-            }
-        }
+    @media (max-width: 860px) {
+        padding-top: 72px;
+        gap: 16px;
     }
 
-    .mobileMenuIcon {
-        position: absolute;
+    @media (max-width: 768px) {
+        padding: 72px 0 0;
+    }
+}
+
+.mainContent {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    max-width: 64rem;
+    width: 100%;
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 149, 218, 0.1);
+    box-shadow: 0 12px 32px rgba(7, 46, 99, 0.08);
+    padding: 8px 0 24px;
+    box-sizing: border-box;
+
+    @media (max-width: 768px) {
+        border-radius: 16px;
+        padding-bottom: 16px;
+    }
+}
+
+.editButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    align-self: flex-end;
+    margin: 16px 24px 0;
+    background: linear-gradient(
+        135deg,
+        $primary-color,
+        $primary-background-header
+    );
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 8px 18px rgba(0, 149, 218, 0.28);
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        filter 0.25s ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(35, 118, 209, 0.35);
+        filter: brightness(1.05);
+    }
+
+    @media (max-width: 768px) {
+        margin: 12px 14px 0;
+    }
+}
+
+.sidebarContainer {
+    flex-shrink: 0;
+    align-self: flex-start;
+    width: 100%;
+    max-width: 25rem;
+
+    @media (max-width: 1244px) {
+        max-width: 30rem;
+    }
+
+    @media (max-width: 768px) {
         display: none;
-        cursor: pointer;
-        left: 0;
-        color: $primary-color;
-        border-radius: 0 15px 15px 0;
-
-        @media screen and (max-width: 1320px) {
-            top: 120px;
-            display: flex;
-            box-sizing: border-box;
-        }
-        @media (max-width: 768px) {
-            display: flex;
-            box-sizing: border-box;
-            top: 60px;
-            background-color: #5db1ff;
-            color: white;
-            padding: 10px;
-        }
     }
+}
 
-    .sideMenu {
-        display: block;
-        transition: transform 0.3s ease-in-out;
-        border: none;
-        height: auto;
-        width: 360px;
-        background-color: #2376d1;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.videoSliderContainer {
+    width: 100%;
+    max-width: 90rem;
+    margin: 40px auto 48px;
+    padding: 0 16px 24px;
+    box-sizing: border-box;
+    overflow: visible;
 
-        @media screen and (max-width: 1320px) {
-            position: absolute;
-            top: 40px;
-            left: 0;
-            width: 250px;
-            height: 100%;
-
-            transform: translateX(-100%);
-            z-index: 500;
-            overflow-y: auto;
-        }
-        @media screen and (max-width: 1052px) {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 250px;
-            height: 100%;
-            transform: translateX(-100%);
-            z-index: 1000;
-            overflow-y: auto;
-        }
-
-        &.open {
-            transform: translateX(0);
-            -webkit-box-shadow: 7px 0px 5px -5px rgba(34, 60, 80, 0.6);
-            -moz-box-shadow: 7px 0px 5px -5px rgba(34, 60, 80, 0.6);
-            box-shadow: 7px 0px 5px -5px rgba(34, 60, 80, 0.6);
-        }
-    }
-
-    .closeButton {
-        display: none;
-
-        @media (max-width: 768px) {
-            display: block;
-            background: none;
-            border: none;
-            cursor: pointer;
-            position: absolute;
-            top: 35px;
-            right: 10px;
-            font-size: 20px;
-            color: $primary-color;
-            transition:
-                0.3s ease,
-                transform,
-                0.3s ease;
-            &:hover {
-                color: $primary-color-hover;
-                transition:
-                    0.3s ease,
-                    transform,
-                    0.3s ease;
-            }
-        }
-    }
-
-    .backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 500;
-    }
-    .newsCardContainer {
-        margin-top: 10%;
-        margin-left: 50px;
-
-        @media (max-width: 968px) {
-            margin: auto;
-            display: grid;
-            max-width: 80%;
-            padding-top: 10%;
-        }
-
-        @media (max-width: 768px) {
-            margin-left: 0;
-            padding: 0 10px;
-        }
-        @media (max-width: 468px) {
-            display: contents;
-        }
-        h3 {
-            padding: 0 0 40px 0;
-            text-align: center;
-
-            @media (max-width: 768px) {
-                margin-bottom: 10px;
-            }
-        }
-    }
-
-    .videoSliderContainer {
-        margin: auto;
-        max-width: 100%;
-        max-height: 340px;
-        overflow: hidden;
-        @media (max-width: 1368px) {
-            max-width: 90%;
-        }
-        @media (max-width: 968px) {
-            max-width: 80%;
-        }
-
-        @media (max-width: 768px) {
-            max-width: 100%;
-            padding: 0 10px;
-        }
-    }
-
-    .newsGrid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-        justify-items: center;
-
-        @media (max-width: 1324px) {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-
-        @media (max-width: 768px) {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-
-        @media (max-width: 480px) {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    .newsDetail {
-        width: 100%;
-        max-width: 100%;
-        padding: 30px;
-        background-color: transparent;
-        margin: 0 auto 5%;
-
-        @media (max-width: 912px) {
-            padding: 20px;
-        }
-
-        @media (max-width: 768px) {
-            padding: 10px;
-        }
-
-        .title {
-            font-family: 'RussiaMedium', Arial, sans-serif;
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            font-weight: bolder;
-            color: #222;
-
-            @media (max-width: 768px) {
-                font-size: 1.5rem;
-            }
-        }
-
-        .meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.9rem;
-            color: #555;
-            width: 100%;
-            max-width: 100%;
-            padding-bottom: 3%;
-
-            @media (max-width: 768px) {
-                font-size: 0.8rem;
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            span {
-                margin-right: 1rem;
-            }
-        }
-
-        .newsImage {
-            width: 815px;
-            height: 500px;
-            display: block;
-        }
-
-        .content {
-            font-size: 1.2rem;
-            line-height: 1.6;
-            margin-top: 0;
-            width: 100%;
-            display: grid;
-            gap: 1rem;
-            margin-left: 0;
-
-            @media (max-width: 768px) {
-                width: 100%;
-            }
-
-            p {
-                margin-bottom: 1rem;
-            }
-        }
-    }
-
-    .otherMediaWrapper,
-    .videoWrapper {
-        width: 100%;
-        max-width: 100%;
-        overflow: hidden;
-        border-radius: 8px;
-        margin-bottom: 20px;
-
-        @media (max-width: 768px) {
-            max-width: 100%;
-        }
+    @media (max-width: 768px) {
+        margin: 28px auto 36px;
+        padding: 0 4px 16px;
     }
 }

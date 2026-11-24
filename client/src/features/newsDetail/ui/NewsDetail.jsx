@@ -232,107 +232,133 @@ export const NewsDetail = memo(
                         href={`${window.location.origin}/news/${newsId}`}
                     />
 
+                    {Array.isArray(news.categories) && news.categories.length > 0 && (
+                        <div className={styles.categories}>
+                            {news.categories.map((category) => (
+                                <Link
+                                    key={category.id}
+                                    to={`/categories/${category.id}`}
+                                    className={styles.categoryChip}
+                                >
+                                    {category.name}
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+
                     <h1 className={styles.title} itemProp="headline">
                         {news.title}
                     </h1>
 
-                    <div className={styles.newsDetail}>
-                        <div className={styles.meta}>
-                            <span>
-                                Автор:{' '}
-                                {news.authorDetails ? (
-                                    <Link to={`/author/${news.authorDetails.id}`}>
-                                        <span itemProp="author">{news.authorDetails.username}</span>
-                                    </Link>
-                                ) : (
-                                    <span itemProp="author">Редакция</span>
-                                )}
-                            </span>
-                            <Link to={`/`}><span itemProp="publisher">Вести Ингушетии</span></Link>
-                            <span itemProp="datePublished" content={news.publishDate || news.createdAt}>
-                                {formattedDate}
-                            </span>
-                            <div className={styles.views}>
-                                <FaEye size={10} /> <span itemProp="interactionCount" content={`UserPageVisits:${news.views}`}>{news.views}</span>
-                            </div>
-                        </div>
-
-                        <div className={styles.mediaSection}>
-                            {embedUrl ? (
-                                <div className={styles.videoWrapper}>
-                                    <iframe
-                                        width="560"
-                                        height="315"
-                                        src={embedUrl}
-                                        className={styles.newsImage}
-                                        frameBorder="0"
-                                        allowFullScreen
-                                        title="Видео"
-                                        itemProp="video"
-                                    ></iframe>
-                                </div>
+                    <div className={styles.meta}>
+                        <span className={styles.metaItem}>
+                            Автор:{' '}
+                            {news.authorDetails ? (
+                                <Link to={`/author/${news.authorDetails.id}`}>
+                                    <span itemProp="author">{news.authorDetails.username}</span>
+                                </Link>
                             ) : (
-                                imageMedia?.url && (
-                                    <div itemProp="image" itemScope itemType="https://schema.org/ImageObject">
-                                        <link itemProp="url" href={new URL(imageMedia.url, window.location.origin).toString()} />
-                                        <meta itemProp="width" content="1200" />
-                                        <meta itemProp="height" content="630" />
-                                        <MediaElement
-                                            imageUrl={imageMedia.url}
-                                            videoUrl={videoMedia?.url}
-                                            alt={news.title}
-                                            className={styles.newsImage}
-                                            playIconSize={70}
-                                            showPlayIcon={false}
-                                        />
-                                    </div>
-                                )
+                                <span itemProp="author">Редакция</span>
+                            )}
+                        </span>
+                        <span className={styles.metaDivider} aria-hidden="true" />
+                        <Link to="/" className={styles.metaItem}>
+                            <span itemProp="publisher">Вести Ингушетии</span>
+                        </Link>
+                        <span className={styles.metaDivider} aria-hidden="true" />
+                        <span
+                            className={styles.metaItem}
+                            itemProp="datePublished"
+                            content={news.publishDate || news.createdAt}
+                        >
+                            {formattedDate}
+                        </span>
+                        <div className={styles.views}>
+                            <FaEye size={12} />
+                            <span
+                                itemProp="interactionCount"
+                                content={`UserPageVisits:${news.views}`}
+                            >
+                                {news.views}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className={styles.mediaSection}>
+                        {embedUrl ? (
+                            <div className={styles.videoWrapper}>
+                                <iframe
+                                    width="560"
+                                    height="315"
+                                    src={embedUrl}
+                                    className={styles.newsImage}
+                                    frameBorder="0"
+                                    allowFullScreen
+                                    title="Видео"
+                                    itemProp="video"
+                                ></iframe>
+                            </div>
+                        ) : (
+                            imageMedia?.url && (
+                                <div itemProp="image" itemScope itemType="https://schema.org/ImageObject">
+                                    <link itemProp="url" href={new URL(imageMedia.url, window.location.origin).toString()} />
+                                    <meta itemProp="width" content="1200" />
+                                    <meta itemProp="height" content="630" />
+                                    <MediaElement
+                                        imageUrl={imageMedia.url}
+                                        videoUrl={videoMedia?.url}
+                                        alt={news.title}
+                                        className={styles.newsImage}
+                                        playIconSize={70}
+                                        showPlayIcon={false}
+                                    />
+                                </div>
+                            )
+                        )}
+                    </div>
+
+                    <div className={styles.newsContentWrapper}>
+                        <SocialIcons />
+                        <div className={styles.content}>
+                            <div
+                                className={styles.paragraph}
+                                dangerouslySetInnerHTML={{
+                                    __html: processedContent,
+                                }}
+                                itemProp="articleBody"
+                            />
+
+                            {otherMediaFiles.length > 0 && (
+                                <div className={styles.otherMediaWrapper}>
+                                    {otherMediaFiles.map((media) => (
+                                        <div
+                                            key={media.id}
+                                            className={styles.imageWrapper}
+                                            itemProp="image"
+                                            itemScope
+                                            itemType="https://schema.org/ImageObject"
+                                        >
+                                            <link itemProp="url" href={new URL(media.url, window.location.origin).toString()} />
+                                            <MediaElement
+                                                imageUrl={media.url}
+                                                alt={news.title}
+                                                className={styles.newsImage}
+                                                showPlayIcon={false}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
+                    </div>
 
-                        <div className={styles.newsContentWrapper}>
-                            <SocialIcons />
-                            <div className={styles.content}>
-                                <div
-                                    className={styles.paragraph}
-                                    dangerouslySetInnerHTML={{
-                                        __html: processedContent,
-                                    }}
-                                    itemProp="articleBody"
-                                />
-
-                                {otherMediaFiles.length > 0 && (
-                                    <div className={styles.otherMediaWrapper}>
-                                        {otherMediaFiles.map((media) => (
-                                            <div
-                                                key={media.id}
-                                                className={styles.imageWrapper}
-                                                itemProp="image"
-                                                itemScope
-                                                itemType="https://schema.org/ImageObject"
-                                            >
-                                                <link itemProp="url" href={new URL(media.url, window.location.origin).toString()} />
-                                                <MediaElement
-                                                    imageUrl={media.url}
-                                                    alt={news.title}
-                                                    className={styles.newsImage}
-                                                    showPlayIcon={false}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div itemProp="comment">
-                            <CommentSection
-                                comments={comments}
-                                newsId={newsId}
-                                authorName={authorName}
-                                userId={userId}
-                            />
-                        </div>
+                    <div className={styles.commentsBlock} itemProp="comment">
+                        <CommentSection
+                            comments={comments}
+                            newsId={newsId}
+                            authorName={authorName}
+                            userId={userId}
+                        />
                     </div>
                 </article>
             </>

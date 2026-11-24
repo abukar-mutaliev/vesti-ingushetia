@@ -1,32 +1,58 @@
 .footerSocialIcons {
     display: flex;
-    gap: 15px;
-    height: 30px;
-    @media screen and (max-width: 920px) {
-        gap: 50px;
-    }
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+
     @media screen and (max-width: 620px) {
-        justify-content: space-between;
+        width: 100%;
     }
+
     a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
         color: #fff;
-        font-size: 30px;
-        transition: color 0.3s;
+        font-size: 22px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        transition:
+            color 0.25s ease,
+            background-color 0.25s ease,
+            transform 0.25s ease,
+            border-color 0.25s ease,
+            box-shadow 0.25s ease;
 
         &:hover {
-            color: #ccc;
+            color: #fff;
+            background-color: $primary-color;
+            border-color: $primary-color;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 149, 218, 0.35);
         }
     }
 }
+
+.icon {
+    display: inline-flex;
+}
+
 .ruTube {
-    width: 24.5px;
+    width: 22px;
+    height: auto;
     filter: invert(100%) sepia(7%) saturate(7467%) hue-rotate(194deg)
         brightness(100%) contrast(108%);
-    transition: transform 0.3s ease;
+    transition: transform 0.25s ease, filter 0.25s ease;
+}
 
-    &:hover {
-        transition: transform 0.3s ease;
-        filter: invert(74%) sepia(0%) saturate(24%) hue-rotate(136deg)
-            brightness(106%) contrast(88%);
-    }
+.footerSocialIcons a:hover .ruTube {
+    transform: scale(1.05);
+    filter: invert(100%) brightness(120%);
+}
+
+.telegramIcon {
+    // inherits link styles
 }

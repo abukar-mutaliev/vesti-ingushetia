@@ -1,39 +1,66 @@
 .footerLegal {
     .container {
-        max-width: 1200px;
+        max-width: 90rem;
         margin: 0 auto;
-        padding: 0 20px;
-
+        padding: 0 40px;
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
+        gap: 12px;
+
+        @media screen and (max-width: 768px) {
+            padding: 0 20px;
+        }
 
         @media screen and (max-width: 620px) {
-            max-width: 80%;
-            margin: 0 20px;
-            padding: 0;
+            flex-direction: column;
+            align-items: flex-start;
         }
+
         p {
             margin: 0;
-            font-size: 14px;
-            color: #ccc;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.65);
+            letter-spacing: 0.02em;
         }
 
         .links {
             display: flex;
-            gap: 15px;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+
             @media screen and (max-width: 620px) {
                 width: 100%;
                 display: grid;
+                gap: 10px;
             }
+
             a {
-                color: #ccc;
+                color: rgba(255, 255, 255, 0.72);
                 text-decoration: none;
-                font-size: 14px;
+                font-size: 13px;
+                position: relative;
+                transition: color 0.25s ease;
+
+                &::after {
+                    content: '';
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    bottom: -2px;
+                    height: 1px;
+                    background: $primary-color;
+                    transform: scaleX(0);
+                    transition: transform 0.25s ease;
+                }
 
                 &:hover {
-                    text-decoration: underline;
+                    color: #fff;
+
+                    &::after {
+                        transform: scaleX(1);
+                    }
                 }
             }
         }
