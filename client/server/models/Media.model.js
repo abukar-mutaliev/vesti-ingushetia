@@ -12,7 +12,7 @@ module.exports = (sequelize) => {
                 type: DataTypes.STRING,
                 allowNull: false,
                 validate: {
-                    isIn: [['image', 'video', 'audio']],
+                    isIn: [['image', 'preview', 'video', 'audio']],
                 },
             },
         },

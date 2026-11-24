@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import styles from './ListedNews.module.scss';
 import defaultImage from '@assets/default.jpg';
 import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
+import { getNewsPreviewImage } from '@shared/lib/getNewsPreviewImage/getNewsPreviewImage.js';
 
 export const ListedNews = React.memo(({ newsList }) => {
     const sortedByViewsNews = useMemo(() => {
@@ -12,9 +13,7 @@ export const ListedNews = React.memo(({ newsList }) => {
 
     const topThreeNews = useMemo(() => {
         return sortedByViewsNews.slice(0, 3).map((newsItem) => {
-            const imageMedia =
-                newsItem.mediaFiles?.find((media) => media.type === 'image') ||
-                null;
+            const imageMedia = getNewsPreviewImage(newsItem.mediaFiles);
             const videoMedia =
                 newsItem.mediaFiles?.find((media) => media.type === 'video') ||
                 null;

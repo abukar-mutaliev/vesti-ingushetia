@@ -427,17 +427,25 @@ exports.createNews = async (req, res) => {
                 mediaFiles: [] // Инициализируем пустым массивом
             };
 
-            // Обрабатываем изображения для отложенной публикации
-            if (mediaFiles && mediaFiles.images && mediaFiles.images.length > 0) {
-                newsData.mediaFiles = mediaFiles.images.map(file => ({
-                        type: file.mimetype.startsWith('image/') ? 'image' : 'other',
-                        filename: file.filename,
-                        originalname: file.originalname,
-                        path: file.path, // ВАЖНО: сохраняем полный путь к файлу
-                        mimetype: file.mimetype,
-                        size: file.size
-                }));
+            const scheduledImages = [];
+            const pushScheduledImage = (file, type = 'image') => {
+                scheduledImages.push({
+                    type,
+                    filename: file.filename,
+                    originalname: file.originalname,
+                    path: file.path,
+                    mimetype: file.mimetype,
+                    size: file.size,
+                });
+            };
+
+            if (mediaFiles?.videoPreview?.length) {
+                mediaFiles.videoPreview.forEach((file) => pushScheduledImage(file, 'preview'));
             }
+            if (mediaFiles?.images?.length) {
+                mediaFiles.images.forEach(pushScheduledImage);
+            }
+            newsData.mediaFiles = scheduledImages;
 
             // Обрабатываем существующие изображения (при редактировании)
             const existingMediaUrls = req.body.existingMediaUrls;
@@ -590,6 +598,15 @@ exports.createNews = async (req, res) => {
             }
         }
 
+        if (mediaFiles?.videoPreview?.length) {
+            const previewFile = mediaFiles.videoPreview[0];
+            const preview = await Media.create({
+                url: path.posix.join('uploads', 'images', previewFile.filename),
+                type: 'preview',
+            }, { transaction });
+            mediaInstances.push(preview);
+        }
+
         if (videoUrl) {
             const media = await Media.create({
                 url: videoUrl,
@@ -717,7 +734,9 @@ exports.updateNews = async (req, res) => {
         }
 
         // 6. Определяем какие изображения нужно удалить
-        const currentImageFiles = news.mediaFiles.filter(media => media.type === 'image');
+        const currentImageFiles = news.mediaFiles.filter(
+            (media) => media.type === 'image' || media.type === 'preview',
+        );
         const imagesToDelete = currentImageFiles.filter(media => !existingMediaIds.includes(media.id));
 
         // 7. Удаляем файлы из файловой системы
@@ -752,6 +771,25 @@ exports.updateNews = async (req, res) => {
 
             if (newMediaInstances.length > 0) {
                 await news.addMediaFiles(newMediaInstances, { transaction });
+            }
+        }
+
+        const previewUpload = mediaFiles?.videoPreview?.[0];
+        if (previewUpload) {
+            const previewUrl = path.posix.join('uploads', 'images', previewUpload.filename);
+            const existingPreview = news.mediaFiles.find(
+                (media) => media.type === 'preview' && existingMediaIds.includes(media.id),
+            );
+
+            if (existingPreview) {
+                await deleteMediaFile(existingPreview);
+                await existingPreview.update({ url: previewUrl }, { transaction });
+            } else {
+                const preview = await Media.create({
+                    url: previewUrl,
+                    type: 'preview',
+                }, { transaction });
+                await news.addMediaFiles([preview], { transaction });
             }
         }
 
@@ -848,9 +886,13 @@ async function handleVideoUpdate(news, videoUrl, transaction) {
 
 // 4. Функция очистки загруженных файлов при ошибке (ИСПРАВЛЕНО)
 function cleanupUploadedFiles(mediaFiles) {
-    if (!mediaFiles || !mediaFiles.images) return;
+    const files = [
+        ...(mediaFiles?.images || []),
+        ...(mediaFiles?.videoPreview || []),
+    ];
+    if (files.length === 0) return;
 
-    for (const file of mediaFiles.images) {
+    for (const file of files) {
         try {
             if (fs.existsSync(file.path)) {
                 fs.unlinkSync(file.path);
@@ -877,7 +919,7 @@ exports.cleanupOrphanedFiles = async (req, res) => {
 
         // Получаем все используемые файлы из БД
         const mediaUrls = await Media.findAll({
-            where: { type: 'image' },
+            where: { type: { [Op.in]: ['image', 'preview'] } },
             attributes: ['url']
         });
 
@@ -944,7 +986,7 @@ exports.deleteNews = async (req, res) => {
 
         try {
             for (let media of news.mediaFiles) {
-                if (media.type === 'image' || media.type === 'audio') {
+                if (media.type === 'image' || media.type === 'preview' || media.type === 'audio') {
                     const pathVariants = [
                         path.resolve(__dirname, '../../', media.url.replace(/\/+/g, path.sep)),
                         path.resolve(__dirname, '../', media.url.replace(/\/+/g, path.sep)),
@@ -1009,7 +1051,7 @@ exports.cleanupOrphanedFiles = async (req, res) => {
         const files = fs.readdirSync(uploadsDir);
 
         const mediaUrls = await Media.findAll({
-            where: { type: 'image' },
+            where: { type: { [Op.in]: ['image', 'preview'] } },
             attributes: ['url']
         });
 

@@ -5,81 +5,96 @@ import { getVideoThumbnailUrl } from '@shared/lib/getVideoThumbnailUrl/getVideoT
 import PropTypes from 'prop-types';
 import styles from './MediaElement.module.scss';
 
-export const MediaElement = ({
-                                 imageUrl = null,
-                                 videoUrl = null,
-                                 alt,
-                                 className = '',
-                                 playIconSize = 30,
-                                 showPlayIcon = true,
-                                 onError = () => {},
-                             }) => {
-    const hasVideo = useMemo(() => Boolean(videoUrl), [videoUrl]);
-    const [useHighQuality, setUseHighQuality] = useState(true);
-    const [imageLoadError, setImageLoadError] = useState(false);
+const resolveUploadedImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
 
-    const videoPosterUrl = useMemo(() => {
-        return hasVideo ? getVideoThumbnailUrl(videoUrl) : null;
-    }, [hasVideo, videoUrl]);
+    if (
+        imageUrl.startsWith('http://') ||
+        imageUrl.startsWith('https://') ||
+        imageUrl.startsWith('data:') ||
+        imageUrl.startsWith('blob:')
+    ) {
+        return imageUrl;
+    }
 
-    const processedImageUrl = useMemo(() => {
-        if (!imageUrl) return null;
+    if (imageUrl.startsWith('uploads/')) {
+        return `${window.location.origin}/${imageUrl.replace(/^\/+/, '')}`;
+    }
 
-        if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-            return imageUrl;
-        }
-
-        if (imageUrl.startsWith('uploads/')) {
-            const cleanPath = imageUrl.replace(/^\/+/, '');
-            return `${window.location.origin}/${cleanPath}`;
-        }
-
-        if (!imageUrl.startsWith('/uploads/')) {
-            return `${window.location.origin}/uploads/images/${imageUrl}`;
-        }
-
+    if (imageUrl.startsWith('/uploads/')) {
         return `${window.location.origin}${imageUrl}`;
-    }, [imageUrl]);
+    }
+
+    if (imageUrl.startsWith('/')) {
+        return imageUrl;
+    }
+
+    return `${window.location.origin}/uploads/images/${imageUrl}`;
+};
+
+export const MediaElement = ({
+    imageUrl = null,
+    videoUrl = null,
+    alt,
+    className = '',
+    playIconSize = 30,
+    showPlayIcon = true,
+    onError = () => {},
+}) => {
+    const hasVideo = Boolean(videoUrl);
+    const videoPosterUrl = useMemo(
+        () => (hasVideo ? getVideoThumbnailUrl(videoUrl) : null),
+        [hasVideo, videoUrl],
+    );
+    const processedImageUrl = useMemo(
+        () => resolveUploadedImageUrl(imageUrl),
+        [imageUrl],
+    );
+    const [stage, setStage] = useState(videoPosterUrl ? 'poster' : 'manual');
 
     useEffect(() => {
-        if (hasVideo && videoPosterUrl) {
-            const img = new Image();
-            img.src = videoPosterUrl.highQuality;
-        }
-    }, [hasVideo, videoPosterUrl]);
+        setStage(videoPosterUrl ? 'poster' : 'manual');
+    }, [videoPosterUrl, processedImageUrl]);
 
     const src = useMemo(() => {
-        if (hasVideo && videoPosterUrl) {
-            return useHighQuality ? videoPosterUrl.highQuality : videoPosterUrl.fallback;
+        if (stage === 'poster' && videoPosterUrl) {
+            return videoPosterUrl.highQuality;
         }
-        return processedImageUrl || defaultImage;
-    }, [hasVideo, videoPosterUrl, processedImageUrl, useHighQuality]);
+        if (stage === 'posterFallback' && videoPosterUrl) {
+            return videoPosterUrl.fallback;
+        }
+        if (stage === 'manual') {
+            return processedImageUrl || defaultImage;
+        }
+        return defaultImage;
+    }, [stage, videoPosterUrl, processedImageUrl]);
 
-    const handleImageError = (e) => {
-        if (hasVideo && useHighQuality) {
-            setUseHighQuality(false);
+    const handleImageError = (event) => {
+        const canTryLowerQuality =
+            stage === 'poster' &&
+            videoPosterUrl?.fallback &&
+            videoPosterUrl.fallback !== videoPosterUrl.highQuality;
+
+        if (canTryLowerQuality) {
+            setStage('posterFallback');
             return;
         }
 
-        if (!imageLoadError) {
-            setImageLoadError(true);
-
-            if (imageUrl && !imageUrl.startsWith('http')) {
-                const alternativeUrls = [
-                    `${window.location.origin}/${imageUrl}`,
-                    `${window.location.origin}/uploads/${imageUrl}`,
-                    `${window.location.origin}/uploads/images/${imageUrl.replace('uploads/images/', '')}`,
-                ];
-
-                if (alternativeUrls[0] !== e.target.src) {
-                    e.target.src = alternativeUrls[0];
-                    return;
-                }
-            }
+        if (stage !== 'manual' && stage !== 'default' && processedImageUrl) {
+            setStage('manual');
+            return;
         }
 
-        e.target.src = defaultImage;
-        onError(e);
+        if (stage !== 'default' && processedImageUrl) {
+            setStage('default');
+            return;
+        }
+
+        event.currentTarget.onerror = null;
+        if (event.currentTarget.src !== defaultImage) {
+            event.currentTarget.src = defaultImage;
+        }
+        onError(event);
     };
 
     return (
@@ -91,7 +106,7 @@ export const MediaElement = ({
                 loading="lazy"
                 onError={handleImageError}
             />
-            {hasVideo && videoPosterUrl && showPlayIcon && (
+            {hasVideo && showPlayIcon && (
                 <div className={styles.playIcon}>
                     <FaPlayCircle size={playIconSize} />
                 </div>

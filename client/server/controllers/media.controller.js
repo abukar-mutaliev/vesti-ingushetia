@@ -27,10 +27,10 @@ const getFetchHeaders = (accept) => ({
 
 const sendVideoPlaceholder = (res) => {
     res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Cache-Control', 'no-store');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    return res.status(200).send(VIDEO_PLACEHOLDER_SVG);
+    return res.status(404).send(VIDEO_PLACEHOLDER_SVG);
 };
 
 const getRutubeVideoMetadata = async (videoId) => {
@@ -45,20 +45,7 @@ const getRutubeVideoMetadata = async (videoId) => {
     return response.json();
 };
 
-const proxyRemoteImage = async (imageUrl, res) => {
-    const response = await fetch(imageUrl, {
-        headers: getFetchHeaders(
-            'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-        ),
-    });
-
-    if (!response.ok) {
-        return sendVideoPlaceholder(res);
-    }
-
-    const contentType = response.headers.get('content-type') || 'image/webp';
-    const imageBuffer = Buffer.from(await response.arrayBuffer());
-
+const sendImage = (res, contentType, imageBuffer) => {
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Length', imageBuffer.length);
     res.setHeader('Cache-Control', 'public, max-age=21600');
@@ -68,11 +55,39 @@ const proxyRemoteImage = async (imageUrl, res) => {
     return res.status(200).send(imageBuffer);
 };
 
+const proxyRemoteImage = async (imageUrl, res, cacheKey = null) => {
+    const response = await fetch(imageUrl, {
+        headers: getFetchHeaders(
+            'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        ),
+        signal: AbortSignal.timeout(8000),
+    });
+
+    if (!response.ok) {
+        return sendVideoPlaceholder(res);
+    }
+
+    const contentType = response.headers.get('content-type') || 'image/webp';
+    const imageBuffer = Buffer.from(await response.arrayBuffer());
+
+    if (cacheKey) {
+        rememberVkThumbnail(cacheKey, contentType, imageBuffer);
+    }
+
+    return sendImage(res, contentType, imageBuffer);
+};
+
+const VK_API_VERSION = '5.199';
+const VK_THUMBNAIL_TTL_MS = 6 * 60 * 60 * 1000;
+const VK_THUMBNAIL_CACHE_LIMIT = 100;
+const vkThumbnailCache = new Map();
+
 const getVkEmbedHtml = async (oid, id) => {
     const response = await fetch(
         `https://vk.com/video_ext.php?oid=${oid}&id=${id}`,
         {
             headers: getFetchHeaders('text/html,application/xhtml+xml'),
+            signal: AbortSignal.timeout(8000),
         },
     );
 
@@ -81,6 +96,86 @@ const getVkEmbedHtml = async (oid, id) => {
     }
 
     return response.text();
+};
+
+const readVkThumbnailCache = (key) => {
+    const cached = vkThumbnailCache.get(key);
+    if (!cached) {
+        return null;
+    }
+
+    if (cached.expiresAt <= Date.now()) {
+        vkThumbnailCache.delete(key);
+        return null;
+    }
+
+    return cached;
+};
+
+const rememberVkThumbnail = (key, contentType, buffer) => {
+    if (vkThumbnailCache.size >= VK_THUMBNAIL_CACHE_LIMIT) {
+        const oldestKey = vkThumbnailCache.keys().next().value;
+        vkThumbnailCache.delete(oldestKey);
+    }
+
+    vkThumbnailCache.set(key, {
+        contentType,
+        buffer,
+        expiresAt: Date.now() + VK_THUMBNAIL_TTL_MS,
+    });
+};
+
+const extractVkAnonymousToken = (html) => {
+    const match = html?.match(/"access_token"\s*:\s*"(anonym\.[^"]+)"/);
+    return match?.[1] || null;
+};
+
+const pickPreviewImageUrl = (images) => {
+    if (!Array.isArray(images)) {
+        return null;
+    }
+
+    const valid = images.filter((image) => image?.url);
+    if (valid.length === 0) {
+        return null;
+    }
+
+    const sorted = [...valid].sort((a, b) => (b.width || 0) - (a.width || 0));
+    const cardSize = sorted.find((image) => {
+        const width = image.width || 0;
+        return width >= 320 && width <= 1280;
+    });
+
+    return (cardSize || sorted[0]).url;
+};
+
+// Embed-страница больше не содержит кадр ролика. Анонимный токен с неё
+// позволяет запросить video.get и взять обложку из ответа.
+const getVkThumbnailFromApi = async (oid, id, token) => {
+    const apiUrl = new URL('https://api.vk.com/method/video.get');
+    apiUrl.searchParams.set('videos', `${oid}_${id}`);
+    apiUrl.searchParams.set('access_token', token);
+    apiUrl.searchParams.set('v', VK_API_VERSION);
+
+    const response = await fetch(apiUrl, {
+        headers: {
+            ...getFetchHeaders('application/json'),
+            Referer: 'https://vk.com/',
+        },
+        signal: AbortSignal.timeout(8000),
+    });
+
+    if (!response.ok) {
+        return null;
+    }
+
+    const data = await response.json();
+    const item = data?.response?.items?.[0];
+    if (!item) {
+        return null;
+    }
+
+    return pickPreviewImageUrl(item.image) || pickPreviewImageUrl(item.first_frame);
 };
 
 const pickLargestImageUrl = (images) => {
@@ -168,15 +263,28 @@ exports.getVkThumbnail = async (req, res) => {
         return sendVideoPlaceholder(res);
     }
 
+    const cacheKey = `${oid}_${id}`;
+    const cached = readVkThumbnailCache(cacheKey);
+    if (cached) {
+        return sendImage(res, cached.contentType, cached.buffer);
+    }
+
     try {
         const embedHtml = await getVkEmbedHtml(oid, id);
-        const thumbnailUrl = extractVkThumbnailUrl(embedHtml);
+        let thumbnailUrl = extractVkThumbnailUrl(embedHtml);
+
+        if (!thumbnailUrl) {
+            const token = extractVkAnonymousToken(embedHtml);
+            if (token) {
+                thumbnailUrl = await getVkThumbnailFromApi(oid, id, token);
+            }
+        }
 
         if (!thumbnailUrl) {
             return sendVideoPlaceholder(res);
         }
 
-        return await proxyRemoteImage(thumbnailUrl, res);
+        return await proxyRemoteImage(thumbnailUrl, res, cacheKey);
     } catch (error) {
         return sendVideoPlaceholder(res);
     }

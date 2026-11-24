@@ -12,6 +12,7 @@ import { Loader } from '@shared/ui/Loader/index.js';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
 import styles from './NewsDetail.module.scss';
 import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
+import { getNewsPreviewImage } from '@shared/lib/getNewsPreviewImage/getNewsPreviewImage.js';
 import { Helmet } from 'react-helmet-async';
 import defaultOgImage from '@assets/default.jpg';
 import {formatMoscowTime} from "@shared/lib/TimeUtils/timeUtils.js";
@@ -39,8 +40,7 @@ export const NewsDetail = memo(
 
         const imageMedia = useMemo(() => {
             return (
-                news?.mediaFiles?.find((media) => media.type === 'image') ||
-                null
+                getNewsPreviewImage(news?.mediaFiles)
             );
         }, [news?.mediaFiles]);
 

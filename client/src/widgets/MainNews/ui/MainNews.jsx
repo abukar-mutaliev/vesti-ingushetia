@@ -7,6 +7,7 @@ import defaultImage from '@assets/default.jpg';
 import styles from './MainNews.module.scss';
 import { truncateHtmlToSentences } from '@shared/lib/TruncateHtml/truncateHtml';
 import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
+import { getNewsPreviewImage } from '@shared/lib/getNewsPreviewImage/getNewsPreviewImage.js';
 import { Loader } from '@shared/ui/Loader/index.js';
 
 export const MainNews = memo(({ news, isLoading }) => {
@@ -18,10 +19,7 @@ export const MainNews = memo(({ news, isLoading }) => {
     }, [news?.mediaFiles]);
 
     const imageMedia = useMemo(() => {
-        return (
-            news?.mediaFiles?.find((media) => media.type === 'image') ||
-            null
-        );
+        return getNewsPreviewImage(news?.mediaFiles);
     }, [news?.mediaFiles]);
 
     const imageUrl = useMemo(() => {

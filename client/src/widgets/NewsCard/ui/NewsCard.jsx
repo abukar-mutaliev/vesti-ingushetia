@@ -4,6 +4,7 @@ import styles from './NewsCard.module.scss';
 import { highlightKeywordsInHtml } from '@shared/lib/highlightKeywordsInHtml/highlightKeywordsInHtml.jsx';
 import { truncateHtmlToSentences } from '@shared/lib/TruncateHtml/truncateHtml.js';
 import { MediaElement } from '@shared/ui/MediaElement/MediaElement';
+import { getNewsPreviewImage } from '@shared/lib/getNewsPreviewImage/getNewsPreviewImage.js';
 
 export const NewsCard = React.memo(
     ({ news, showDate, showContent, keywords = '' }) => {
@@ -16,7 +17,7 @@ export const NewsCard = React.memo(
         }, [news.createdAt]);
 
         const imageMedia = useMemo(() => {
-            return news.mediaFiles?.find((media) => media.type === 'image') || null;
+            return getNewsPreviewImage(news.mediaFiles);
         }, [news.mediaFiles]);
 
         const videoMedia = useMemo(() => {

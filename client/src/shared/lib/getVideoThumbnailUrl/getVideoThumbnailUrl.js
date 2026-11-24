@@ -61,8 +61,8 @@ export const getVideoThumbnailUrl = (videoUrl) => {
     const vkVideo = extractVkVideoIds(videoUrl);
     if (vkVideo) {
         return {
-            highQuality: `${apiBaseUrl}/media/video-thumbnail/vk/${vkVideo.oid}/${vkVideo.id}`,
-            fallback: `${apiBaseUrl}/media/video-thumbnail/vk/${vkVideo.oid}/${vkVideo.id}`,
+            highQuality: `${apiBaseUrl}/media/video-thumbnail/vk/${vkVideo.oid}/${vkVideo.id}?v=2`,
+            fallback: `${apiBaseUrl}/media/video-thumbnail/vk/${vkVideo.oid}/${vkVideo.id}?v=2`,
         };
     }
 

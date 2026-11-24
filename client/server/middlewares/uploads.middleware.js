@@ -102,6 +102,7 @@ const fileDestination = (req, file, cb) => {
     const destMap = {
         avatar: avatarsDir,
         images: imagesDir,
+        videoPreview: imagesDir,
     };
 
     const destination = destMap[file.fieldname];
@@ -367,12 +368,13 @@ const uploadsMiddleware = multer({
     limits: {
         fileSize: maxImageSize,
         files: 10,
-        fields: 10,
-        parts: 20
+        fields: 20,
+        parts: 40
     },
     fileFilter: advancedFileFilter,
 }).fields([
     { name: 'images', maxCount: 5 },
+    { name: 'videoPreview', maxCount: 1 },
     { name: 'avatar', maxCount: 1 },
 ]);
 

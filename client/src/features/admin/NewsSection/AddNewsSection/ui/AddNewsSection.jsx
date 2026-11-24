@@ -36,6 +36,8 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         return saved ? JSON.parse(saved).videoUrl || '' : '';
     });
+    const [videoPreview, setVideoPreview] = useState(null);
+    const [videoPreviewUrl, setVideoPreviewUrl] = useState('');
 
     const [publishDate, setPublishDate] = useState(() => {
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -203,7 +205,11 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 break;
         }
 
-        setErrors((prevErrors) => ({ ...prevErrors, [fieldName]: error }));
+        setErrors((prevErrors) => ({
+            ...prevErrors,
+            [fieldName]: error,
+            ...(fieldName === 'videoUrl' && value.trim() ? { media: '' } : {}),
+        }));
         return error === '';
     };
 
@@ -309,6 +315,10 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
 
         if (videoUrl.trim()) {
             formData.append('videoUrl', videoUrl.trim());
+        }
+
+        if (videoPreview) {
+            formData.append('videoPreview', videoPreview);
         }
 
         // Обработка времени публикации
@@ -452,6 +462,45 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
             });
     };
 
+    const clearVideoPreview = () => {
+        if (videoPreviewUrl) {
+            URL.revokeObjectURL(videoPreviewUrl);
+        }
+        setVideoPreview(null);
+        setVideoPreviewUrl('');
+        setErrors((prev) => ({ ...prev, videoPreview: '' }));
+    };
+
+    const handleVideoPreviewChange = (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+
+        const allowedTypes = ['image/jpeg', 'image/png'];
+        if (!allowedTypes.includes(file.type)) {
+            setErrors((prev) => ({
+                ...prev,
+                videoPreview: 'Превью должно быть в формате JPG или PNG.',
+            }));
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            setErrors((prev) => ({
+                ...prev,
+                videoPreview: 'Превью не должно быть больше 5MB.',
+            }));
+            return;
+        }
+
+        if (videoPreviewUrl) {
+            URL.revokeObjectURL(videoPreviewUrl);
+        }
+        setVideoPreview(file);
+        setVideoPreviewUrl(URL.createObjectURL(file));
+        setErrors((prev) => ({ ...prev, videoPreview: '' }));
+    };
+
     const handleInputChange = (field, value) => {
         switch (field) {
             case 'title':
@@ -462,6 +511,9 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 break;
             case 'videoUrl':
                 setVideoUrl(value);
+                if (!value.trim()) {
+                    clearVideoPreview();
+                }
                 break;
             case 'publishDate':
                 setPublishDate(value);
@@ -710,6 +762,45 @@ export const AddNewsSection = ({ onSave, onCancel }) => {
                 />
                 {errors.videoUrl && (
                     <p className={styles.error}>{errors.videoUrl}</p>
+                )}
+
+                {videoUrl.trim() && (
+                    <div>
+                        <label>Превью видео</label>
+                        <input
+                            type="file"
+                            accept="image/jpeg,image/png"
+                            onChange={handleVideoPreviewChange}
+                            className={styles.fileInput}
+                        />
+                        {videoPreviewUrl && (
+                            <div className={styles.mediaPreview}>
+                                <div className={styles.previewItem}>
+                                    <div className={styles.previewActions}>
+                                        <button
+                                            type="button"
+                                            className={styles.removeButton}
+                                            onClick={clearVideoPreview}
+                                            title="Удалить превью"
+                                        >
+                                            <FaDeleteLeft />
+                                        </button>
+                                    </div>
+                                    <img
+                                        src={videoPreviewUrl}
+                                        alt="Превью видео"
+                                        className={styles.imagePreview}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        <p className={styles.fileInfo}>
+                            Необязательно. Это изображение появится в карточке, если кадр из видео не загрузится. JPG или PNG, до 5MB.
+                        </p>
+                        {errors.videoPreview && (
+                            <p className={styles.error}>{errors.videoPreview}</p>
+                        )}
+                    </div>
                 )}
 
                 <label>Дата публикации (опционально)</label>

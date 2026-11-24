@@ -19,6 +19,8 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
     const [editMedia, setEditMedia] = useState([]);
     const [newMedia, setNewMedia] = useState([]);
     const [videoUrl, setVideoUrl] = useState('');
+    const [videoPreview, setVideoPreview] = useState(null);
+    const [videoPreviewUrl, setVideoPreviewUrl] = useState('');
     const [publishDate, setPublishDate] = useState('');
     const [isElections, setIsElections] = useState(false);
     const [errors, setErrors] = useState({});
@@ -67,10 +69,8 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
         const hasExistingMedia = editMedia.length > 0;
         const hasNewMedia = newMedia.length > 0;
         const hasVideoUrl = videoUrl.trim() !== '';
-        const isVideoUrlValid = videoUrl ? videoUrlRegex.test(videoUrl) : false;
 
-        const isMediaValid =
-            hasExistingMedia || hasNewMedia || (hasVideoUrl && isVideoUrlValid);
+        const isMediaValid = hasExistingMedia || hasNewMedia || hasVideoUrl;
 
         if (!isMediaValid) {
             setErrors((prevErrors) => ({
@@ -83,7 +83,7 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
                 media: undefined,
             }));
         }
-    }, [editMedia, newMedia, videoUrl, videoUrlRegex]);
+    }, [editMedia, newMedia, videoUrl]);
 
     const validateField = (fieldName, value) => {
         let error = '';
@@ -134,9 +134,7 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
         const hasNewMedia = newMedia.length > 0;
         const hasVideoUrl = videoUrl.trim() !== '';
 
-        // Обновлено: учитываем валидность videoUrl
-        const isMediaValid =
-            hasExistingMedia || hasNewMedia || (hasVideoUrl && isVideoUrlValid);
+        const isMediaValid = hasExistingMedia || hasNewMedia || hasVideoUrl;
 
         if (!isMediaValid) {
             setErrors((prevErrors) => ({
@@ -159,6 +157,45 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
         );
     };
 
+    const clearVideoPreview = () => {
+        if (videoPreviewUrl) {
+            URL.revokeObjectURL(videoPreviewUrl);
+        }
+        setVideoPreview(null);
+        setVideoPreviewUrl('');
+        setErrors((prev) => ({ ...prev, videoPreview: undefined }));
+    };
+
+    const handleVideoPreviewChange = (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+
+        const allowedTypes = ['image/jpeg', 'image/png'];
+        if (!allowedTypes.includes(file.type)) {
+            setErrors((prev) => ({
+                ...prev,
+                videoPreview: 'Превью должно быть в формате JPG или PNG.',
+            }));
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            setErrors((prev) => ({
+                ...prev,
+                videoPreview: 'Превью не должно быть больше 5MB.',
+            }));
+            return;
+        }
+
+        if (videoPreviewUrl) {
+            URL.revokeObjectURL(videoPreviewUrl);
+        }
+        setVideoPreview(file);
+        setVideoPreviewUrl(URL.createObjectURL(file));
+        setErrors((prev) => ({ ...prev, videoPreview: undefined }));
+    };
+
     const handleInputChange = (field, value) => {
         switch (field) {
             case 'title':
@@ -169,6 +206,9 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
                 break;
             case 'videoUrl':
                 setVideoUrl(value);
+                if (!value.trim()) {
+                    clearVideoPreview();
+                }
                 break;
             case 'publishDate':
                 setPublishDate(value);
@@ -201,6 +241,7 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
         formData.append('isElections', isElections ? 'true' : 'false');
 
         if (videoUrl.trim()) formData.append('videoUrl', videoUrl.trim());
+        if (videoPreview) formData.append('videoPreview', videoPreview);
 
         // ИСПРАВЛЕНО: правильно обрабатываем время публикации
         if (publishDate) {
@@ -363,6 +404,55 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
                     <p className={styles.error}>{errors.videoUrl}</p>
                 )}
 
+                {videoUrl.trim() && (
+                    <div>
+                        <label>Превью видео</label>
+                        {editMedia
+                            .filter((media) => media.type === 'preview')
+                            .map((media) => (
+                                <div key={media.id} className={styles.mediaItem}>
+                                    <img
+                                        className={styles.media}
+                                        src={media.url}
+                                        alt="Текущее превью"
+                                    />
+                                    <button
+                                        type="button"
+                                        className={styles.deleteButton}
+                                        onClick={() =>
+                                            handleDeleteMedia(
+                                                editMedia.findIndex(
+                                                    (item) => item.id === media.id,
+                                                ),
+                                            )
+                                        }
+                                    >
+                                        <FaDeleteLeft size={20} />
+                                    </button>
+                                </div>
+                            ))}
+                        <input
+                            type="file"
+                            accept="image/jpeg,image/png"
+                            onChange={handleVideoPreviewChange}
+                            className={styles.fileInput}
+                        />
+                        {videoPreviewUrl && (
+                            <img
+                                src={videoPreviewUrl}
+                                alt="Новое превью"
+                                className={styles.media}
+                            />
+                        )}
+                        <p className={styles.mediaPreview}>
+                            Необязательно. Это изображение появится в карточке, если кадр из видео не загрузится.
+                        </p>
+                        {errors.videoPreview && (
+                            <p className={styles.error}>{errors.videoPreview}</p>
+                        )}
+                    </div>
+                )}
+
                 <label>Дата публикации (московское время, опционально)</label>
                 <input
                     type="datetime-local"
@@ -378,8 +468,9 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
                 )}
 
                 <label>Изображения</label>
-                {editMedia.length > 0 ? (
+                {editMedia.some((media) => media.type === 'image' || media.type?.startsWith('image')) ? (
                     editMedia.map((media, index) => (
+                        media.type === 'preview' ? null : (
                         <div key={index} className={styles.mediaItem}>
                             {media.type === 'image' ||
                             media.type.startsWith('image') ? (
@@ -396,6 +487,7 @@ export const EditNewsSection = ({ news, onCancel, embedded = false }) => {
                                 <FaDeleteLeft size={20} />
                             </button>
                         </div>
+                        )
                     ))
                 ) : (
                     <p>Нет загруженных изображений</p>

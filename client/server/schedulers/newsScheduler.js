@@ -144,7 +144,7 @@ class NewsScheduler {
 
                 for (const [index, mediaFile] of newsData.mediaFiles.entries()) {
                     try {
-                        if (mediaFile.type === 'image') {
+                        if (mediaFile.type === 'image' || mediaFile.type === 'preview') {
                             console.log(`📷 Обрабатываем изображение ${index + 1}:`, {
                                 filename: mediaFile.filename,
                                 originalName: mediaFile.originalName,
@@ -380,7 +380,7 @@ class NewsScheduler {
                             if (finalImageUrl) {
                                 const imageMedia = await Media.create({
                                     url: finalImageUrl,
-                                    type: 'image'
+                                    type: mediaFile.type === 'preview' ? 'preview' : 'image',
                                 }, { transaction });
 
                                 mediaInstances.push(imageMedia);
@@ -477,7 +477,7 @@ class NewsScheduler {
                             path: file.path
                         });
 
-                        if (file.type === 'image') {
+                        if (file.type === 'image' || file.type === 'preview') {
                             const timestamp = Date.now();
                             const randomSuffix = Math.round(Math.random() * 1E9);
                             const originalExt = path.extname(file.originalname || file.filename || '');
@@ -508,7 +508,7 @@ class NewsScheduler {
                                     console.log(`   ✅ Файл скопирован во временную папку: ${tempPath}`);
 
                                     return {
-                                        type: 'image',
+                                        type: file.type === 'preview' ? 'preview' : 'image',
                                         filename: tempFilename, // Новое имя во временной папке
                                         originalName: file.originalname || file.filename,
                                         path: tempPath, // Путь к временному файлу
@@ -532,7 +532,7 @@ class NewsScheduler {
                                         console.log(`   ✅ Создан fallback файл: ${fallbackPath}`);
 
                                         return {
-                                            type: 'image',
+                                            type: file.type === 'preview' ? 'preview' : 'image',
                                             filename: fallbackFilename,
                                             originalName: file.originalname || file.filename,
                                             url: `uploads/images/${fallbackFilename}`,
@@ -543,7 +543,7 @@ class NewsScheduler {
                                         
                                         // Последний fallback - просто сохраняем информацию
                                         return {
-                                            type: 'image',
+                                            type: file.type === 'preview' ? 'preview' : 'image',
                                             filename: file.filename,
                                             originalName: file.originalname,
                                             url: `uploads/images/${file.filename}`,
@@ -557,7 +557,7 @@ class NewsScheduler {
 
                                 // Создаем placeholder запись
                                 return {
-                                    type: 'image',
+                                    type: file.type === 'preview' ? 'preview' : 'image',
                                     filename: file.filename || tempFilename,
                                     originalName: file.originalname || 'unknown',
                                     placeholder: true,
@@ -676,7 +676,7 @@ class NewsScheduler {
             const files = fs.readdirSync(uploadsDir);
 
             const mediaUrls = await Media.findAll({
-                where: { type: 'image' },
+                where: { type: ['image', 'preview'] },
                 attributes: ['url']
             });
 

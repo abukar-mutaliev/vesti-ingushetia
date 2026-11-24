@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import styles from './NewsCard.module.scss';
 import { truncateHtmlToSentences } from '@shared/lib/TruncateHtml/truncateHtml.js';
 import { MediaElement } from '@shared/ui/MediaElement/MediaElement';
+import { getNewsPreviewImage } from '@shared/lib/getNewsPreviewImage/getNewsPreviewImage.js';
 import { FaPlayCircle } from 'react-icons/fa';
 
 export const NewsCardSidebar = React.memo(({ item }) => {
@@ -11,7 +12,7 @@ export const NewsCardSidebar = React.memo(({ item }) => {
     }, [item.mediaFiles]);
 
     const imageMedia = useMemo(() => {
-        return item.mediaFiles?.find((media) => media.type === 'image') || null;
+        return getNewsPreviewImage(item.mediaFiles);
     }, [item.mediaFiles]);
 
     const mediaElement = useMemo(() => (

@@ -12,6 +12,7 @@ import styles from './VideoSlider.module.scss';
 import { Loader } from '@shared/ui/Loader/index.js';
 import { Link } from 'react-router-dom';
 import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
+import { getNewsPreviewImage } from '@shared/lib/getNewsPreviewImage/getNewsPreviewImage.js';
 
 const sliderSettings = {
     className: 'center',
@@ -72,9 +73,7 @@ export const VideoSlider = () => {
             const video = news.mediaFiles.find(
                 (media) => media.type === 'video',
             );
-            const image = news.mediaFiles.find(
-                (media) => media.type === 'image',
-            );
+            const image = getNewsPreviewImage(news.mediaFiles);
 
             const videoUrl = video?.url || null;
 
