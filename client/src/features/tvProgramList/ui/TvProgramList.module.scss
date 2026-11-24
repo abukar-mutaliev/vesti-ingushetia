@@ -1,8 +1,15 @@
 .tvProgramList {
+    flex: 1;
+    min-width: 0;
     max-width: 800px;
-    margin: 8% auto;
+    width: 100%;
+    margin: 120px auto 0;
     padding: 20px;
     font-family: Arial, sans-serif;
+
+    @media (max-width: 768px) {
+        margin-top: 24px;
+    }
 
     .programSection {
         margin-bottom: 20px;
