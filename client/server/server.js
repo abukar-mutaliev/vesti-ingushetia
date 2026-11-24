@@ -3,7 +3,7 @@ require('dotenv').config();
 process.env.TZ = 'Europe/Moscow';
 
 const helmet = require('helmet');
-const http = require('https');
+const http = require('http');
 const logger = require('./logger');
 const express = require('express');
 const cookieParser = require('cookie-parser');
@@ -19,16 +19,6 @@ const fs = require('fs');
 const { ensureElectionsSchema } = require('./utils/ensureElectionsSchema');
 const { ensureNewsCategorySchema } = require('./utils/ensureNewsCategorySchema');
 
-const privateKey = fs.readFileSync(path.join(__dirname, 'cf', 'private-key.pem'), 'utf8');
-const certificate = fs.readFileSync(path.join(__dirname, 'cf', 'certificate.pem'), 'utf8');
-const ca = fs.readFileSync(path.join(__dirname, 'cf', 'csr.pem'), 'utf8');
-
-const credentials = {
-    key: privateKey,
-    cert: certificate,
-    ca: ca,
-};
-
 const uploadDir = process.env.UPLOAD_DIR || path.resolve(__dirname, '../uploads');
 
 const allowedOrigins = process.env.CORS_ORIGIN.split(',');
@@ -42,7 +32,22 @@ const publicDir = path.join(__dirname, '../public');
 
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
+
+const videoEmbedSources = [
+    'https://www.youtube.com',
+    'https://www.youtu.be',
+    'https://www.youtube-nocookie.com',
+    'https://img.youtube.com',
+    'https://rutube.ru',
+    'https://player.smotrim.ru',
+    'https://embed.smotrim.ru',
+    'https://vk.com',
+    'https://vk.ru',
+    'https://vkvideo.ru',
+    'https://m.vk.com',
+];
 
 // Импорт утилиты для проверки IP-адресов роботов Яндекса
 // Добавлены новые IP-адреса и подсети роботов Яндекса для вайтлиста
@@ -171,59 +176,29 @@ app.use(
         crossOriginResourcePolicy: { policy: 'cross-origin' },
         contentSecurityPolicy: {
             directives: {
-                defaultSrc: ["'self'", 'https://ingushetiatv.ru', 'https://player.smotrim.ru', 'https://yastatic.net', process.env.BASE_URL],
-                connectSrc: ["'self'", 'https://ingushetiatv.ru', 'https://player.smotrim.ru', 'https://yastatic.net', process.env.BASE_URL],
-                imgSrc: ["'self'", 'data:', 'blob:', 'https://ingushetiatv.ru', 'https://player.smotrim.ru', 'https://yastatic.net', 'https://rutube.ru', process.env.BASE_URL],
-                mediaSrc: ["'self'", 'https://ingushetiatv.ru', 'https://player.smotrim.ru', 'https://yastatic.net', process.env.BASE_URL],
+                defaultSrc: ["'self'", 'https://ingushetiatv.ru', 'https://yastatic.net', process.env.BASE_URL, ...videoEmbedSources],
+                connectSrc: ["'self'", 'https://ingushetiatv.ru', 'https://yastatic.net', process.env.BASE_URL, ...videoEmbedSources],
+                imgSrc: ["'self'", 'data:', 'blob:', 'https://ingushetiatv.ru', 'https://yastatic.net', process.env.BASE_URL, ...videoEmbedSources],
+                mediaSrc: ["'self'", 'https://ingushetiatv.ru', 'https://yastatic.net', process.env.BASE_URL, ...videoEmbedSources],
                 scriptSrc: [
                     "'self'",
                     "'unsafe-inline'",
                     'https://ingushetiatv.ru',
-                    'https://player.smotrim.ru',
                     'https://yastatic.net',
                     process.env.BASE_URL,
+                    ...videoEmbedSources,
                 ],
                 styleSrc: [
                     "'self'",
                     "'unsafe-inline'",
                     'https://ingushetiatv.ru',
-                    'https://player.smotrim.ru',
                     'https://yastatic.net',
                     process.env.BASE_URL,
+                    ...videoEmbedSources,
                 ],
-                fontSrc: ["'self'", 'https://ingushetiatv.ru', 'https://player.smotrim.ru', 'https://yastatic.net', 'data:', process.env.BASE_URL],
-                childSrc: [
-                    "'self'",
-                    'blob:',
-                    'https://www.youtube.com',
-                    'https://www.youtu.be',
-                    'https://www.youtube-nocookie.com',
-                    'https://rutube.ru',
-                    'https://rutube.ru/play/embed',
-                    'https://player.smotrim.ru',
-                    'https://embed.smotrim.ru',
-                    'https://vk.com',
-                    'https://vk.ru',
-                    'https://vkvideo.ru',
-                    'https://m.vk.com',
-                    process.env.BASE_URL,
-                ],
-                frameSrc: [
-                    "'self'",
-                    'blob:',
-                    'https://www.youtube.com',
-                    'https://www.youtu.be',
-                    'https://www.youtube-nocookie.com',
-                    'https://rutube.ru',
-                    'https://rutube.ru/play/embed',
-                    'https://player.smotrim.ru',
-                    'https://embed.smotrim.ru',
-                    'https://vk.com',
-                    'https://vk.ru',
-                    'https://vkvideo.ru',
-                    'https://m.vk.com',
-                    process.env.BASE_URL,
-                ],
+                fontSrc: ["'self'", 'https://ingushetiatv.ru', 'https://yastatic.net', 'data:', process.env.BASE_URL, ...videoEmbedSources],
+                childSrc: ["'self'", 'blob:', process.env.BASE_URL, ...videoEmbedSources],
+                frameSrc: ["'self'", 'blob:', process.env.BASE_URL, ...videoEmbedSources],
                 objectSrc: ["'none'"],
             },
         },
@@ -787,8 +762,8 @@ const startServer = async (retryCount = 0) => {
         logger.info(`[${moscowTime}] Все модели были синхронизированы с базой данных.`);
 
         // Запускаем сервер
-        http.createServer(credentials, app).listen(PORT, () => {
-            logger.info(`[${moscowTime}] HTTPS сервер запущен на порту ${PORT}`);
+        http.createServer(app).listen(PORT, () => {
+            logger.info(`[${moscowTime}] HTTP сервер запущен на порту ${PORT}`);
             logger.info(`🌐 Базовый URL: ${process.env.BASE_URL}`);
             logger.info(`🔗 CORS разрешен для: ${allowedOrigins.join(', ')}`);
             logger.info(`📊 Режим: ${process.env.NODE_ENV}`);
