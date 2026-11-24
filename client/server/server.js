@@ -4,6 +4,7 @@ process.env.TZ = 'Europe/Moscow';
 
 const helmet = require('helmet');
 const http = require('http');
+const https = require('https');
 const logger = require('./logger');
 const express = require('express');
 const cookieParser = require('cookie-parser');
@@ -18,6 +19,15 @@ const botHandler = require('./middlewares/botHandler.middleware');
 const fs = require('fs');
 const { ensureElectionsSchema } = require('./utils/ensureElectionsSchema');
 const { ensureNewsCategorySchema } = require('./utils/ensureNewsCategorySchema');
+
+const useHttps = process.env.NODE_ENV !== 'production';
+const credentials = useHttps
+    ? {
+        key: fs.readFileSync(path.join(__dirname, 'cf', 'private-key.pem'), 'utf8'),
+        cert: fs.readFileSync(path.join(__dirname, 'cf', 'certificate.pem'), 'utf8'),
+        ca: fs.readFileSync(path.join(__dirname, 'cf', 'csr.pem'), 'utf8'),
+    }
+    : null;
 
 const uploadDir = process.env.UPLOAD_DIR || path.resolve(__dirname, '../uploads');
 
@@ -169,45 +179,44 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-app.use(
-    helmet({
-        crossOriginEmbedderPolicy: false,
-        crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
-        crossOriginResourcePolicy: { policy: 'cross-origin' },
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'", 'https://ingushetiatv.ru', 'https://yastatic.net', process.env.BASE_URL, ...videoEmbedSources],
-                connectSrc: ["'self'", 'https://ingushetiatv.ru', 'https://yastatic.net', process.env.BASE_URL, ...videoEmbedSources],
-                imgSrc: ["'self'", 'data:', 'blob:', 'https://ingushetiatv.ru', 'https://yastatic.net', process.env.BASE_URL, ...videoEmbedSources],
-                mediaSrc: ["'self'", 'https://ingushetiatv.ru', 'https://yastatic.net', process.env.BASE_URL, ...videoEmbedSources],
-                scriptSrc: [
-                    "'self'",
-                    "'unsafe-inline'",
-                    'https://ingushetiatv.ru',
-                    'https://yastatic.net',
-                    process.env.BASE_URL,
-                    ...videoEmbedSources,
-                ],
-                styleSrc: [
-                    "'self'",
-                    "'unsafe-inline'",
-                    'https://ingushetiatv.ru',
-                    'https://yastatic.net',
-                    process.env.BASE_URL,
-                    ...videoEmbedSources,
-                ],
-                fontSrc: ["'self'", 'https://ingushetiatv.ru', 'https://yastatic.net', 'data:', process.env.BASE_URL, ...videoEmbedSources],
-                childSrc: ["'self'", 'blob:', process.env.BASE_URL, ...videoEmbedSources],
-                frameSrc: ["'self'", 'blob:', process.env.BASE_URL, ...videoEmbedSources],
-                objectSrc: ["'none'"],
-            },
+const pageHelmet = helmet({
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'", 'https://ingushetiatv.ru', 'https://yastatic.net', process.env.BASE_URL],
+            connectSrc: ["'self'", 'https://ingushetiatv.ru', 'https://yastatic.net', process.env.BASE_URL],
+            imgSrc: ["'self'", 'data:', 'blob:', 'https://ingushetiatv.ru', 'https://yastatic.net', 'https://img.youtube.com', process.env.BASE_URL],
+            mediaSrc: ["'self'", 'https://ingushetiatv.ru', process.env.BASE_URL],
+            scriptSrc: ["'self'", "'unsafe-inline'", 'https://ingushetiatv.ru', 'https://yastatic.net', process.env.BASE_URL],
+            styleSrc: ["'self'", "'unsafe-inline'", 'https://ingushetiatv.ru', 'https://yastatic.net', process.env.BASE_URL],
+            fontSrc: ["'self'", 'https://ingushetiatv.ru', 'https://yastatic.net', 'data:', process.env.BASE_URL],
+            childSrc: ["'self'", 'blob:', process.env.BASE_URL, ...videoEmbedSources],
+            frameSrc: ["'self'", 'blob:', process.env.BASE_URL, ...videoEmbedSources],
+            objectSrc: ["'none'"],
         },
-        referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-        featurePolicy: {
-            geolocation: ["'none'"],
-        },
-    }),
-);
+    },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    featurePolicy: {
+        geolocation: ["'none'"],
+    },
+});
+
+const apiHelmet = helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+});
+
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) {
+        return apiHelmet(req, res, next);
+    }
+    return pageHelmet(req, res, next);
+});
 
 const limiter = rateLimit({
     windowMs: 10 * 60 * 1000, // Уменьшил до 10 минут
@@ -762,8 +771,9 @@ const startServer = async (retryCount = 0) => {
         logger.info(`[${moscowTime}] Все модели были синхронизированы с базой данных.`);
 
         // Запускаем сервер
-        http.createServer(app).listen(PORT, () => {
-            logger.info(`[${moscowTime}] HTTP сервер запущен на порту ${PORT}`);
+        const server = useHttps ? https.createServer(credentials, app) : http.createServer(app);
+        server.listen(PORT, () => {
+            logger.info(`[${moscowTime}] ${useHttps ? 'HTTPS' : 'HTTP'} сервер запущен на порту ${PORT}`);
             logger.info(`🌐 Базовый URL: ${process.env.BASE_URL}`);
             logger.info(`🔗 CORS разрешен для: ${allowedOrigins.join(', ')}`);
             logger.info(`📊 Режим: ${process.env.NODE_ENV}`);
