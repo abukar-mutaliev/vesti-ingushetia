@@ -443,7 +443,8 @@ exports.createNews = async (req, res) => {
                 mediaFiles.videoPreview.forEach((file) => pushScheduledImage(file, 'preview'));
             }
             if (mediaFiles?.images?.length) {
-                mediaFiles.images.forEach(pushScheduledImage);
+                // Не передавать callback напрямую в forEach: вторым аргументом придёт индекс, и type станет 0
+                mediaFiles.images.forEach((file) => pushScheduledImage(file, 'image'));
             }
             newsData.mediaFiles = scheduledImages;
 
