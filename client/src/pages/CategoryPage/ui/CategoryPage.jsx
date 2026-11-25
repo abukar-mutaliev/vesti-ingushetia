@@ -16,14 +16,11 @@ import {
 import { fetchAllNews } from '@entities/news/model/newsSlice.js';
 import ReactPaginate from 'react-paginate';
 import { SideMenu } from '@widgets/SideMenu/index.js';
-import { FaTimes } from 'react-icons/fa';
-import { SlArrowRight } from 'react-icons/sl';
 import { Loader } from '@shared/ui/Loader/index.js';
 
 const CategoryPage = () => {
     const { categoryId } = useParams();
     const dispatch = useDispatch();
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const newsByCategory = useSelector(
         (state) => selectNewsByCategory(state, categoryId),
@@ -67,14 +64,6 @@ const CategoryPage = () => {
         dispatch(fetchCategories());
     }, [dispatch]);
 
-    const toggleMenu = () => {
-        setIsMenuOpen(!isMenuOpen);
-    };
-
-    const closeMenu = () => {
-        setIsMenuOpen(false);
-    };
-
     const isLoading = loading || !categories || !newsList;
 
     const noNewsMessage = !isLoading && newsByCategory.length === 0;
@@ -85,22 +74,8 @@ const CategoryPage = () => {
 
     return (
         <div className={styles.categoryPage}>
-            {isMenuOpen && (
-                <div className={styles.backdrop} onClick={closeMenu}></div>
-            )}
-
-            <div
-                className={`${styles.sideMenu} ${isMenuOpen ? styles.open : ''}`}
-            >
-                <button className={styles.closeButton} onClick={closeMenu}>
-                    <FaTimes size={20} />
-                </button>
-                <SideMenu onCategoryClick={closeMenu} />
-            </div>
+            <SideMenu />
             <div className={styles.content}>
-                <div className={styles.mobileMenuIcon}>
-                    <SlArrowRight size={20} onClick={toggleMenu} />
-                </div>
                 <h1>
                     {currentCategory
                         ? currentCategory.name

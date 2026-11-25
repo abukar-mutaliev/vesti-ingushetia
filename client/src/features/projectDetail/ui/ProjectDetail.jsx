@@ -103,10 +103,6 @@ export const ProjectDetail = ({ project }) => {
         return getVideoEmbedUrl(firstVideo?.url);
     }, [firstVideo]);
 
-    const isExternalVideo = useMemo(() => {
-        return embedUrl !== null;
-    }, [embedUrl]);
-
     const otherMediaImages = useMemo(() => {
         return otherMediaFiles?.filter((media) => media.type === 'image') || [];
     }, [otherMediaFiles]);
@@ -115,25 +111,41 @@ export const ProjectDetail = ({ project }) => {
         return otherMediaFiles?.filter((media) => media.type === 'video') || [];
     }, [otherMediaFiles]);
 
+    const formattedDate = useMemo(() => {
+        return new Date(createdAt).toLocaleDateString('ru-RU', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        });
+    }, [createdAt]);
+
     return (
-        <div className={styles.projectDetail}>
+        <article className={styles.projectDetail}>
+            <span className={styles.eyebrow}>Проект</span>
+
             <h1 className={styles.title}>{title}</h1>
 
             <div className={styles.meta}>
-                <span>
-                    <Link to={`/category/${categoryId}`}>{categoryName}</Link>
-                </span>
-                <span>
-                    {new Date(createdAt).toLocaleDateString('ru-RU', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                    })}
-                </span>
+                {categoryName && (
+                    <>
+                        {categoryId ? (
+                            <Link
+                                to={`/categories/${categoryId}`}
+                                className={styles.categoryChip}
+                            >
+                                {categoryName}
+                            </Link>
+                        ) : (
+                            <span className={styles.categoryChip}>{categoryName}</span>
+                        )}
+                        <span className={styles.metaDivider} aria-hidden="true" />
+                    </>
+                )}
+                <span className={styles.metaItem}>{formattedDate}</span>
             </div>
 
-            <div className={styles.mediaSection}>
-                {firstImage && (
+            {firstImage && (
+                <div className={styles.mediaSection}>
                     <div className={styles.imageWrapper}>
                         <img
                             src={firstImage.url}
@@ -143,8 +155,24 @@ export const ProjectDetail = ({ project }) => {
                             onError={(e) => (e.target.src = defaultImage)}
                         />
                     </div>
-                )}
-            </div>
+                </div>
+            )}
+
+            {embedUrl && (
+                <div className={styles.mediaSection}>
+                    <div className={styles.videoWrapper}>
+                        <iframe
+                            width="100%"
+                            height="100%"
+                            src={embedUrl}
+                            className={styles.projectVideo}
+                            frameBorder="0"
+                            allowFullScreen
+                            title="Видео проекта"
+                        ></iframe>
+                    </div>
+                </div>
+            )}
 
             <div className={styles.projectContentWrapper}>
                 <SocialIcons />
@@ -178,8 +206,8 @@ export const ProjectDetail = ({ project }) => {
                     {otherMediaVideos.length > 0 && (
                         <div className={styles.otherMediaWrapper}>
                             {otherMediaVideos.map((media) => {
-                                const embedUrl = getVideoEmbedUrl(media.url);
-                                const isExternal = embedUrl !== null;
+                                const videoEmbedUrl = getVideoEmbedUrl(media.url);
+                                const isExternal = videoEmbedUrl !== null;
 
                                 return isExternal ? (
                                     <div
@@ -189,7 +217,7 @@ export const ProjectDetail = ({ project }) => {
                                         <iframe
                                             width="100%"
                                             height="100%"
-                                            src={embedUrl}
+                                            src={videoEmbedUrl}
                                             className={styles.projectVideo}
                                             frameBorder="0"
                                             allowFullScreen
@@ -209,6 +237,6 @@ export const ProjectDetail = ({ project }) => {
                     )}
                 </div>
             </div>
-        </div>
+        </article>
     );
 };

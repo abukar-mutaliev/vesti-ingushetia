@@ -16,6 +16,7 @@ import { Loader } from '@shared/ui/Loader';
 import { Link, useNavigate } from 'react-router-dom';
 import Modal from 'react-modal';
 import { ProfileCard } from '@features/userProfile/components/ProfileCard.jsx';
+import { AccountPanel, SiteLinks } from '@features/userProfile/components/ProfilePanels.jsx';
 import { RepliesList } from '@features/userProfile/components/RepliesList.jsx';
 import { AvatarModal } from '@features/userProfile/components/AvatarModal.jsx';
 import { EditProfileModal } from '@features/userProfile/components/EditProfileModal.jsx';
@@ -101,20 +102,27 @@ export const UserProfile = () => {
     };
 
     return (
-        <div className={styles.profileContainer}>
+        <div className={styles.page}>
             {user && (
                 <>
-                    <ProfileCard
-                        user={user}
-                        isAdmin={isAdmin}
-                        handleAdminPanel={handleAdminPanel}
-                        handleLogout={handleLogout}
-                        handleAvatarClick={handleAvatarClick}
-                        handleUploadClick={handleUploadClick}
-                        fileInputRef={fileInputRef}
-                        handleAvatarChange={handleAvatarChange}
-                        handleEditProfile={handleEditProfile}
-                    />
+                    <div className={styles.layout}>
+                        <ProfileCard
+                            user={user}
+                            isAdmin={isAdmin}
+                            repliesCount={replies?.length || 0}
+                            handleAdminPanel={handleAdminPanel}
+                            handleLogout={handleLogout}
+                            handleAvatarClick={handleAvatarClick}
+                            handleUploadClick={handleUploadClick}
+                            fileInputRef={fileInputRef}
+                            handleAvatarChange={handleAvatarChange}
+                            handleEditProfile={handleEditProfile}
+                        />
+                        <div className={styles.sideColumn}>
+                            <AccountPanel user={user} isAdmin={isAdmin} />
+                            <SiteLinks />
+                        </div>
+                    </div>
                     <RepliesList replies={replies} />
                     <AvatarModal
                         isModalOpen={isModalOpen}

@@ -1,148 +1,77 @@
 .TvProgramsPage {
+    background: transparent;
+    margin: 0 auto;
     display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 28px;
     width: 100%;
+    max-width: 90rem;
+    padding: 96px 16px 48px;
+    box-sizing: border-box;
+    animation: pageIn 0.45s ease-out;
+
+    @media (max-width: 1244px) {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    @media (max-width: 860px) {
+        padding-top: 72px;
+        gap: 16px;
+    }
+
     @media (max-width: 768px) {
-        margin-top: 12%;
+        padding: 72px 12px 36px;
     }
+}
 
-    .mobileMenuIcon {
-        position: absolute;
-        display: none;
-        cursor: pointer;
-        left: 0;
-        color: $primary-color;
-        border-radius: 0 15px 15px 0;
-
-        @media screen and (max-width: 1320px) {
-            top: 120px;
-            display: flex;
-            box-sizing: border-box;
-            background-color: #5db1ff;
-            color: white;
-            padding: 10px;
-        }
-
-        @media (max-width: 768px) {
-            display: flex;
-            box-sizing: border-box;
-            top: 60px;
-            background-color: #5db1ff;
-            color: white;
-            padding: 10px;
-        }
+@keyframes pageIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
     }
-
-    .sideMenu {
-        display: block;
-        transition: transform 0.3s ease-in-out;
-        border: none;
-        height: auto;
-        width: 360px;
-        background-color: #2376d1;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        margin-top: 5%;
-        padding-top: 18px;
-        @media screen and (max-width: 1320px) {
-            position: absolute;
-            top: 40px;
-            left: 0;
-            width: 250px;
-            height: 100%;
-
-            transform: translateX(-100%);
-            z-index: 500;
-            overflow-y: auto;
-        }
-        @media screen and (max-width: 1052px) {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 250px;
-            height: 100%;
-            transform: translateX(-100%);
-            z-index: 1000;
-            overflow-y: auto;
-        }
-
-        &.open {
-            transform: translateX(0);
-            -webkit-box-shadow: 7px 0px 5px -5px rgba(34, 60, 80, 0.6);
-            -moz-box-shadow: 7px 0px 5px -5px rgba(34, 60, 80, 0.6);
-            box-shadow: 7px 0px 5px -5px rgba(34, 60, 80, 0.6);
-        }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
+}
 
-    .closeButton {
-        display: none;
+.content {
+    display: flex;
+    flex: 1;
+    gap: 28px;
+    width: 100%;
+    align-items: flex-start;
+    justify-content: center;
+    min-width: 0;
 
-        @media (max-width: 768px) {
-            display: block;
-            background: none;
-            border: none;
-            cursor: pointer;
-            position: absolute;
-            top: 35px;
-            right: 10px;
-            font-size: 20px;
-            color: $primary-color;
-            transition:
-                0.3s ease,
-                transform,
-                0.3s ease;
-            &:hover {
-                color: $primary-color-hover;
-                transition:
-                    0.3s ease,
-                    transform,
-                    0.3s ease;
-            }
-        }
+    @media (max-width: 1100px) {
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
     }
+}
 
-    .backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
+.programColumn {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    min-width: 0;
+    width: 100%;
+}
+
+.sidebarWrapper {
+    width: 20rem;
+    flex-shrink: 0;
+    align-self: flex-start;
+
+    @media (max-width: 1100px) {
         width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 500;
+        max-width: 25rem;
     }
 
-    .content {
-        display: flex;
-        flex: 1;
-        gap: 20px;
-        width: 100%;
-        align-items: flex-start;
-        justify-content: center;
-        min-width: 0;
-        padding: 0 16px 40px;
-        box-sizing: border-box;
-
-        @media (max-width: 1100px) {
-            flex-direction: column;
-            align-items: center;
-        }
-    }
-
-    .programColumn {
-        flex: 1;
-        display: flex;
-        justify-content: center;
-        min-width: 0;
-    }
-
-    .sidebarWrapper {
-        width: 20rem;
-        flex-shrink: 0;
-        margin-top: 8%;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-
-        @media (max-width: 1100px) {
-            width: 100%;
-            max-width: 25rem;
-            margin-top: 16px;
-        }
+    @media (max-width: 768px) {
+        display: none;
     }
 }

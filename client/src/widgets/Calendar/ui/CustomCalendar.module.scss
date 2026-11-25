@@ -1,0 +1,194 @@
+.card {
+    width: 100%;
+    box-sizing: border-box;
+    background: #fff;
+    border-radius: 18px;
+    padding: 16px 14px 14px;
+    border: 1px solid rgba(0, 149, 218, 0.1);
+    box-shadow: 0 10px 28px rgba(7, 46, 99, 0.07);
+}
+
+.header {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0, 149, 218, 0.12);
+}
+
+.eyebrow {
+    display: inline-block;
+    margin-bottom: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: $primary-color;
+}
+
+.title {
+    margin: 0;
+    font-family: 'Russia', Arial, sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: $text-color;
+}
+
+.calendar {
+    width: 100% !important;
+    max-width: 100%;
+    border: none !important;
+    background: transparent !important;
+    font-family: inherit;
+    line-height: 1.3;
+
+    :global(.react-calendar__navigation) {
+        display: flex;
+        height: 40px;
+        margin-bottom: 8px;
+    }
+
+    :global(.react-calendar__navigation button) {
+        min-width: 32px;
+        background: transparent;
+        border-radius: 10px;
+        color: $primary-background-header;
+        font-size: 18px;
+        font-weight: 700;
+
+        &:enabled:hover,
+        &:enabled:focus {
+            background: rgba(0, 149, 218, 0.1);
+        }
+
+        &:disabled {
+            background: transparent;
+            opacity: 0.3;
+        }
+    }
+
+    :global(.react-calendar__navigation__label) {
+        font-family: 'Russia', Arial, sans-serif;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        text-transform: capitalize;
+        color: $text-color;
+    }
+
+    :global(.react-calendar__month-view__weekdays) {
+        text-align: center;
+        text-transform: uppercase;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: #8a97a5;
+
+        abbr {
+            text-decoration: none;
+            cursor: default;
+        }
+    }
+
+    :global(.react-calendar__month-view__weekdays__weekday--weekend) {
+        color: #d07070;
+    }
+
+    :global(.react-calendar__month-view__days) {
+        gap: 2px;
+    }
+
+    :global(.react-calendar__tile) {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 40px;
+        padding: 4px 0 8px;
+        border-radius: 10px;
+        background: transparent;
+        color: $text-color;
+        font-size: 14px;
+        font-weight: 500;
+
+        &:disabled {
+            background: transparent;
+            color: #c5ced6;
+        }
+
+        &:enabled:hover,
+        &:enabled:focus {
+            background: rgba(0, 149, 218, 0.12);
+        }
+    }
+
+    :global(.react-calendar__month-view__days__day--neighboringMonth) {
+        color: #c5ced6;
+    }
+
+    :global(.react-calendar__tile--now) {
+        background: rgba(0, 149, 218, 0.1);
+        color: $primary-background-header;
+        font-weight: 700;
+
+        &:enabled:hover,
+        &:enabled:focus {
+            background: rgba(0, 149, 218, 0.18);
+        }
+    }
+
+    :global(.react-calendar__tile--active),
+    :global(.react-calendar__tile--active:enabled:hover),
+    :global(.react-calendar__tile--active:enabled:focus) {
+        background: $primary-color !important;
+        color: #fff !important;
+    }
+
+    :global(.react-calendar__year-view__months__month),
+    :global(.react-calendar__decade-view__years__year),
+    :global(.react-calendar__century-view__decades__decade) {
+        border-radius: 12px;
+        padding: 12px 6px;
+    }
+}
+
+.newsDot {
+    position: absolute;
+    left: 50%;
+    bottom: 5px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: $primary-color;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.calendar :global(.react-calendar__tile--active) .newsDot {
+    background: #fff;
+}
+
+.resetButton {
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(0, 149, 218, 0.28);
+    background: rgba(0, 149, 218, 0.08);
+    color: $primary-background-header;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background-color 0.25s ease,
+        border-color 0.25s ease,
+        color 0.25s ease,
+        box-shadow 0.25s ease;
+
+    &:hover {
+        background: $primary-color;
+        border-color: $primary-color;
+        color: #fff;
+        box-shadow: 0 8px 18px rgba(0, 149, 218, 0.28);
+    }
+}

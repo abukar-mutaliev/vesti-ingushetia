@@ -1,57 +1,178 @@
-.aboutUsPage {
-    padding: 40px 0;
-    margin-top: 8%;
+.aboutPage {
+    background: transparent;
+    margin: 0 auto;
     display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 28px;
     width: 100%;
-    max-width: 90%;
+    max-width: 90rem;
+    padding: 96px 16px 48px;
+    box-sizing: border-box;
+    animation: pageIn 0.45s ease-out;
 
-    .container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 40px 40px;
-        background-color: #ffffff;
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    @media (max-width: 1244px) {
+        flex-direction: column;
+        align-items: center;
     }
 
-    .title {
-        text-align: center;
-        font-size: 28px;
-        color: #333;
-        margin-bottom: 50px;
-        padding-top: 20px;
+    @media (max-width: 860px) {
+        padding-top: 72px;
+        gap: 16px;
     }
 
-    .section {
-        margin-bottom: 20px;
-        padding: 0 20px;
+    @media (max-width: 768px) {
+        padding: 72px 12px 36px;
+    }
+}
 
-        &:last-child {
-            margin-bottom: 40px;
+@keyframes pageIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    max-width: 64rem;
+    padding: 24px;
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 149, 218, 0.1);
+    box-shadow: 0 12px 32px rgba(7, 46, 99, 0.08);
+    box-sizing: border-box;
+
+    @media (max-width: 768px) {
+        padding: 18px 14px 20px;
+        border-radius: 16px;
+    }
+}
+
+.header {
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(0, 149, 218, 0.12);
+}
+
+.eyebrow {
+    display: inline-block;
+    margin-bottom: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: $primary-color;
+}
+
+.title {
+    margin: 0 0 8px;
+    text-align: left;
+    font-size: 2rem;
+    font-family: 'Russia', Arial, sans-serif;
+    font-weight: 700;
+    color: $text-color;
+    line-height: 1.2;
+
+    @media (max-width: 768px) {
+        font-size: 1.5rem;
+    }
+}
+
+.subtitle {
+    margin: 0;
+    max-width: 36rem;
+    font-size: 0.98rem;
+    line-height: 1.5;
+    color: #6b7785;
+}
+
+.address {
+    margin-bottom: 18px;
+    padding: 16px 18px;
+    border-radius: 16px;
+    background: linear-gradient(
+        145deg,
+        $primary-background-header 0%,
+        #1a5fad 55%,
+        #0d4a8f 100%
+    );
+    color: #fff;
+
+    p {
+        margin: 6px 0 0;
+        font-size: 1.05rem;
+        line-height: 1.45;
+    }
+}
+
+.addressLabel {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+
+    @media (max-width: 720px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.contact {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px;
+    border-radius: 16px;
+    background: linear-gradient(
+        160deg,
+        rgba(0, 149, 218, 0.07),
+        rgba(35, 118, 209, 0.03)
+    );
+    border: 1px solid rgba(0, 149, 218, 0.12);
+
+    &:first-child {
+        grid-column: 1 / -1;
+    }
+
+    h2 {
+        margin: 0;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #8a97a5;
+    }
+
+    a {
+        color: $primary-background-header;
+        font-size: 1.05rem;
+        font-weight: 700;
+        text-decoration: none;
+
+        &:hover {
+            color: $primary-color;
         }
     }
+}
 
-    .sectionTitle {
-        font-size: 22px;
-        color: #222;
-        margin-bottom: 10px;
-        border-bottom: 1px solid #e0e0e0;
-        padding-bottom: 5px;
-    }
-
-    .text {
-        font-size: 16px;
-        color: #555;
-        line-height: 1.6;
-        margin-bottom: 10px;
-
-        a {
-            color: #007bff;
-            text-decoration: none;
-
-            &:hover {
-                text-decoration: underline;
-            }
-        }
-    }
+.name {
+    margin: 0;
+    font-family: 'Russia', Arial, sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: $text-color;
+    line-height: 1.3;
 }

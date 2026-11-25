@@ -6,89 +6,77 @@ import { MediaElement } from '@shared/ui/MediaElement/MediaElement.jsx';
 import { getNewsPreviewImage } from '@shared/lib/getNewsPreviewImage/getNewsPreviewImage.js';
 
 export const ListedNews = React.memo(({ newsList }) => {
-    const sortedByViewsNews = useMemo(() => {
+    const popularNews = useMemo(() => {
         const items = Array.isArray(newsList) ? newsList : [];
-        return [...items].sort((a, b) => b.views - a.views).slice(0, 6);
+
+        return [...items]
+            .sort((a, b) => (b.views || 0) - (a.views || 0))
+            .slice(0, 6)
+            .map((newsItem) => {
+                const imageMedia = getNewsPreviewImage(newsItem.mediaFiles);
+                const videoMedia =
+                    newsItem.mediaFiles?.find((media) => media.type === 'video') ||
+                    null;
+
+                return {
+                    id: newsItem.id,
+                    title: newsItem.title,
+                    imageUrl: imageMedia?.url || null,
+                    videoUrl: videoMedia?.url || null,
+                };
+            });
     }, [newsList]);
 
-    const topThreeNews = useMemo(() => {
-        return sortedByViewsNews.slice(0, 3).map((newsItem) => {
-            const imageMedia = getNewsPreviewImage(newsItem.mediaFiles);
-            const videoMedia =
-                newsItem.mediaFiles?.find((media) => media.type === 'video') ||
-                null;
+    const [lead, ...rest] = popularNews;
 
-            const imageUrl = imageMedia?.url || null;
-            const videoUrl = videoMedia?.url || null;
-
-            return {
-                id: newsItem.id,
-                title: newsItem.title,
-                imageUrl,
-                videoUrl,
-                alt: newsItem.title,
-            };
-        });
-    }, [sortedByViewsNews]);
-
-    const nextThreeNews = useMemo(() => {
-        return sortedByViewsNews.slice(1, 6).map((newsItem) => ({
-            id: newsItem.id,
-            title: newsItem.title,
-        }));
-    }, [sortedByViewsNews]);
+    if (!lead) {
+        return null;
+    }
 
     return (
-        <div className={styles.listedNews}>
-            <h2>Популярное</h2>
-            <div className={styles.smallImageNewsSection}>
-                {topThreeNews.map((newsItem) => {
-                    const handleImageError = (e) => {
-                        e.target.onerror = null;
-                        e.target.src = defaultImage;
-                    };
+        <section className={styles.listedNews}>
+            <h2>Популярные новости</h2>
 
-                    return (
-                        <Link
-                            key={newsItem.id}
-                            to={`/news/${newsItem.id}`}
-                            className={styles.smallImageNewsLink}
-                        >
-                            <div className={styles.smallImageNewsItem}>
-                                <MediaElement
-                                    imageUrl={newsItem.imageUrl}
-                                    videoUrl={newsItem.videoUrl}
-                                    alt={newsItem.alt}
-                                    className={styles.mediaElement}
-                                    playIconSize={30}
-                                    onError={handleImageError}
-                                />
-                                <p className={styles.smallImageNewsTitle}>
-                                    {newsItem.title}
-                                </p>
-                            </div>
-                        </Link>
-                    );
-                })}
-            </div>
-            <ul className={styles.listedNewsSection}>
-                {nextThreeNews.map((newsItem) => (
-                    <Link
-                        key={newsItem.id}
-                        to={`/news/${newsItem.id}`}
-                        className={styles.listedNewsLink}
-                    >
-                        <li className={styles.listedNewsItem}>
-                            {newsItem.title}
+            <Link to={`/news/${lead.id}`} className={styles.lead}>
+                <MediaElement
+                    imageUrl={lead.imageUrl}
+                    videoUrl={lead.videoUrl}
+                    alt={lead.title}
+                    className={styles.leadMedia}
+                    playIconSize={36}
+                    onError={(event) => {
+                        event.target.onerror = null;
+                        event.target.src = defaultImage;
+                    }}
+                />
+                <span className={styles.leadTitle}>{lead.title}</span>
+            </Link>
+
+            {rest.length > 0 && (
+                <ul className={styles.list}>
+                    {rest.map((newsItem) => (
+                        <li key={newsItem.id}>
+                            <Link to={`/news/${newsItem.id}`} className={styles.row}>
+                                <span className={styles.thumb}>
+                                    <MediaElement
+                                        imageUrl={newsItem.imageUrl}
+                                        videoUrl={newsItem.videoUrl}
+                                        alt=""
+                                        className={styles.thumbMedia}
+                                        showPlayIcon={false}
+                                        playIconSize={16}
+                                    />
+                                </span>
+                                <span className={styles.rowTitle}>{newsItem.title}</span>
+                            </Link>
                         </li>
-                    </Link>
-                ))}
-            </ul>
-            <div className={styles.viewAllNewsButton}>
-                <Link to="/news" className={styles.viewAllLink}>
-                    Все новости
-                </Link>
-            </div>
-        </div>
+                    ))}
+                </ul>
+            )}
+
+            <Link to="/news" className={styles.viewAllLink}>
+                Все новости
+            </Link>
+        </section>
     );
 });

@@ -1,62 +1,81 @@
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchCategories } from '@entities/categories/model/categorySlice';
+import { selectCategories } from '@entities/categories/model/categorySelectors';
+import { SideMenu } from '@widgets/SideMenu/index.js';
 import styles from './AboutUsPage.module.scss';
 
+const CONTACTS = [
+    {
+        title: 'Директор',
+        name: 'Евлоев Берс Биланович',
+        phone: '+7 (8732) 22-42-52',
+        tel: '+78732224252',
+    },
+    {
+        title: 'Служба информационных программ',
+        phone: '+7 (8732) 22-41-33',
+        tel: '+78732224133',
+    },
+    {
+        title: 'Продюсер',
+        phone: '+7 (8732) 22-41-28',
+        tel: '+78732224128',
+    },
+    {
+        title: 'Планово-экономический отдел',
+        phone: '+7 (8732) 22-41-45',
+        tel: '+78732224145',
+    },
+    {
+        title: 'Служба радиовещания',
+        phone: '+7 (8732) 22-41-34',
+        tel: '+78732224134',
+    },
+];
+
 const AboutUsPage = () => {
+    const dispatch = useDispatch();
+    const categories = useSelector(selectCategories);
+
+    useEffect(() => {
+        if (!categories.length) {
+            dispatch(fetchCategories());
+        }
+    }, [dispatch, categories.length]);
+
     return (
-        <div className={styles.aboutUsPage}>
-            <div className={styles.container}>
-                <h1 className={styles.title}>
-                    Филиал ФГУП ВГТРК ГТРК «Ингушетия»
-                </h1>
-
-                <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Адрес</h2>
-                    <p className={styles.text}>
-                        386101 - Республика Ингушетия, г. Назрань, пер.
-                        Набережный, 8.
+        <div className={styles.aboutPage}>
+            <SideMenu />
+            <article className={styles.card}>
+                <header className={styles.header}>
+                    <span className={styles.eyebrow}>ГТРК «Ингушетия»</span>
+                    <h1 className={styles.title}>О нас</h1>
+                    <p className={styles.subtitle}>
+                        Филиал ФГУП ВГТРК ГТРК «Ингушетия»
                     </p>
-                </div>
+                </header>
 
-                <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Директор</h2>
-                    <p className={styles.text}>Евлоев Берс Биланович</p>
-                    <p className={styles.text}>
-                        Тел.: <a href="tel:+78732224252">+7 (8732) 22-42-52</a>
+                <section className={styles.address}>
+                    <span className={styles.addressLabel}>Адрес редакции</span>
+                    <p>
+                        386101, Республика Ингушетия, г. Назрань, пер.
+                        Набережный, 8
                     </p>
-                </div>
+                </section>
 
-                <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>
-                        Служба информационных программ
-                    </h2>
-                    <p className={styles.text}>
-                        Тел.: <a href="tel:+78732224133">+7 (8732) 22-41-33</a>
-                    </p>
+                <div className={styles.grid}>
+                    {CONTACTS.map((contact) => (
+                        <section key={contact.title} className={styles.contact}>
+                            <h2>{contact.title}</h2>
+                            {contact.name && <p className={styles.name}>{contact.name}</p>}
+                            <a href={`tel:${contact.tel}`}>{contact.phone}</a>
+                        </section>
+                    ))}
                 </div>
-
-                <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Продюсер</h2>
-                    <p className={styles.text}>
-                        Тел.: <a href="tel:+78732224128">+7 (8732) 22-41-28</a>
-                    </p>
-                </div>
-
-                <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>
-                        Планово-экономический отдел
-                    </h2>
-                    <p className={styles.text}>
-                        Тел.: <a href="tel:+78732224145">+7 (8732) 22-41-45</a>
-                    </p>
-                </div>
-
-                <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Служба радиовещания</h2>
-                    <p className={styles.text}>
-                        Тел.: <a href="tel:+78732224134">+7 (8732) 22-41-34</a>
-                    </p>
-                </div>
-            </div>
+            </article>
         </div>
     );
 };
+
 export default AboutUsPage;

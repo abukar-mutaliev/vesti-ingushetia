@@ -1,105 +1,107 @@
 .addCommentForm {
     display: flex;
     flex-direction: column;
-    margin-top: 20px;
-    padding: 15px;
-    border-radius: 8px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    gap: 12px;
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 16px;
+    background: linear-gradient(
+        160deg,
+        #ffffff 0%,
+        rgba(0, 149, 218, 0.05) 100%
+    );
+    border: 1px solid rgba(0, 149, 218, 0.14);
+    box-shadow: 0 8px 20px rgba(7, 46, 99, 0.06);
+    animation: formIn 0.3s ease-out;
 
-    .formGroup {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 15px;
-    }
-
-    .label {
-        margin-bottom: 5px;
-        font-weight: bold;
-        color: #333;
-    }
-
+    textarea,
     .authorNameInput,
     .commentTextArea {
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px 14px;
+        border: 1px solid rgba(0, 149, 218, 0.2);
+        border-radius: 12px;
         font-size: 14px;
-        color: #333;
-        transition: border-color 0.3s ease-in-out;
+        font-family: inherit;
+        color: $text-color;
+        background: #fff;
+        resize: vertical;
+        min-height: 96px;
+        transition:
+            border-color 0.25s ease,
+            box-shadow 0.25s ease;
 
         &:focus {
             outline: none;
-            border-color: #007bff;
+            border-color: $primary-color;
+            box-shadow: 0 0 0 3px rgba(0, 149, 218, 0.15);
+        }
+
+        &::placeholder {
+            color: #8a95a1;
         }
     }
 
     .authorNameInput {
-        height: 40px;
-    }
-
-    .commentTextArea {
-        resize: vertical;
-        min-height: 80px;
+        min-height: 0;
+        height: 44px;
+        resize: none;
     }
 
     .error {
-        color: #d9534f;
+        color: $error-color;
         font-size: 12px;
-        margin-top: -5px;
-        margin-bottom: 10px;
-    }
-
-    .buttonGroup {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
+        margin: -4px 0 0;
     }
 
     .submitButton {
-        padding: 10px 15px;
+        align-self: flex-start;
+        padding: 11px 20px;
         border: none;
-        border-radius: 4px;
-        background-color: #007bff;
+        border-radius: 999px;
+        background: linear-gradient(
+            135deg,
+            $primary-color,
+            $primary-background-header
+        );
         color: white;
-        font-weight: bold;
+        font-weight: 600;
+        font-size: 14px;
         cursor: pointer;
-        transition: background-color 0.3s ease;
-        width: 30%;
-        &:hover {
-            background-color: #0056b3;
+        box-shadow: 0 8px 18px rgba(0, 149, 218, 0.28);
+        transition:
+            transform 0.25s ease,
+            box-shadow 0.25s ease,
+            filter 0.25s ease;
+
+        &:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 22px rgba(35, 118, 209, 0.35);
+            filter: brightness(1.05);
         }
 
         &:disabled {
-            background-color: #cccccc;
+            opacity: 0.6;
             cursor: not-allowed;
-        }
-    }
-
-    .cancelButton {
-        padding: 10px 15px;
-        border: none;
-        border-radius: 4px;
-        background-color: #6c757d;
-        color: white;
-        font-weight: bold;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-
-        &:hover {
-            background-color: #5a6268;
-        }
-
-        &:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
+            box-shadow: none;
         }
     }
 }
 
+@keyframes formIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .error {
-    color: #d9534f;
+    color: $error-color;
     font-size: 12px;
-    margin-top: -5px;
-    margin-bottom: 10px;
+    margin: 0;
 }

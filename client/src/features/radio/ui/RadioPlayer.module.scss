@@ -1,94 +1,350 @@
-.RadioPlayerWrapper {
+.player {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 1rem;
-    background-color: #f8f8f8;
-    border-radius: 10px;
-    box-shadow:
-        0 20px 25px -5px rgba(0, 0, 0, 0.1),
-        0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    background-color: rgba(255, 255, 255, 1);
-    width: 100%;
-    height: 100vh;
-    text-align: center;
-    margin-top: 5%;
+    gap: 22px;
+    padding: 24px;
+    text-align: left;
+
+    @media (max-width: 768px) {
+        padding: 18px 14px 20px;
+        gap: 18px;
+    }
+}
+
+.header {
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(0, 149, 218, 0.12);
+}
+
+.eyebrow {
+    display: inline-block;
+    margin-bottom: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: $primary-color;
+}
+
+.title {
+    margin: 0 0 8px;
+    font-size: 2rem;
+    font-family: 'Russia', Arial, sans-serif;
+    font-weight: 700;
+    color: $text-color;
+    line-height: 1.2;
+
+    @media (max-width: 768px) {
+        font-size: 1.45rem;
+    }
+}
+
+.subtitle {
+    margin: 0;
+    max-width: 36rem;
+    font-size: 0.98rem;
+    line-height: 1.5;
+    color: #6b7785;
+}
+
+.infoGrid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 14px;
+
+    @media (max-width: 860px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.infoCard {
+    padding: 16px;
+    border-radius: 16px;
+    background: linear-gradient(
+        160deg,
+        rgba(0, 149, 218, 0.07),
+        rgba(35, 118, 209, 0.03)
+    );
+    border: 1px solid rgba(0, 149, 218, 0.12);
 
     h2 {
-        padding: 20px;
-        width: 100%;
-        text-align: center;
-    }
-    h3 {
-        display: grid;
+        margin: 0 0 8px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: $text-color;
     }
 }
 
-.TrackList {
+.infoLead {
+    margin: 0 0 12px;
+    font-size: 0.92rem;
+    color: #5a6570;
+}
+
+.slots {
     list-style: none;
-    padding: 5% 0;
-    width: 100%;
     margin: 0;
-    gap: 10px;
-}
-
-.trackItemContainer {
+    padding: 0;
     display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    cursor: pointer;
-    border-bottom: 1px solid #ccc;
-    transition: background-color 0.2s;
-    height: 60px;
-    padding: 0 1rem;
+    flex-direction: column;
+    gap: 8px;
 
-    &:hover {
-        background-color: #e0e0e0;
-    }
-
-    &.active {
-        color: #007bff;
-        font-weight: bold;
-    }
-
-    .trackItem {
+    li {
         display: flex;
         align-items: center;
-        padding: 0.5rem;
-        width: 100%;
-        margin-left: 0.5rem;
-    }
-
-    svg {
-        flex-shrink: 0;
+        gap: 10px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+        color: $primary-color-hover-header;
     }
 }
 
-.Button {
-    margin-top: 1rem;
-    padding: 0.5rem 1rem;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
+.slotDash {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        rgba(0, 149, 218, 0.45),
+        rgba(0, 149, 218, 0.05)
+    );
+}
+
+.wave {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 14px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 149, 218, 0.14);
+    font-size: 0.9rem;
+    color: #5a6570;
+
+    strong {
+        font-size: 1.15rem;
+        color: $primary-background-header;
+        letter-spacing: 0.02em;
+    }
+}
+
+.contacts {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    div {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    dt {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #8a97a5;
+    }
+
+    dd {
+        margin: 0;
+        font-size: 0.95rem;
+        line-height: 1.45;
+        color: $text-color;
+    }
+
+    a {
+        color: $primary-background-header;
+        font-weight: 600;
+        text-decoration: none;
+
+        &:hover {
+            color: $primary-color;
+        }
+    }
+}
+
+.tracks {
+    h2 {
+        margin: 0 0 12px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: $text-color;
+    }
+}
+
+.trackList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.trackItem {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(7, 46, 99, 0.08);
+    border-radius: 14px;
+    background: #fff;
+    color: $text-color;
+    text-align: left;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition:
+        background-color 0.25s ease,
+        border-color 0.25s ease,
+        transform 0.25s ease;
 
     &:hover {
-        background-color: #0056b3;
+        background: rgba(0, 149, 218, 0.06);
+        border-color: rgba(0, 149, 218, 0.28);
+        transform: translateX(3px);
     }
 }
 
-.radioPlayerContainer {
-    width: 100%;
+.trackItemActive {
+    background: rgba(0, 149, 218, 0.1);
+    border-color: rgba(0, 149, 218, 0.4);
+    color: $primary-color-hover-header;
+    font-weight: 700;
+}
+
+.playIcon {
+    display: flex;
+    color: $primary-color;
+    flex-shrink: 0;
+}
+
+.trackTitle {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.98rem;
+}
+
+.onAir {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: $primary-color;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.hint,
+.empty {
+    margin: 12px 0 0;
+    color: #6b7785;
+    font-size: 0.95rem;
+}
+
+.error {
+    margin: 0 0 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(231, 76, 60, 0.08);
+    color: $error-color;
+}
+
+.loaderWrap {
+    display: flex;
+    justify-content: center;
+    padding: 12px 0;
+}
+
+.nowPlaying {
     display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px 16px;
+    align-items: center;
+    padding: 16px;
+    border-radius: 16px;
+    background: linear-gradient(
+        145deg,
+        $primary-background-header 0%,
+        #1a5fad 55%,
+        #0d4a8f 100%
+    );
+    color: #fff;
+
+    @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+
+        .nowPlayingText,
+        .stopButton,
+        .radioPlayer {
+            grid-column: 1;
+            grid-row: auto;
+        }
+    }
+}
+
+.nowPlayingText {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
 
     h2 {
-        color: #333333;
-        font-family: 'RussiaMedium';
-        text-align: center;
+        margin: 4px 0 0;
+        font-size: 1.15rem;
+        font-family: 'Russia', Arial, sans-serif;
+        line-height: 1.3;
     }
-    .radioPlayer {
-        padding: 20px;
+
+    p {
+        margin: 6px 0 0;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.78);
+    }
+}
+
+.nowLabel {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.radioPlayer {
+    grid-column: 1 / -1;
+    grid-row: 2;
+}
+
+.stopButton {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    padding: 10px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background-color 0.25s ease,
+        border-color 0.25s ease;
+
+    &:hover {
+        background: #fff;
+        border-color: #fff;
+        color: $primary-background-header;
+    }
+
+    @media (max-width: 640px) {
+        justify-self: stretch;
     }
 }

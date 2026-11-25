@@ -1,93 +1,88 @@
 .replyForm {
     display: flex;
-    margin-top: 8px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 149, 218, 0.14);
+
     @media (max-width: 768px) {
-        display: inline;
+        flex-direction: column;
     }
 }
 
 .replyTextarea {
     width: 100%;
-    min-height: 50px;
-    padding: 8px;
-    border: 1px solid #dbdbdb;
-    border-radius: 8px;
+    flex: 1 1 100%;
+    min-height: 64px;
+    padding: 10px 12px;
+    border: 1px solid rgba(0, 149, 218, 0.2);
+    border-radius: 10px;
     resize: vertical;
+    font-family: inherit;
+    font-size: 14px;
+    color: $text-color;
+    transition:
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
+
+    &:focus {
+        outline: none;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 3px rgba(0, 149, 218, 0.15);
+    }
+
+    &::placeholder {
+        color: #8a95a1;
+    }
+}
+
+.replySubmitButton,
+.replyCancelButton {
+    border: none;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 8px 14px;
+    margin-left: 0;
+    transition:
+        background-color 0.25s ease,
+        color 0.25s ease,
+        transform 0.2s ease;
+}
+
+.replySubmitButton {
+    background: linear-gradient(
+        135deg,
+        $primary-color,
+        $primary-background-header
+    );
+    color: #fff;
+    box-shadow: 0 6px 14px rgba(0, 149, 218, 0.25);
+
+    &:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.05);
+    }
+}
+
+.replyCancelButton {
+    background: rgba(7, 46, 99, 0.06);
+    color: #5a6570;
+
+    &:hover {
+        background: rgba(7, 46, 99, 0.1);
+        color: $text-color;
+    }
 }
 
 .replyFormActions {
     display: flex;
     justify-content: flex-end;
-    margin-top: 8px;
-}
-
-.replySubmitButton,
-.replyCancelButton {
-    background: none;
-    border: none;
-    color: #3897f0;
-    font-weight: bold;
-    cursor: pointer;
-    margin-left: 8px;
-}
-.replySubmitButton:hover {
-    color: $primary-color-hover;
-}
-
-.replyCancelButton {
-    color: #262626;
-    &:hover {
-        color: #777777;
-    }
-}
-.modal {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    border-radius: 8px;
-    padding: 20px;
-    width: 30%;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    text-align: center;
-}
-
-.modalOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-.modalButton {
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-right: 35px;
-    transition: background-color 0.3s;
-
-    &:hover {
-        background-color: #0056b3;
-    }
-}
-
-.modalCloseButton {
-    padding: 10px 20px;
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 10px;
-    transition: background-color 0.3s;
-
-    &:hover {
-        background-color: #5a6268;
-    }
+    gap: 8px;
+    margin-top: 0;
 }

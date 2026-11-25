@@ -1,4 +1,5 @@
 import { memo, useCallback, useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import {
     selectCommentsError,
@@ -11,6 +12,7 @@ import { AddCommentForm } from '@features/comments/AddCommentForm/';
 import { fetchCommentsForNews } from '@entities/comments/model/commentsSlice.js';
 import { Loader } from '@shared/ui/Loader/index.js';
 import { selectUserAuth } from '@entities/user/auth/model/authSelectors.js';
+import { FaRegComments, FaChevronDown } from 'react-icons/fa';
 
 export const CommentSection = memo(({ newsId, authorName, userId }) => {
     const dispatch = useDispatch();
@@ -23,7 +25,7 @@ export const CommentSection = memo(({ newsId, authorName, userId }) => {
     const comments = useSelector(commentsSelector, shallowEqual);
     const user = useSelector(selectUserAuth, shallowEqual);
 
-    const [isCommentsVisible, setIsCommentsVisible] = useState(false);
+    const [isCommentsVisible, setIsCommentsVisible] = useState(true);
     const [showAddComment, setShowAddComment] = useState(false);
 
     const handleToggleComments = useCallback(() => {
@@ -49,65 +51,90 @@ export const CommentSection = memo(({ newsId, authorName, userId }) => {
             </div>
         );
     }
+
     return (
         <div className={styles.commentSection}>
             <button
+                type="button"
                 onClick={handleToggleComments}
                 className={styles.toggleButton}
                 aria-expanded={isCommentsVisible}
                 aria-controls="comments-list"
             >
-                Комментарии ({comments.length})
-                <span
+                <span className={styles.toggleLeft}>
+                    <FaRegComments className={styles.toggleIcon} aria-hidden="true" />
+                    <span className={styles.toggleTitle}>Комментарии</span>
+                    <span className={styles.countBadge}>{comments.length}</span>
+                </span>
+                <FaChevronDown
                     className={`${styles.arrow} ${isCommentsVisible ? styles.arrowUp : ''}`}
                     aria-hidden="true"
-                >
-                    ▼
-                </span>
+                />
             </button>
 
             {isCommentsVisible && (
-                <>
+                <div className={styles.commentsBody}>
                     {loading ? (
-                        <Loader />
+                        <div className={styles.loaderWrap}>
+                            <Loader />
+                        </div>
                     ) : comments.length === 0 ? (
-                        <p className={styles.noComments}>
-                            Комментарии отсутствуют
-                        </p>
+                        <div className={styles.noComments}>
+                            <div className={styles.noCommentsIcon} aria-hidden="true">
+                                <FaRegComments size={28} />
+                            </div>
+                            <p className={styles.noCommentsTitle}>
+                                Комментарии отсутствуют
+                            </p>
+                            <p className={styles.noCommentsText}>
+                                Будьте первым — поделитесь мнением об этой новости
+                            </p>
+                        </div>
                     ) : (
                         <ul className={styles.commentList} id="comments-list">
                             {comments.map((comment) => (
-                                <CommentItem
-                                    key={comment.id}
-                                    comment={comment}
-                                    isReply={false}
-                                />
+                                <li key={comment.id} className={styles.commentListItem}>
+                                    <CommentItem
+                                        comment={comment}
+                                        isReply={false}
+                                    />
+                                </li>
                             ))}
                         </ul>
                     )}
-                </>
+                </div>
             )}
-            {user === false ? (
-                <button
-                    onClick={handleShowAddComment}
-                    className={styles.addCommentButtonDisabled}
-                    aria-expanded={showAddComment}
-                    title="Для комментирования авторизуйся"
-                    disabled
-                >
-                    Написать комментарий
-                </button>
-            ) : (
-                <button
-                    onClick={handleShowAddComment}
-                    className={styles.addCommentButton}
-                    aria-expanded={showAddComment}
-                    aria-controls="add-comment-form"
-                >
-                    Написать комментарий
-                </button>
-            )}
-            {showAddComment && (
+
+            <div className={styles.actions}>
+                {user === false ? (
+                    <div className={styles.authHint}>
+                        <button
+                            type="button"
+                            className={styles.addCommentButtonDisabled}
+                            aria-expanded={showAddComment}
+                            disabled
+                        >
+                            Написать комментарий
+                        </button>
+                        <p className={styles.authHintText}>
+                            Для комментирования{' '}
+                            <Link to="/login">войдите</Link> в аккаунт
+                        </p>
+                    </div>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={handleShowAddComment}
+                        className={styles.addCommentButton}
+                        aria-expanded={showAddComment}
+                        aria-controls="add-comment-form"
+                    >
+                        {showAddComment ? 'Скрыть форму' : 'Написать комментарий'}
+                    </button>
+                )}
+            </div>
+
+            {showAddComment && user !== false && (
                 <AddCommentForm
                     newsId={newsId}
                     authorName={authorName}

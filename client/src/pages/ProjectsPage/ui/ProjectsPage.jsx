@@ -9,6 +9,7 @@ import {
     selectProjectsError,
 } from '@entities/projects/model/projectSelectors.js';
 import { Sidebar } from '@widgets/Sidebar/index.js';
+import { SideMenu } from '@widgets/SideMenu/index.js';
 import {
     selectNewsList,
     selectNewsLoading,
@@ -48,7 +49,11 @@ const ProjectsPage = () => {
     ]);
 
     if (projectsLoading || loadingNews) {
-        return <Loader />;
+        return (
+            <div className={styles.loaderWrap}>
+                <Loader />
+            </div>
+        );
     }
 
     if (projectsError) {
@@ -57,24 +62,39 @@ const ProjectsPage = () => {
 
     return (
         <div className={styles.projectsPage}>
+            <SideMenu />
             <div className={styles.projectsPageContainer}>
-                <h2 className={styles.projectsTitle}>Наши проекты</h2>
-                <div className={styles.projectsGrid}>
-                    {projects.length > 0 ? (
-                        projects.map((project) => (
+                <header className={styles.pageHeader}>
+                    <span className={styles.eyebrow}>ГТРК «Ингушетия»</span>
+                    <h1 className={styles.projectsTitle}>Наши проекты</h1>
+                    <p className={styles.pageSubtitle}>
+                        Телепроекты и рубрики регионального вещания
+                    </p>
+                </header>
+
+                {projects.length > 0 ? (
+                    <div className={styles.projectsGrid}>
+                        {projects.map((project, index) => (
                             <Link
                                 key={project.id}
                                 to={`/projects/${project.id}`}
                                 className={styles.projectLink}
+                                style={{ animationDelay: `${Math.min(index, 12) * 0.04}s` }}
                             >
                                 <ProjectCard project={project} />
                             </Link>
-                        ))
-                    ) : (
-                        <div>Проекты не найдены</div>
-                    )}
-                </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className={styles.emptyState}>
+                        <p className={styles.emptyTitle}>Проекты не найдены</p>
+                        <p className={styles.emptyText}>
+                            Скоро здесь появятся новые материалы
+                        </p>
+                    </div>
+                )}
             </div>
+
             <div className={styles.sidebarContainer}>
                 <Sidebar
                     newsList={memoizedNewsList}

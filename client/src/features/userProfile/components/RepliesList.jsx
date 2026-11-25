@@ -2,23 +2,25 @@ import styles from '../ui/UserProfile.module.scss';
 import defaultAvatar from '@assets/default-avatar.jpg';
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { Link } from 'react-router-dom';
 
 export const RepliesList = ({ replies }) => {
     return (
-        <div className={styles.repliesSection}>
-            <h3>Ответы на ваши комментарии</h3>
+        <section className={styles.repliesSection}>
+            <header className={styles.repliesHeader}>
+                <h2>Ответы на комментарии</h2>
+                <p>Сообщения, которые оставили под вашими комментариями</p>
+            </header>
             {replies?.length > 0 ? (
                 <div className={styles.repliesList}>
                     {replies.map((reply) => (
-                        <div key={reply.id} className={styles.reply}>
+                        <article key={reply.id} className={styles.reply}>
                             <div className={styles.replyHeader}>
                                 <img
                                     src={
-                                        reply.author && reply.author.avatarUrl
-                                            ? `${reply.author.avatarUrl}`
-                                            : defaultAvatar
+                                        reply.author?.avatarUrl || defaultAvatar
                                     }
-                                    alt="Аватар автора"
+                                    alt=""
                                     className={styles.replyAvatar}
                                 />
                                 <div className={styles.replyInfo}>
@@ -38,21 +40,26 @@ export const RepliesList = ({ replies }) => {
                                     </p>
                                 </div>
                             </div>
-                            <p className={styles.replyContent}>
-                                {reply.content}
-                            </p>
-                            <a
-                                href={`/news/${reply.newsId}`}
+                            <p className={styles.replyContent}>{reply.content}</p>
+                            <Link
+                                to={`/news/${reply.newsId}`}
                                 className={styles.replyLink}
                             >
                                 Перейти к новости
-                            </a>
-                        </div>
+                            </Link>
+                        </article>
                     ))}
                 </div>
             ) : (
-                <p>У вас нет новых ответов.</p>
+                <div className={styles.emptyReplies}>
+                    <p className={styles.emptyTitle}>Ответов пока нет</p>
+                    <p>
+                        Оставьте комментарий под новостью — ответы появятся в
+                        этом блоке.
+                    </p>
+                    <Link to="/news">Перейти к новостям</Link>
+                </div>
             )}
-        </div>
+        </section>
     );
 };

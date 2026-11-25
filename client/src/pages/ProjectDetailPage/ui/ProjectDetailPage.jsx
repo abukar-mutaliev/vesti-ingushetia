@@ -1,6 +1,6 @@
 import { memo, useEffect } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import styles from './ProjectDetailPage.module.scss';
 import { Sidebar } from '@widgets/Sidebar';
 import { ProjectDetail } from '@features/projectDetail';
@@ -64,16 +64,25 @@ const ProjectDetailPage = memo(() => {
     }, [id]);
 
     if (loadingProjects || !currentProject) {
-        return <Loader />;
+        return (
+            <div className={styles.loaderWrap}>
+                <Loader />
+            </div>
+        );
     }
 
     return (
         <div className={styles.projectDetailPage}>
             <div className={styles.projectDetailPageContainer}>
-                <ProjectDetail
-                    project={currentProject}
-                    loading={loadingProjects}
-                />
+                <div className={styles.mainContent}>
+                    <Link to="/projects" className={styles.backLink}>
+                        ← Все проекты
+                    </Link>
+                    <ProjectDetail
+                        project={currentProject}
+                        loading={loadingProjects}
+                    />
+                </div>
                 <div className={styles.sidebarContainer}>
                     <Sidebar
                         newsList={newsList}

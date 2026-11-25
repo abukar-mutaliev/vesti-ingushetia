@@ -20,6 +20,7 @@ import {
 } from '@entities/radio/model/radioSelectors';
 import { RadioPlayer } from '@features/radio/index.js';
 import { Sidebar } from '@widgets/Sidebar/index.js';
+import { SideMenu } from '@widgets/SideMenu/index.js';
 import styles from './RadioPage.module.scss';
 import { Loader } from '@shared/ui/Loader/index.js';
 import radioImage from '@assets/radio.jpg';
@@ -72,24 +73,30 @@ const RadioPage = memo(() => {
 
     return (
         <div className={styles.radioPage}>
+            <SideMenu />
             <div className={styles.radioPlayerWrapper}>
-                <img
-                    alt='Радио России "Ингушетия"'
-                    className={styles.radioImage}
-                    src={radioImage}
-                />
-
-                <RadioPlayer
-                    radio={radio}
-                    currentRadio={currentRadio}
-                    status={status}
-                    error={errorText}
-                    onPlay={handlePlay}
-                    onStop={handleStop}
-                />
+                <article className={styles.stationCard}>
+                    <img
+                        alt='Радио России «Ингушетия»'
+                        className={styles.radioImage}
+                        src={radioImage}
+                    />
+                    <RadioPlayer
+                        radio={radio}
+                        currentRadio={currentRadio}
+                        status={status}
+                        error={errorText}
+                        onPlay={handlePlay}
+                        onStop={handleStop}
+                    />
+                </article>
             </div>
             <div className={styles.sidebarWrapper}>
-                <Sidebar categories={categories} newsList={memoizedNewsList} showElectionsBanner />
+                <Sidebar
+                    categories={categories}
+                    newsList={memoizedNewsList}
+                    showElectionsBanner
+                />
             </div>
         </div>
     );

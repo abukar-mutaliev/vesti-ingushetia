@@ -1,103 +1,153 @@
 .comment {
     display: flex;
     align-items: flex-start;
-    margin-bottom: 16px;
+    gap: 12px;
+    margin-bottom: 0;
+    padding: 14px;
+    border-radius: 14px;
+    background: linear-gradient(
+        160deg,
+        #ffffff 0%,
+        rgba(0, 149, 218, 0.04) 100%
+    );
+    border: 1px solid rgba(0, 149, 218, 0.1);
+    transition:
+        border-color 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.25s ease;
+
+    &:hover {
+        border-color: rgba(0, 149, 218, 0.22);
+        box-shadow: 0 8px 20px rgba(7, 46, 99, 0.08);
+    }
 }
 
 .reply {
-    margin-left: 44px;
+    margin-left: 28px;
+    margin-top: 10px;
+    background: #fff;
+    border-style: dashed;
+
+    @media (max-width: 568px) {
+        margin-left: 12px;
+    }
 }
 
 .avatar {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
     border-radius: 50%;
-    margin-right: 12px;
+    margin-right: 0;
     object-fit: cover;
+    border: 2px solid rgba(0, 149, 218, 0.2);
+    box-shadow: 0 4px 10px rgba(7, 46, 99, 0.1);
 }
 
 .commentContent {
     display: flex;
     flex-direction: column;
+    gap: 4px;
     font-size: 14px;
-    color: #262626;
+    color: $text-color;
+    min-width: 0;
+    flex: 1;
 }
 
 .authorName {
     font-family: 'RussiaMedium', Arial, sans-serif;
-    font-weight: bolder;
-    margin-right: 5px;
+    font-weight: 700;
+    margin-right: 0;
+    color: $primary-background-header;
+    font-size: 14px;
 }
 
 .commentText {
     margin-top: 2px;
+    line-height: 1.55;
+    color: #3d4852;
+    word-break: break-word;
 }
 
 .commentActions {
     display: flex;
     align-items: center;
-    margin-top: 4px;
-}
-
-.likeButton {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    margin-right: 8px;
-}
-
-.likesCount {
-    font-size: 12px;
-    color: #8e8e8e;
-}
-.commentActions {
-    display: flex;
-    align-items: center;
-    margin-top: 4px;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    margin-top: 8px;
 }
 
 .likeButton,
 .replyButton {
-    background: none;
-    border: none;
+    background: rgba(0, 149, 218, 0.06);
+    border: 1px solid transparent;
     cursor: pointer;
-    padding: 0;
-    margin-right: 8px;
-    display: flex;
+    padding: 6px 10px;
+    margin-right: 0;
+    display: inline-flex;
     align-items: center;
-    color: #262626;
-}
-.deleteButton {
-    background-color: #f44336;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    margin-left: 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.3s ease;
+    gap: 4px;
+    color: #5a6570;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
 
-    &:hover {
-        background-color: #d32f2f;
+    &:hover:not(:disabled) {
+        background: rgba(0, 149, 218, 0.12);
+        color: $primary-color;
+        transform: translateY(-1px);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.likeButton {
+    svg {
+        font-size: 15px;
     }
 }
 
 .likesCount {
     font-size: 12px;
-    color: #8e8e8e;
-    margin-right: 8px;
+    color: #8a95a1;
+    margin-right: 4px;
+    font-weight: 600;
+    min-width: 1ch;
 }
 
-.likeButton:disabled {
-    opacity: 0.5;
-}
-
-.replyButton {
+.deleteButton {
+    background-color: rgba(231, 76, 60, 0.1);
+    color: $error-color;
+    border: 1px solid rgba(231, 76, 60, 0.2);
+    padding: 6px 12px;
+    margin-left: auto;
+    border-radius: 999px;
+    cursor: pointer;
     font-size: 12px;
-    color: #8e8e8e;
+    font-weight: 600;
+    transition:
+        background-color 0.25s ease,
+        color 0.25s ease,
+        transform 0.2s ease;
+
+    &:hover {
+        background-color: $error-color;
+        color: #fff;
+        transform: translateY(-1px);
+    }
 }
+
 .replies {
     margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
